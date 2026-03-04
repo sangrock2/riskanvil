@@ -1,0 +1,1 @@
+{"Global Quote": {"01. symbol": "META", "02. open": "659.5700", "03. high": "665.5200", "04. low": "651.9000", "05. price": "660.6200", "06. volume": "11074419", "07. latest trading day": "2026-01-06", "08. previous close": "658.7900", "09. change": "1.8300", "10. change percent": "0.2778%"}}

@@ -1,0 +1,1451 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock-AI Portfolio Full Document</title>
+  <style>
+    :root {
+      --bg: #f2f5fa;
+      --surface: #ffffff;
+      --line: #d6dee8;
+      --ink: #1a2330;
+      --muted: #5e6e80;
+      --brand: #0f5fab;
+      --brand-strong: #0a4179;
+      --chip: #e8f1fb;
+      --chip-ink: #0c4d8b;
+      --shadow: 0 12px 30px rgba(12, 35, 66, 0.1);
+      --radius: 14px;
+      --content-max: 1480px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, #f8fbff 0%, #f2f5fa 35%),
+        linear-gradient(180deg, #f8fbff 0%, #f2f5fa 45%);
+      line-height: 1.65;
+    }
+
+    .page {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: 22px 16px 40px;
+    }
+
+    .hero {
+      border-radius: 20px;
+      padding: 26px 24px;
+      color: #f4f8ff;
+      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-strong) 100%);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 31px;
+      letter-spacing: -0.4px;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 1050px;
+      color: #d9e9fb;
+    }
+
+    .meta {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 12px;
+      font-weight: 700;
+      color: #edf5ff;
+    }
+
+    .layout {
+      margin-top: 16px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 280px minmax(0, 1fr);
+      align-items: start;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 10px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      max-height: calc(100vh - 22px);
+      overflow: auto;
+    }
+
+    .sidebar h2 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      color: #1f3956;
+    }
+
+    .sidebar p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toc-list a {
+      display: block;
+      text-decoration: none;
+      color: #27415d;
+      border-radius: 8px;
+      padding: 6px 8px;
+      margin-bottom: 3px;
+      font-size: 13px;
+      transition: background 0.2s ease;
+    }
+
+    .toc-list a:hover {
+      background: #edf4fc;
+    }
+
+    .toc-list a.lvl-h1 { font-weight: 700; }
+    .toc-list a.lvl-h2 { padding-left: 12px; }
+    .toc-list a.lvl-h3 { padding-left: 20px; color: #45617d; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .tab-btn {
+      border: 1px solid #c8d4e2;
+      border-radius: 999px;
+      padding: 7px 13px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #284968;
+      background: #fff;
+      cursor: pointer;
+    }
+
+    .tab-btn.active {
+      background: var(--chip);
+      border-color: #a9c6e6;
+      color: var(--chip-ink);
+    }
+
+    .tab-links {
+      margin-left: auto;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tab-links a {
+      text-decoration: none;
+      border: 1px solid #d0dce9;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      color: #3b5977;
+      background: #fdfefe;
+    }
+
+    .doc-panel {
+      display: none;
+    }
+
+    .doc-panel.active {
+      display: block;
+    }
+
+    .article {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px 20px 22px;
+      min-width: 0;
+    }
+
+    .article h1 {
+      font-size: 29px;
+      margin: 2px 0 14px;
+      letter-spacing: -0.35px;
+      color: #163657;
+      border-bottom: 1px solid #dbe6f1;
+      padding-bottom: 11px;
+    }
+
+    .article h2 {
+      font-size: 24px;
+      margin: 24px 0 10px;
+      letter-spacing: -0.2px;
+      color: #1a3f66;
+    }
+
+    .article h3 {
+      font-size: 19px;
+      margin: 18px 0 8px;
+      color: #244b72;
+    }
+
+    .article h4, .article h5, .article h6 {
+      margin: 16px 0 7px;
+      color: #2f557c;
+    }
+
+    .article p {
+      margin: 0 0 12px;
+    }
+
+    .article ul, .article ol {
+      margin: 0 0 12px 22px;
+      padding: 0;
+    }
+
+    .article li {
+      margin: 2px 0;
+    }
+
+    .article blockquote {
+      margin: 12px 0;
+      border-left: 4px solid #8cb0d7;
+      background: #f7faff;
+      padding: 10px 12px;
+      color: #37506b;
+      border-radius: 6px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 12px 0;
+      border: 1px solid #dbe5f0;
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .article table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      min-width: 640px;
+      margin: 0;
+    }
+
+    .article th, .article td {
+      border: 1px solid #dbe5f0;
+      text-align: left;
+      padding: 9px 10px;
+      vertical-align: top;
+    }
+
+    .article th {
+      background: #edf4fc;
+      color: #22435f;
+      font-weight: 700;
+    }
+
+    .article code {
+      font-family: Consolas, "Courier New", monospace;
+      background: #f1f5fa;
+      border: 1px solid #dce6f1;
+      border-radius: 6px;
+      padding: 1px 5px;
+      font-size: 0.92em;
+    }
+
+    .article pre {
+      margin: 12px 0;
+      overflow-x: auto;
+      background: #16293f;
+      color: #ecf3fb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      border: 1px solid #294764;
+    }
+
+    .article pre code {
+      background: transparent;
+      border: none;
+      color: inherit;
+      padding: 0;
+      font-size: 0.88em;
+    }
+
+    .article a {
+      color: var(--brand);
+      text-decoration: none;
+    }
+
+    .article a:hover {
+      text-decoration: underline;
+    }
+
+    .footer {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 2px;
+    }
+
+    @media (max-width: 1080px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        max-height: none;
+      }
+
+      .tab-links {
+        margin-left: 0;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .hero h1 {
+        font-size: 24px;
+      }
+
+      .article {
+        padding: 14px 14px 16px;
+      }
+
+      .article h1 {
+        font-size: 23px;
+      }
+
+      .article h2 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1>Stock-AI Portfolio Full Document</h1>
+      <p>
+        요약판이 아닌 원문 전체를 HTML로 렌더링한 뷰입니다. 기술 문서와 포지션별 문서를 한 화면에서 전환하며 읽을 수 있고,
+        좌측 목차를 통해 섹션 단위로 빠르게 이동할 수 있습니다.
+      </p>
+      <div class="meta">
+        <span class="chip">Generated: 2026-02-26 04:17:31</span>
+        <span class="chip">기술문서 + 포지션문서 전체본</span>
+        <span class="chip">Markdown to HTML (PowerShell)</span>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <h2 id="tocTitle">기술문서 목차</h2>
+        <p>좌측 목차는 현재 선택된 문서의 헤더 구조를 반영합니다.</p>
+        <nav class="toc-list" id="tocList"></nav>
+      </aside>
+
+      <section>
+        <div class="tabs">
+          <button type="button" class="tab-btn active" data-target="dossier">기술문서 전체</button>
+          <button type="button" class="tab-btn" data-target="roles">포지션 문서 전체</button>
+          <div class="tab-links">
+            <a href="./PORTFOLIO_TECHNICAL_DOSSIER.md">원문 MD: 기술문서</a>
+            <a href="./PORTFOLIO_ROLE_HIGHLIGHTS.md">원문 MD: 포지션 문서</a>
+            <a href="./PORTFOLIO_READABLE.html">요약 HTML</a>
+          </div>
+        </div>
+
+        <article id="panel-dossier" class="article doc-panel active">
+<h1 id="stock-ai">Stock-AI 포트폴리오/면접용 기술 문서</h1>
+<p>기준일: 2026-02-25<br />
+기준 코드 스냅샷: <code>C:\Users\Sw103\Desktop\stock-ai</code> 워크스페이스</p>
+<p>가독성 요약 뷰(HTML): <code>docs/PORTFOLIO_READABLE.html</code>
+원문 전체 뷰(HTML): <code>docs/PORTFOLIO_FULL.html</code></p>
+<h2 id="section">1. 문서 목적과 사용 방법</h2>
+<p>이 문서는 Stock-AI 프로젝트를 포트폴리오 제출, 이력서 기술, 면접 설명에 바로 활용할 수 있도록 정리한 기술 도큐먼트다.</p>
+<p>이 문서의 목표는 다음 3가지다.</p>
+<ol>
+<li>프로젝트의 실제 구현 구조를 한 번에 설명한다.</li>
+<li>기술 선택 이유(왜 이 스택을 썼는지)를 근거와 함께 제시한다.</li>
+<li>면접에서 예상 질문에 대해 설계 의도와 트레이드오프를 설명할 수 있게 준비한다.</li>
+</ol>
+<p>주의 사항:</p>
+<ol>
+<li>본 문서는 기존 <code>docs/*</code> 문서 중 일부의 과거/계획성 서술이 아닌, 실제 코드/설정 파일 기준으로 재정리했다.</li>
+<li>성능 수치 중 코드에서 직접 확인 가능한 값(예: TTL, 타임아웃, 레이트리밋)과 실측이 필요한 값(예: p95 latency)은 구분했다.</li>
+</ol>
+<hr />
+<h2 id="section-1">2. 프로젝트 한 줄 요약</h2>
+<p>Stock-AI는 <strong>개인 투자자의 분석 의사결정을 지원하는 AI 기반 풀스택 투자 분석 플랫폼</strong>으로,<br />
+<code>React SPA + Spring Boot API + FastAPI AI 엔진 + MySQL/Redis + Nginx/Prometheus/Grafana</code>로 구성된다.</p>
+<p>핵심 가치:</p>
+<ol>
+<li>분석 자동화: 기술적/기본적/뉴스/리스크를 통합 분석.</li>
+<li>실행 보조: 백테스트, 모의투자, 포트폴리오 리밸런싱/리스크 대시보드 제공.</li>
+<li>운영 안정성: 캐시, 토큰 하드닝, 레이트리밋, 헬스체크, 관측성(메트릭/Request ID) 포함.</li>
+</ol>
+<hr />
+<h2 id="section-2">3. 시스템 아키텍처</h2>
+<h3 id="section-3">3.1 전체 구조</h3>
+<pre><code class="language-text">[React Frontend]
+  - UI/UX, React Query 캐시, 인증 토큰 보유
+  - WS(/ws/quotes), REST(/api/*)
+          |
+          v
+[Nginx Reverse Proxy]
+  - /api/* -&gt; Backend
+  - /ws/quotes -&gt; Backend WS
+  - rate limit, SSE/WS proxy, actuator 제한
+          |
+          v
+[Spring Boot Backend]
+  - 인증/인가, 도메인 로직, DB 저장, 캐시, 오케스트레이션
+  - AI 서비스 호출(WebClient), SSE 스트리밍, WS 릴레이
+          |
+          v
+[FastAPI AI Service]
+  - 시장 데이터 수집(yfinance/FDR/Alpha/Finnhub)
+  - 인사이트/리포트/백테스트/몬테카를로/리스크 계산
+  - LLM(Ollama/OpenAI) + RAG
+</code></pre>
+<p>보조 인프라:</p>
+<ol>
+<li>MySQL: 영속 데이터 저장(Flyway 마이그레이션).</li>
+<li>Redis: 캐시 및 일부 인증 플로우 상태.</li>
+<li>Prometheus/Grafana: 메트릭 수집/시각화.</li>
+<li>Sentry(옵션): FE/BE/AI 오류 수집.</li>
+</ol>
+<h3 id="section-4">3.2 서비스 책임 분리</h3>
+<table>
+<thead>
+<tr>
+<th>계층</th>
+<th>책임</th>
+<th>대표 구현 파일</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Frontend</td>
+<td>화면, 사용자 상호작용, 클라이언트 캐싱, 토큰 동기화</td>
+<td><code>frontend/src/App.js</code>, <code>frontend/src/api/http.js</code>, <code>frontend/src/hooks/queries/*</code></td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>보안, 도메인 규칙, 저장/조회, 외부(AI) 오케스트레이션</td>
+<td><code>backend/src/main/java/com/sw103302/backend/controller/*</code>, <code>service/*</code></td>
+</tr>
+<tr>
+<td>AI Service</td>
+<td>데이터 수집, 수치 계산, LLM 리포트, 실시간 시세 소스</td>
+<td><code>ai/routes/*</code>, <code>ai/data_sources/*</code>, <code>ai/analysis/*</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="section-5">3.3 코드 규모/구성 지표(정적 집계)</h3>
+<p>집계 기준: 현재 워크스페이스 파일 카운트 스크립트</p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>수치</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backend Controller 파일 수</td>
+<td>21</td>
+</tr>
+<tr>
+<td>Backend Service 파일 수</td>
+<td>24</td>
+</tr>
+<tr>
+<td>Backend Repository 파일 수</td>
+<td>22</td>
+</tr>
+<tr>
+<td>AI Route 파일 수</td>
+<td>17</td>
+</tr>
+<tr>
+<td>Frontend Page 파일 수</td>
+<td>21</td>
+</tr>
+<tr>
+<td>DB 마이그레이션 수</td>
+<td>20 (<code>V1</code>~<code>V20</code>)</td>
+</tr>
+<tr>
+<td>Backend 엔드포인트 매핑 수</td>
+<td>74 (<code>@*Mapping</code>)</td>
+</tr>
+<tr>
+<td>AI 엔드포인트/WS 매핑 수</td>
+<td>34 (<code>@router.*</code>)</td>
+</tr>
+<tr>
+<td>Frontend Route 수</td>
+<td>22</td>
+</tr>
+<tr>
+<td>테스트 파일 수</td>
+<td>Backend 16, Frontend 2, AI 2</td>
+</tr>
+</tbody>
+</table>
+<p>대략적인 코드 라인 수(주요 영역):</p>
+<ol>
+<li>Backend main 코드: 11,038 lines</li>
+<li>Frontend src 코드: 25,331 lines</li>
+<li>AI Python 코드: 5,110 lines</li>
+</ol>
+<hr />
+<h2 id="section-6">4. 기술 스택과 채택 이유</h2>
+<h3 id="frontend">4.1 Frontend</h3>
+<table>
+<thead>
+<tr>
+<th>기술</th>
+<th>버전</th>
+<th>채택 이유</th>
+<th>트레이드오프</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>React</td>
+<td>19.2.3</td>
+<td>컴포넌트 기반 UI, 생태계 안정성, 장기 유지보수 용이</td>
+<td>CRA 기반 번들 최적화 한계</td>
+</tr>
+<tr>
+<td>React Router</td>
+<td>7.11.0</td>
+<td>페이지 라우팅/보호 라우트 단순화</td>
+<td>고급 데이터 라우팅 미사용</td>
+</tr>
+<tr>
+<td>TanStack Query</td>
+<td>5.90.20</td>
+<td>서버 상태 캐싱/재시도/무효화 표준화</td>
+<td>캐시 정책 학습 필요</td>
+</tr>
+<tr>
+<td>Recharts</td>
+<td>3.7.0</td>
+<td>리스크 대시보드/사용량 시각화 빠른 구현</td>
+<td>대용량 데이터 렌더 최적화 과제</td>
+</tr>
+<tr>
+<td>i18next/react-i18next</td>
+<td>25.x / 16.x</td>
+<td>한국어/영어 전환 대응</td>
+<td>번역 키 관리 부담</td>
+</tr>
+<tr>
+<td>Sentry FE SDK</td>
+<td>8.x</td>
+<td>운영 중 프론트 오류 추적</td>
+<td>샘플링/PII 정책 운영 필요</td>
+</tr>
+</tbody>
+</table>
+<p>핵심 패턴:</p>
+<ol>
+<li><code>QueryClient</code>에서 도메인별 <code>staleTime</code>을 분리(<code>QUOTE</code> 30초, <code>FUNDAMENTALS</code> 6시간 등).</li>
+<li>API 공통 모듈(<code>api/http.js</code>)에서 401 시 refresh 큐잉 재시도 로직 제공.</li>
+<li><code>App.js</code>에서 페이지 lazy loading + <code>ProtectedRoute</code>로 인증 분기.</li>
+</ol>
+<h3 id="backend">4.2 Backend</h3>
+<table>
+<thead>
+<tr>
+<th>기술</th>
+<th>버전</th>
+<th>채택 이유</th>
+<th>트레이드오프</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Spring Boot</td>
+<td>4.0.0</td>
+<td>엔터프라이즈급 안정성, 보안/데이터/운영 생태계</td>
+<td>설정/구조가 비교적 무겁다</td>
+</tr>
+<tr>
+<td>Java</td>
+<td>21</td>
+<td>LTS, 생산성/성능 균형, 타입 안정성</td>
+<td>러닝커브가 Python/JS 대비 높음</td>
+</tr>
+<tr>
+<td>Spring Security + JWT</td>
+<td>-</td>
+<td>무상태 인증, API 서버 수평 확장 친화적</td>
+<td>토큰 폐기/회전 정책 설계 필요</td>
+</tr>
+<tr>
+<td>JPA + MySQL</td>
+<td>MySQL 8.4</td>
+<td>관계형 모델 강점, 트랜잭션 안정성</td>
+<td>복잡 쿼리 시 튜닝 필요</td>
+</tr>
+<tr>
+<td>Flyway</td>
+<td>-</td>
+<td>스키마 변경 이력화/재현성 확보</td>
+<td>마이그레이션 품질관리 필요</td>
+</tr>
+<tr>
+<td>Redis Cache</td>
+<td>7.x</td>
+<td>AI 호출 비용/지연 완화</td>
+<td>캐시 일관성 정책 필요</td>
+</tr>
+<tr>
+<td>Spring WebFlux WebClient</td>
+<td>-</td>
+<td>AI 서비스 호출 비동기/타임아웃 제어</td>
+<td>장애 처리 시 정책 복잡도 증가</td>
+</tr>
+<tr>
+<td>Resilience4j</td>
+<td>2.2.0 BOM</td>
+<td>재시도/서킷브레이커 패턴 도입</td>
+<td>과도 재시도시 부하 확대 가능</td>
+</tr>
+<tr>
+<td>Micrometer + Prometheus</td>
+<td>-</td>
+<td>운영 지표 표준화</td>
+<td>지표 해석 체계 수립 필요</td>
+</tr>
+<tr>
+<td>SpringDoc OpenAPI</td>
+<td>2.8.0</td>
+<td>API 협업 문서 자동화</td>
+<td>설명 품질은 코드 리뷰 필요</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ai-service">4.3 AI Service</h3>
+<table>
+<thead>
+<tr>
+<th>기술</th>
+<th>버전</th>
+<th>채택 이유</th>
+<th>트레이드오프</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FastAPI</td>
+<td>&gt;=0.115</td>
+<td>라우팅/검증/비동기 처리 간결</td>
+<td>대규모 구조화 시 레이어링 필요</td>
+</tr>
+<tr>
+<td>yfinance + FDR + Alpha</td>
+<td>-</td>
+<td>US/KR 시장 데이터 소스 다변화</td>
+<td>데이터 소스별 스키마 편차</td>
+</tr>
+<tr>
+<td>numpy/pandas/scipy/pandas_ta</td>
+<td>-</td>
+<td>수치 계산/시계열 분석 생산성</td>
+<td>계산식 검증 체계 필요</td>
+</tr>
+<tr>
+<td>websockets(Finnhub)</td>
+<td>&gt;=13</td>
+<td>실시간 시세 수신</td>
+<td>외부 WS 장애 대응 필요</td>
+</tr>
+<tr>
+<td>Ollama/OpenAI</td>
+<td>-</td>
+<td>로컬/클라우드 LLM 선택지 확보</td>
+<td>비용/지연/품질 편차</td>
+</tr>
+<tr>
+<td>ChromaDB + BeautifulSoup</td>
+<td>-</td>
+<td>RAG 인덱싱/검색 구현 단순화</td>
+<td>데이터 정합성/품질 관리 필요</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="section-7">5. 핵심 도메인 플로우</h2>
+<h3 id="section-8">5.1 인증/보안 플로우</h3>
+<p>구성 요소:</p>
+<ol>
+<li>로그인/회원가입: <code>AuthController</code>, <code>AuthService</code></li>
+<li>JWT 검증 필터: <code>JwtAuthenticationFilter</code></li>
+<li>인증 레이트 리밋: <code>AuthRateLimitFilter</code></li>
+<li>2FA: <code>TwoFactorService</code>(TOTP + 백업코드)</li>
+<li>리프레시 토큰 하드닝: <code>TokenHashService</code>, <code>RefreshTokenRepository</code>, <code>V20__harden_refresh_tokens.sql</code></li>
+</ol>
+<p>핵심 설계:</p>
+<ol>
+<li>Access Token(기본 15분), Refresh Token(7일) 분리.</li>
+<li>Refresh Token은 원문이 아닌 <code>token_hash(SHA-256 + optional pepper)</code> 기반 조회.</li>
+<li>Refresh 시 토큰 로테이션(새 토큰 발급 + 기존 레코드 갱신).</li>
+<li>만료 토큰 정리 스케줄러(기본 30분 주기).</li>
+<li>2FA 활성 사용자는 로그인 시 즉시 JWT 대신 <code>pendingToken</code> 발급 후 검증 완료 시 토큰 발급.</li>
+</ol>
+<p>면접 포인트:</p>
+<ol>
+<li>“왜 해시 저장인가?”: DB 유출 시 토큰 원문 재사용 리스크 감소.</li>
+<li>“왜 로테이션인가?”: 탈취된 refresh token 재사용 창구를 줄임.</li>
+</ol>
+<h3 id="section-9">5.2 분석/백테스트 플로우</h3>
+<p>분석:</p>
+<ol>
+<li>FE가 <code>/api/analysis</code> 호출.</li>
+<li>Backend <code>AnalysisService</code>가 사용자 검증 후 AI <code>/analyze</code> 호출.</li>
+<li>응답 JSON을 <code>analysis_runs</code>에 저장, 요약(action/confidence) 추출 저장.</li>
+<li>히스토리는 페이징+정렬 화이트리스트 기반 조회.</li>
+</ol>
+<p>백테스트:</p>
+<ol>
+<li>FE가 <code>/api/backtest</code> 호출.</li>
+<li>Backend <code>BacktestService</code>가 AI <code>/backtest</code> 호출.</li>
+<li>summary 메트릭(totalReturn, sharpe 등) 파싱 후 <code>backtest_runs</code> 저장.</li>
+<li>히스토리/상세 조회 제공.</li>
+</ol>
+<p>설계 이유:</p>
+<ol>
+<li>Backend가 이력 저장의 단일 진입점 역할을 수행해 감사 추적성을 유지.</li>
+<li>AI 서비스에서 계산하고 Backend에서 결과 정규화/저장함으로써 책임 분리.</li>
+</ol>
+<h3 id="sse">5.3 인사이트/리포트 캐싱 + SSE 스트리밍</h3>
+<p>구성:</p>
+<ol>
+<li><code>MarketCacheService</code>에서 <code>market_cache</code>(DB) + Redis(<code>ai_insights</code>, <code>ai_report</code>) 이중 캐시.</li>
+<li><code>InMemoryInFlightDeduplicator</code>로 동일 키 동시 요청 중복 실행 방지.</li>
+<li><code>/api/market/report/stream</code>에서 <code>open -&gt; delta -&gt; done</code> SSE 이벤트 전송.</li>
+<li>보고서는 600자 청크 전송, 최대 10분 타임아웃.</li>
+</ol>
+<p>설계 이유:</p>
+<ol>
+<li>AI 리포트 생성은 느리고 비용이 큰 연산이라 캐시+중복제거가 필수.</li>
+<li>SSE는 “생성 중 체감” UX를 개선하고, 긴 요청 타임아웃 체감 부담을 낮춤.</li>
+</ol>
+<h3 id="websocket">5.4 실시간 시세 WebSocket 릴레이</h3>
+<p>구성:</p>
+<ol>
+<li>Frontend <code>quoteWS</code>가 <code>/ws/quotes</code> 연결.</li>
+<li>Backend <code>QuoteWebSocketHandler</code>가 세션별 구독 티커 관리.</li>
+<li>Backend <code>QuoteWebSocketRelay</code>가 AI <code>/ws/quotes</code>와 단일 연결 유지.</li>
+<li>구독/해제 이벤트를 <code>QuoteSubscriptionEvent</code>로 relay에 전달.</li>
+<li>relay 재연결 시 현재 구독 스냅샷 재전송.</li>
+</ol>
+<p>설계 이유:</p>
+<ol>
+<li>외부 Finnhub 연결/키 노출을 프론트에서 제거.</li>
+<li>Backend를 실시간 게이트웨이로 두어 인증/정책/모니터링 일원화.</li>
+<li>재연결 구독 동기화로 운영 중 연결 유실 복구.</li>
+</ol>
+<h3 id="section-10">5.5 포트폴리오 확장 기능: 실적 캘린더 + 리스크 대시보드</h3>
+<p>실적 캘린더:</p>
+<ol>
+<li>Backend가 포트폴리오 보유 종목을 시장별로 그룹화.</li>
+<li>AI <code>/earnings/calendar</code> 호출 후 이벤트 병합/정렬.</li>
+<li>FE <code>/earnings</code> 페이지에서 기간 선택(30/60/90/180일) 기반 조회.</li>
+</ol>
+<p>리스크 대시보드:</p>
+<ol>
+<li>Backend가 현재 가격 배치 조회 후 보유 비중 계산.</li>
+<li>AI <code>/portfolio/risk</code>에서 변동성/Max DD/VaR/ES/베타/분산/집중도 계산.</li>
+<li>FE <code>/risk-dashboard</code>에서 KPI 카드 + 시계열(drawdown, rolling vol) 시각화.</li>
+</ol>
+<p>설계 이유:</p>
+<ol>
+<li>단순 포트폴리오 조회를 “일정 기반 이벤트 관리 + 리스크 관리”로 확장해 제품 가치 상승.</li>
+<li>계산 집약 로직은 AI 서비스로 분리해 확장성과 실험 속도 확보.</li>
+</ol>
+<h3 id="paper-trading">5.6 모의투자(Paper Trading)</h3>
+<p>핵심 동작:</p>
+<ol>
+<li>US/KR 계좌 자동 생성(초기잔고 상이).</li>
+<li>시장가 BUY/SELL 주문, 수수료 0.1% 반영.</li>
+<li>포지션 평균단가/평가손익/주문이력 계산 및 조회.</li>
+</ol>
+<p>의미:</p>
+<ol>
+<li>분석 결과를 실제 자금 리스크 없이 “행동 시뮬레이션”으로 연결하는 브리지 기능.</li>
+</ol>
+<h3 id="section-11">5.7 챗봇 컨텍스트 주입</h3>
+<p>핵심 동작:</p>
+<ol>
+<li>대화/메시지를 DB에 저장(<code>chat_conversations</code>, <code>chat_messages</code>).</li>
+<li>최근 이력(최대 30 메시지)을 AI에 전달.</li>
+<li>사용자 포트폴리오/관심종목 컨텍스트를 프롬프트에 주입.</li>
+</ol>
+<p>설계 이유:</p>
+<ol>
+<li>일반 챗봇이 아닌 “사용자 맞춤형 투자 어시스턴트”로 전환.</li>
+<li>대화 히스토리와 포트폴리오 문맥을 결합해 답변 관련성 향상.</li>
+</ol>
+<hr />
+<h2 id="section-12">6. 데이터 모델과 마이그레이션 전략</h2>
+<h3 id="section-13">6.1 핵심 엔티티(22개)</h3>
+<p>주요 도메인 묶음:</p>
+<ol>
+<li>인증/보안: <code>User</code>, <code>RefreshToken</code>, <code>UserSettings</code>, <code>TotpSecret</code>, <code>BackupCode</code></li>
+<li>분석/기록: <code>AnalysisRun</code>, <code>BacktestRun</code>, <code>ApiUsageLog</code>, <code>MarketCache</code>, <code>MarketReportHistory</code></li>
+<li>투자/운용: <code>Portfolio</code>, <code>PortfolioPosition</code>, <code>Dividend</code>, <code>PriceAlert</code></li>
+<li>상호작용: <code>WatchlistItem</code>, <code>WatchlistTag</code>, <code>ChatConversation</code>, <code>ChatMessage</code></li>
+<li>모의투자: <code>PaperAccount</code>, <code>PaperPosition</code>, <code>PaperOrder</code></li>
+<li>기타: <code>ScreenerPreset</code></li>
+</ol>
+<h3 id="v1v20">6.2 마이그레이션(<code>V1</code>~<code>V20</code>)</h3>
+<p>진화 포인트:</p>
+<ol>
+<li>초기 사용자/분석/백테스트 테이블에서 시작.</li>
+<li>캐시/사용량/워치리스트/포트폴리오/2FA/챗봇/모의투자 등으로 도메인 확장.</li>
+<li><code>V20</code>에서 refresh token 하드닝(<code>token_hash</code> 추가, unique index).</li>
+</ol>
+<p>설계 이유:</p>
+<ol>
+<li>Flyway 버전 고정으로 배포 간 스키마 재현성 확보.</li>
+<li>기능 추가를 마이그레이션 이력으로 남겨 도메인 성장 경로를 증명 가능.</li>
+</ol>
+<p>면접 포인트:</p>
+<ol>
+<li>“DB 스키마 변경을 어떻게 안전하게 운영했는가?”에 대해 Flyway 기반 답변 가능.</li>
+</ol>
+<hr />
+<h2 id="section-14">7. 성능, 안정성, 관측성</h2>
+<h3 id="section-15">7.1 성능 최적화</h3>
+<p>확인 가능한 설정값:</p>
+<ol>
+<li>Redis 캐시 TTL:
+<ul>
+<li><code>ai_quote</code> 30초</li>
+<li><code>ai_prices</code> 5분</li>
+<li><code>ai_fundamentals</code> 6시간</li>
+<li><code>ai_news</code> 10분</li>
+<li><code>ai_insights</code> 10분</li>
+<li><code>ai_report</code> 30분</li>
+</ul>
+</li>
+<li>In-flight dedup로 동일 키 동시 실행 1회로 수렴.</li>
+<li>AI WebClient connection pool:
+<ul>
+<li>maxConnections 100</li>
+<li>pendingAcquireMaxCount 500</li>
+</ul>
+</li>
+<li>FE Query staleTime 분리로 도메인별 재요청 빈도 제어.</li>
+</ol>
+<h3 id="section-16">7.2 안정성/복원력</h3>
+<p>확인 가능한 설정값:</p>
+<ol>
+<li>AI 호출 타임아웃:
+<ul>
+<li>일반 30초</li>
+<li>리포트 180초</li>
+</ul>
+</li>
+<li>AI 호출 재시도:
+<ul>
+<li>일반 기본 2회(백오프)</li>
+<li>리포트 기본 0회</li>
+</ul>
+</li>
+<li>WS 재연결:
+<ul>
+<li>Backend relay: 5초 후 재시도</li>
+<li>Frontend client: 1초 시작, 최대 30초 지수 백오프</li>
+</ul>
+</li>
+<li>Graceful shutdown:
+<ul>
+<li>서버 종료 시 SSE emitter 일괄 종료</li>
+</ul>
+</li>
+</ol>
+<h3 id="section-17">7.3 관측성</h3>
+<p>구현 요소:</p>
+<ol>
+<li><code>X-Request-Id</code> 전파:
+<ul>
+<li>Frontend/Backend/AI 응답 헤더 노출</li>
+<li>Backend WebClient가 AI 호출 시 request-id 전달</li>
+</ul>
+</li>
+<li>메트릭:
+<ul>
+<li><code>ai_client_latency</code>, <code>ai_client_requests_total</code></li>
+<li><code>/actuator/prometheus</code> 제공</li>
+</ul>
+</li>
+<li>사용량 로그:
+<ul>
+<li>endpoint, cached 여부, 상태코드, duration, error_text 저장</li>
+</ul>
+</li>
+<li>운영 스택:
+<ul>
+<li>Prometheus scrape + Grafana datasource provisioning</li>
+</ul>
+</li>
+<li>Sentry:
+<ul>
+<li>FE/AI/BE 선택적 활성화</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2 id="section-18">8. 보안 설계</h2>
+<p>핵심 정책:</p>
+<ol>
+<li>보안 필터체인 분리:
+<ul>
+<li>Actuator 체인과 App 체인 분리, actuator 허용 엔드포인트 최소화</li>
+</ul>
+</li>
+<li>인증 엔드포인트 레이트리밋:
+<ul>
+<li>애플리케이션 필터: IP당 60초 10회 제한</li>
+<li>Nginx: <code>/api/auth/</code> 5 req/min</li>
+</ul>
+</li>
+<li>JWT 비밀키 길이 강제:
+<ul>
+<li>32바이트 미만 시 앱 기동 실패</li>
+</ul>
+</li>
+<li>Refresh token 하드닝:
+<ul>
+<li>해시 저장 + rotation + cleanup scheduler</li>
+</ul>
+</li>
+<li>전역 예외 포맷 통일:
+<ul>
+<li><code>ApiErrorResponse</code>, <code>X-Error-Code</code> 헤더</li>
+</ul>
+</li>
+<li>정렬 필드 화이트리스트:
+<ul>
+<li>분석/백테스트 히스토리 정렬 파라미터 검증</li>
+</ul>
+</li>
+</ol>
+<p>면접 포인트:</p>
+<ol>
+<li>인증 강화를 “기능 완성”이 아니라 “운영 보안”으로 연결해 설명 가능.</li>
+<li>레이트리밋을 Nginx+애플리케이션 이중 방어로 설계한 이유를 설명 가능.</li>
+</ol>
+<hr />
+<h2 id="devops">9. DevOps/운영 구조</h2>
+<h3 id="docker-compose">9.1 Docker Compose 서비스 구성</h3>
+<ol>
+<li><code>mysql</code></li>
+<li><code>redis</code></li>
+<li><code>ai</code></li>
+<li><code>backend</code></li>
+<li><code>frontend</code></li>
+<li><code>nginx</code></li>
+<li><code>prometheus</code></li>
+<li><code>grafana</code></li>
+</ol>
+<p>운영 의도:</p>
+<ol>
+<li>로컬/스테이징에서 전체 스택 재현이 쉬움.</li>
+<li>헬스체크를 서비스별로 선언해 의존 순서 명확화.</li>
+</ol>
+<h3 id="nginx">9.2 Nginx 운영 포인트</h3>
+<ol>
+<li><code>/api/auth/</code>와 <code>/api/</code>를 분리해 rate-limit 정책 차등 적용.</li>
+<li><code>/ws/quotes</code> 업그레이드 헤더 처리로 WS 안정 연결.</li>
+<li><code>/api/</code>에서 SSE 대응(proxy_buffering off).</li>
+<li><code>/actuator/</code>는 도커 네트워크 대역만 허용.</li>
+</ol>
+<hr />
+<h2 id="section-19">10. 테스트/품질 보증</h2>
+<h3 id="section-20">10.1 자동화 테스트 구성</h3>
+<p>Backend:</p>
+<ol>
+<li>서비스/플로우/컴포넌트/유효성/예외계약 테스트 포함(16개 클래스).</li>
+<li>예: <code>AuthServiceTest</code>, <code>TokenHashServiceTest</code>, <code>GlobalExceptionHandlerContractTest</code>.</li>
+</ol>
+<p>Frontend:</p>
+<ol>
+<li>기본 앱 테스트 + WS URL 해석 테스트(2개).</li>
+<li>실시간 연결 URL 결정 로직 회귀 방지.</li>
+</ol>
+<p>AI:</p>
+<ol>
+<li><code>test_earnings.py</code>, <code>test_portfolio_risk.py</code>로 신규 기능 최소 단위 검증.</li>
+</ol>
+<h3 id="ci.githubworkflowsci.yml">10.2 CI 파이프라인(<code>.github/workflows/ci.yml</code>)</h3>
+<ol>
+<li>Frontend: <code>npm ci</code> -&gt; test -&gt; build</li>
+<li>Backend: Gradle build/test(Java 21)</li>
+<li>AI: syntax check -&gt; ruff -&gt; pytest</li>
+</ol>
+<p>의미:</p>
+<ol>
+<li>멀티서비스 스택을 단일 CI로 검증해 회귀 리스크를 줄임.</li>
+</ol>
+<hr />
+<h2 id="section-21">11. 포트폴리오용 성과 정리(이력서/자기소개서 문장)</h2>
+<p>아래 문구는 코드 근거가 있는 내용만 선별해 작성했다.</p>
+<h3 id="bullet">11.1 이력서 Bullet 샘플 (국문)</h3>
+<ol>
+<li>React 19 + Spring Boot 4 + FastAPI 기반 3계층 투자 분석 플랫폼을 설계/구현하고, 20개 Flyway 마이그레이션으로 도메인 확장을 관리했습니다.</li>
+<li>AI 분석/리포트 경로에 Redis TTL 캐시와 in-flight dedup을 적용해 외부 API 호출 중복을 구조적으로 억제했습니다.</li>
+<li>Refresh Token 해시 저장(SHA-256+pepper), 토큰 로테이션, 만료 토큰 스케줄 정리를 구현해 인증 보안을 강화했습니다.</li>
+<li>WebSocket 릴레이(Frontend-Backend-AI) 구조로 실시간 시세 구독을 중앙화하고 재연결 시 구독 자동 복구를 구현했습니다.</li>
+<li>실적 캘린더/리스크 대시보드를 추가해 포트폴리오 기능을 이벤트 관리와 리스크 관리 영역으로 확장했습니다.</li>
+<li>Prometheus/Grafana 및 Request-ID 기반 추적을 도입해 장애 분석과 운영 관측성을 개선했습니다.</li>
+</ol>
+<h3 id="resume-bullet">11.2 Resume Bullet 샘플 (영문)</h3>
+<ol>
+<li>Built a production-oriented 3-service stock analytics platform using React 19, Spring Boot 4, and FastAPI, with 20 Flyway migrations for schema evolution.</li>
+<li>Implemented multi-layer caching and in-flight request deduplication to reduce redundant AI calls and stabilize latency under repeated requests.</li>
+<li>Hardened auth with hashed refresh tokens, token rotation, and scheduled cleanup, improving credential security posture.</li>
+<li>Designed a WebSocket relay architecture (Frontend -&gt; Backend -&gt; AI) with subscription synchronization on reconnect.</li>
+<li>Delivered new portfolio features including an earnings calendar and a risk dashboard with volatility/drawdown/VaR metrics and time-series charts.</li>
+</ol>
+<h3 id="section-22">11.3 정량 근거(코드에서 확인 가능한 값)</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Access Token 기본 만료</td>
+<td>15분</td>
+</tr>
+<tr>
+<td>Refresh Token 유효기간</td>
+<td>7일</td>
+</tr>
+<tr>
+<td>Refresh token cleanup cron</td>
+<td>기본 30분 주기</td>
+</tr>
+<tr>
+<td>인증 레이트리밋(앱)</td>
+<td>60초당 10회/IP</td>
+</tr>
+<tr>
+<td>인증 레이트리밋(Nginx)</td>
+<td>5 req/min</td>
+</tr>
+<tr>
+<td>AI 일반 타임아웃</td>
+<td>30초</td>
+</tr>
+<tr>
+<td>AI 리포트 타임아웃</td>
+<td>180초</td>
+</tr>
+<tr>
+<td>SSE 타임아웃</td>
+<td>10분</td>
+</tr>
+<tr>
+<td>WS 프론트 재연결</td>
+<td>1초~30초 지수 백오프</td>
+</tr>
+<tr>
+<td>캐시 TTL(quote/prices/fundamentals)</td>
+<td>30초/5분/6시간</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="section-23">12. 면접 대응 가이드</h2>
+<h3 id="section-24">12.1 “왜 이 구조를 선택했나?” 답변 템플릿</h3>
+<ol>
+<li>Backend와 AI를 분리해 도메인 책임(보안/저장 vs 계산/ML)을 분명히 했고, 각 레이어의 변경 속도를 분리했다.</li>
+<li>AI 호출은 지연/실패 가능성이 높아 timeout/retry/cache/dedup를 조합해 시스템 전체 안정성을 우선시했다.</li>
+<li>인증은 단순 JWT 발급에서 끝내지 않고 refresh token 저장 방식까지 하드닝해 운영 보안을 강화했다.</li>
+</ol>
+<h3 id="section-25">12.2 예상 질문과 핵심 답변</h3>
+<ol>
+<li><p>Q: SSE와 WebSocket을 왜 둘 다 썼나요?<br />
+A: 보고서 생성은 서버 단방향 스트리밍이므로 SSE가 단순/효율적이고, 실시간 시세는 다중 구독/해제 제어가 필요해 WebSocket이 적합합니다.</p>
+</li>
+<li><p>Q: 캐시 일관성은 어떻게 보장하나요?<br />
+A: <code>refresh=true</code> 요청으로 강제 재계산 경로를 제공하고, Redis TTL + DB cache timestamp를 조합해 자동 갱신/강제 갱신을 분리했습니다.</p>
+</li>
+<li><p>Q: AI 서비스 장애 시 대응은?<br />
+A: 호출 타임아웃/재시도 정책과 캐시 fallback을 사용하고, 메트릭(<code>ai_client_requests_total</code>, latency)으로 장애를 관측합니다.</p>
+</li>
+<li><p>Q: 보안에서 가장 중요하게 본 지점은?<br />
+A: refresh token 원문 저장을 해시 저장으로 전환한 부분입니다. DB 유출 시 즉시 재사용 가능한 토큰 노출 위험을 줄였습니다.</p>
+</li>
+<li><p>Q: 왜 React Query를 도입했나요?<br />
+A: 서버 상태를 컴포넌트 로컬 상태로 관리하면 중복/재요청 제어가 어렵습니다. staleTime/invalidations로 정책을 중앙화했습니다.</p>
+</li>
+<li><p>Q: 실시간 구독 유실은 어떻게 처리하나요?<br />
+A: relay 재연결 시 현재 구독 스냅샷을 AI 소켓으로 재구독하도록 구현했습니다.</p>
+</li>
+<li><p>Q: 리스크 대시보드 계산을 AI 서비스에 둔 이유는?<br />
+A: 시계열 통계 계산은 Python 수치 생태계가 강점이고, Backend는 권한/보유종목 집계 및 API 계약 안정화에 집중했습니다.</p>
+</li>
+<li><p>Q: 기술 부채는 무엇인가요?<br />
+A: 일부 과거 문서와 실제 구현 간 불일치가 있으며, 엔드투엔드 테스트 범위 확장이 필요합니다.</p>
+</li>
+<li><p>Q: 확장 계획은?<br />
+A: 백엔드-AI 계약 테스트 강화, 시나리오 기반 E2E 도입, 모니터링 대시보드 표준화, 비동기 작업 큐 도입 순으로 계획합니다.</p>
+</li>
+</ol>
+<hr />
+<h2 id="section-26">13. 프로젝트 개선 과제(정직한 진단)</h2>
+<ol>
+<li>문서 동기화: 일부 기존 문서의 기술/버전/기능 설명이 실제 코드와 불일치.</li>
+<li>테스트 심화: FE E2E, AI 통합 테스트, 성능/부하 테스트 부재.</li>
+<li>계약 안정성: Backend-AI 응답 스키마 contract test 추가 필요.</li>
+<li>오류 처리 표준화: 일부 서비스는 예외를 RuntimeException으로 래핑해 세밀한 에러 코드 매핑이 어려움.</li>
+<li>운영 지표 확장: p95/p99 SLA 관점 대시보드/알림 룰 정교화 필요.</li>
+</ol>
+<p>이 섹션을 면접에서 선제적으로 말하면 “구현자 시각 + 운영 시각”을 동시에 보여줄 수 있다.</p>
+<hr />
+<h2 id="section-27">14. 참고 근거 파일(핵심)</h2>
+<p>아키텍처/엔트리:</p>
+<ol>
+<li><code>frontend/src/App.js</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/BackendApplication.java</code></li>
+<li><code>ai/main.py</code></li>
+<li><code>docker-compose.yml</code></li>
+<li><code>nginx/nginx.conf</code></li>
+</ol>
+<p>보안/인증:</p>
+<ol>
+<li><code>backend/src/main/java/com/sw103302/backend/config/SecurityConfig.java</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/service/AuthService.java</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/service/TokenHashService.java</code></li>
+<li><code>backend/src/main/resources/db/migration/V20__harden_refresh_tokens.sql</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/component/AuthRateLimitFilter.java</code></li>
+</ol>
+<p>실시간/SSE:</p>
+<ol>
+<li><code>frontend/src/api/ws.js</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/component/QuoteWebSocketHandler.java</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/component/QuoteWebSocketRelay.java</code></li>
+<li><code>ai/routes/realtime.py</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/controller/ReportStreamController.java</code></li>
+</ol>
+<p>신규 기능:</p>
+<ol>
+<li><code>frontend/src/pages/EarningsCalendar.js</code></li>
+<li><code>frontend/src/pages/RiskDashboard.js</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/service/EarningsCalendarService.java</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/service/RiskDashboardService.java</code></li>
+<li><code>ai/routes/earnings.py</code></li>
+<li><code>ai/routes/portfolio_risk.py</code></li>
+</ol>
+<p>테스트/CI:</p>
+<ol>
+<li><code>.github/workflows/ci.yml</code></li>
+<li><code>backend/src/test/java/...</code></li>
+<li><code>frontend/src/api/ws.test.js</code></li>
+<li><code>ai/tests/test_earnings.py</code></li>
+<li><code>ai/tests/test_portfolio_risk.py</code></li>
+</ol>
+<hr />
+<h2 id="section-28">15. 최종 요약(면접 30초 버전)</h2>
+<p>“Stock-AI는 React, Spring Boot, FastAPI를 분리한 3계층 투자 분석 플랫폼입니다.<br />
+저는 보안(토큰 해시/회전), 안정성(캐시+중복제거+재시도), 실시간성(WS 릴레이/SSE), 확장 기능(실적 캘린더/리스크 대시보드)을 중심으로 제품을 고도화했습니다.<br />
+핵심은 기능 구현을 넘어서 운영 가능한 구조로 만든 점이며, 현재는 테스트/계약/문서 동기화를 다음 단계로 보고 있습니다.”</p>
+<hr />
+<h2 id="section-29">16. 포지션별 강조 문서</h2>
+<p>백엔드/풀스택/AI 포지션별 강조 포인트는 아래 문서에 분리 정리:</p>
+<p><code>docs/PORTFOLIO_ROLE_HIGHLIGHTS.md</code></p>
+
+        </article>
+
+        <article id="panel-roles" class="article doc-panel">
+<h1 id="stock-ai">Stock-AI 포지션별 강조 포인트 재편집</h1>
+<p>기준일: 2026-02-25<br />
+원본 기술문서: <code>docs/PORTFOLIO_TECHNICAL_DOSSIER.md</code></p>
+<p>가독성 요약 뷰(HTML): <code>docs/PORTFOLIO_READABLE.html</code>
+원문 전체 뷰(HTML): <code>docs/PORTFOLIO_FULL.html</code></p>
+<h2 id="section">1. 사용 목적</h2>
+<p>이 문서는 같은 프로젝트를 지원 포지션에 맞춰 다르게 설명하기 위한 가이드다.</p>
+<ol>
+<li>백엔드 엔지니어 지원용</li>
+<li>풀스택 엔지니어 지원용</li>
+<li>AI/ML 엔지니어 지원용</li>
+</ol>
+<hr />
+<h2 id="section-1">2. 공통 코어 메시지(모든 포지션 공통)</h2>
+<p>면접 30초 기본 버전:</p>
+<p>“Stock-AI는 React, Spring Boot, FastAPI를 분리한 투자 분석 플랫폼입니다.<br />
+저는 인증 보안 강화(토큰 해시/회전), AI 호출 안정화(캐시+중복제거), 실시간 처리(WebSocket/SSE), 그리고 포트폴리오 실적 캘린더·리스크 대시보드 기능 확장을 주도했습니다.”</p>
+<hr />
+<h2 id="section-2">3. 백엔드 포지션용 재편집</h2>
+<h3 id="section-3">3.1 무엇을 가장 앞에 두고 말할지</h3>
+<ol>
+<li>보안: Refresh token hash 저장 + rotation + cleanup scheduler</li>
+<li>신뢰성: AI 호출 timeout/retry/cache/dedup</li>
+<li>실시간 게이트웨이: WS relay + 구독 동기화</li>
+<li>운영성: Request-ID, Prometheus, actuator 정책 분리</li>
+</ol>
+<h3 id="bullet">3.2 이력서 Bullet (국문)</h3>
+<ol>
+<li>Spring Boot 4 기반 API 서버에서 인증 보안을 강화하기 위해 refresh token 해시 저장(SHA-256+pepper), 토큰 로테이션, 만료 토큰 스케줄 정리를 구현했습니다.</li>
+<li>AI 연동 구간에 Redis 캐시와 in-flight dedup을 적용해 중복 계산을 억제하고 지연/실패 상황에서의 안정성을 개선했습니다.</li>
+<li>WebSocket 릴레이 아키텍처를 구현해 클라이언트 구독 상태를 중앙에서 관리하고 재연결 시 구독 자동 복구를 지원했습니다.</li>
+<li><code>X-Request-Id</code> 기반 분산 추적과 <code>ai_client_*</code> 메트릭을 도입해 운영 중 장애 분석 시간을 단축했습니다.</li>
+</ol>
+<h3 id="resume-bullet">3.3 Resume Bullet (영문)</h3>
+<ol>
+<li>Hardened JWT refresh-token flow with SHA-256 token hashing, token rotation, and scheduled cleanup.</li>
+<li>Implemented multi-layer resilience for AI integrations using Redis caching, in-flight deduplication, and timeout/retry controls.</li>
+<li>Built a WebSocket relay path with subscription synchronization and reconnect recovery.</li>
+<li>Added request correlation (<code>X-Request-Id</code>) and AI client metrics for production observability.</li>
+</ol>
+<h3 id="section-4">3.4 면접 핵심 질문/답변 포인트</h3>
+<ol>
+<li><p>Q: 토큰을 왜 해시로 저장했나요?<br />
+A: DB 유출 시 raw refresh token 재사용을 막기 위해서입니다. 조회는 deterministic hash로 수행하고, refresh 시 rotation을 적용했습니다.</p>
+</li>
+<li><p>Q: AI 서비스 장애 시 백엔드는 어떻게 보호하나요?<br />
+A: timeout/retry를 구분 설정하고, 캐시 + dedup을 결합해 외부 호출 폭증을 억제했습니다.</p>
+</li>
+<li><p>Q: 실시간 구독 유실은 어떻게 복구하나요?<br />
+A: relay 재연결 시 현재 구독 스냅샷을 재전송해 프론트 상태와 상류 소켓 상태를 동기화합니다.</p>
+</li>
+</ol>
+<h3 id="section-5">3.5 코드 근거 파일</h3>
+<ol>
+<li><code>backend/src/main/java/com/sw103302/backend/service/AuthService.java</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/service/TokenHashService.java</code></li>
+<li><code>backend/src/main/resources/db/migration/V20__harden_refresh_tokens.sql</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/service/MarketCacheService.java</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/component/QuoteWebSocketRelay.java</code></li>
+</ol>
+<hr />
+<h2 id="section-6">4. 풀스택 포지션용 재편집</h2>
+<h3 id="section-7">4.1 무엇을 가장 앞에 두고 말할지</h3>
+<ol>
+<li>사용자 흐름 완성도: 로그인 -&gt; 분석 -&gt; 리포트 -&gt; 포트폴리오 관리</li>
+<li>FE/BE 계약 설계: React Query + REST + SSE + WS</li>
+<li>기능 확장: 실적 캘린더, 리스크 대시보드(차트 포함)</li>
+<li>장애 대응 UX: 토큰 자동 갱신, 재시도, 오프라인 표시</li>
+</ol>
+<h3 id="bullet-1">4.2 이력서 Bullet (국문)</h3>
+<ol>
+<li>React 19 + Spring Boot + FastAPI 구조에서 FE/BE/AI 인터페이스를 통합 설계해 분석·백테스트·포트폴리오 워크플로를 완성했습니다.</li>
+<li>React Query 기반 서버 상태 관리로 도메인별 캐시 전략을 분리하고, 인증 만료 시 자동 refresh 재시도 플로우를 구현했습니다.</li>
+<li>SSE 리포트 스트리밍과 WebSocket 실시간 시세를 UI에 통합해 실시간 분석 경험을 구현했습니다.</li>
+<li>포트폴리오 실적 캘린더/리스크 대시보드를 추가해 제품 기능을 “조회”에서 “의사결정 보조” 단계로 확장했습니다.</li>
+</ol>
+<h3 id="resume-bullet-1">4.3 Resume Bullet (영문)</h3>
+<ol>
+<li>Delivered end-to-end product flows across React, Spring Boot, and FastAPI services.</li>
+<li>Standardized server-state handling with TanStack Query and implemented token-refresh retry logic for authenticated APIs.</li>
+<li>Integrated SSE report streaming and WebSocket quote updates into user-facing dashboards.</li>
+<li>Extended portfolio UX with an earnings calendar and a risk dashboard (volatility/drawdown/VaR charts).</li>
+</ol>
+<h3 id="section-8">4.4 면접 핵심 질문/답변 포인트</h3>
+<ol>
+<li><p>Q: React Query를 왜 썼나요?<br />
+A: 서버 상태를 중앙 정책(staleTime, invalidate)으로 통제해 중복 요청과 동기화 복잡도를 줄였습니다.</p>
+</li>
+<li><p>Q: SSE와 WS를 나눈 기준은?<br />
+A: 보고서 생성은 서버 단방향 이벤트라 SSE가 적합하고, 실시간 시세 구독/해제는 양방향 제어가 필요해 WS가 적합합니다.</p>
+</li>
+<li><p>Q: Fullstack 관점에서 가장 어려웠던 통합 이슈는?<br />
+A: 인증 만료/재발급 시 동시 요청 레이스를 큐잉 방식으로 정리한 부분과 WS URL/프록시 경로 일관화였습니다.</p>
+</li>
+</ol>
+<h3 id="section-9">4.5 코드 근거 파일</h3>
+<ol>
+<li><code>frontend/src/App.js</code></li>
+<li><code>frontend/src/api/http.js</code></li>
+<li><code>frontend/src/hooks/queries/usePortfolio.js</code></li>
+<li><code>frontend/src/pages/EarningsCalendar.js</code></li>
+<li><code>frontend/src/pages/RiskDashboard.js</code></li>
+<li><code>backend/src/main/java/com/sw103302/backend/controller/PortfolioController.java</code></li>
+</ol>
+<hr />
+<h2 id="aiml">5. AI/ML 포지션용 재편집</h2>
+<h3 id="section-10">5.1 무엇을 가장 앞에 두고 말할지</h3>
+<ol>
+<li>AI 서비스 설계: FastAPI 기반 도메인별 라우트 분리</li>
+<li>정량 분석: 리스크 지표 계산(변동성/MaxDD/VaR/ES/Beta)</li>
+<li>데이터 파이프라인: yfinance/FDR/Alpha/Finnhub 조합</li>
+<li>LLM 통합: Ollama/OpenAI fallback + RAG 컨텍스트 주입</li>
+</ol>
+<h3 id="bullet-2">5.2 이력서 Bullet (국문)</h3>
+<ol>
+<li>FastAPI 기반 분석 엔진에서 기술적/기본적/뉴스 감성 지표를 결합한 투자 인사이트 API를 설계했습니다.</li>
+<li>포트폴리오 리스크 API에서 연환산 변동성, 최대낙폭, VaR95, Expected Shortfall, 베타, 분산점수를 계산해 대시보드 데이터로 제공했습니다.</li>
+<li>실적 캘린더 API를 구현해 보유 종목 이벤트를 기간 기반으로 집계/정렬하여 포트폴리오 의사결정 정보를 제공했습니다.</li>
+<li>LLM 경로에 로컬(Ollama) 우선, OpenAI 폴백 전략과 RAG 검색 컨텍스트를 결합해 리포트 품질과 가용성을 보완했습니다.</li>
+</ol>
+<h3 id="resume-bullet-2">5.3 Resume Bullet (영문)</h3>
+<ol>
+<li>Designed FastAPI-based analytics endpoints combining technical, fundamental, and sentiment signals.</li>
+<li>Implemented portfolio risk metrics (annualized volatility, max drawdown, VaR/ES, beta, diversification) for dashboard consumption.</li>
+<li>Built an earnings-calendar pipeline for portfolio holdings with date-window filtering and event normalization.</li>
+<li>Integrated hybrid LLM routing (Ollama primary, OpenAI fallback) and RAG-based context enrichment.</li>
+</ol>
+<h3 id="section-11">5.4 면접 핵심 질문/답변 포인트</h3>
+<ol>
+<li><p>Q: 리스크 지표 계산에서 중요하게 본 점은?<br />
+A: 최소 데이터 길이 검증, NaN/Inf 안전 처리, 시장 벤치마크 정렬(alignment), 그리고 결과를 프론트 차트 소비 형태로 직렬화하는 부분입니다.</p>
+</li>
+<li><p>Q: LLM 품질/비용/가용성 균형은 어떻게 잡았나요?<br />
+A: 로컬 모델을 기본 경로로 두고 실패 시 OpenAI로 폴백해 가용성을 확보했습니다. 고비용 경로는 리포트/고부가 요청으로 제한했습니다.</p>
+</li>
+<li><p>Q: RAG를 왜 도입했나요?<br />
+A: LLM 단독 생성의 최신성/근거 약점을 보완하기 위해 ticker 기반 문서 검색 결과를 프롬프트에 결합했습니다.</p>
+</li>
+</ol>
+<h3 id="section-12">5.5 코드 근거 파일</h3>
+<ol>
+<li><code>ai/routes/intelligence.py</code></li>
+<li><code>ai/routes/portfolio_risk.py</code></li>
+<li><code>ai/routes/earnings.py</code></li>
+<li><code>ai/routes/market_data.py</code></li>
+<li><code>ai/routes/rag.py</code></li>
+<li><code>ai/rag/store.py</code></li>
+</ol>
+<hr />
+<h2 id="section-13">6. 포지션별 자기소개 템플릿 (복붙용)</h2>
+<h3 id="section-14">6.1 백엔드 지원</h3>
+<p>“저는 Spring Boot 기반 서비스에서 인증/보안, 외부 연동 안정성, 운영 관측성 개선을 중심으로 일해왔습니다.<br />
+Stock-AI에서는 refresh token 하드닝과 AI 연동 캐시/중복제거 구조를 구현해 보안성과 안정성을 동시에 개선했습니다.”</p>
+<h3 id="section-15">6.2 풀스택 지원</h3>
+<p>“저는 사용자 플로우를 끝까지 연결하는 풀스택 개발을 지향합니다.<br />
+Stock-AI에서 React Query, 인증 재시도, SSE/WS 통합, 포트폴리오 실적/리스크 기능까지 FE-BE-AI를 일관된 제품 경험으로 연결했습니다.”</p>
+<h3 id="aiml-1">6.3 AI/ML 지원</h3>
+<p>“저는 모델 자체보다 ‘제품에 들어가는 분석 API’를 설계하는 데 강점이 있습니다.<br />
+Stock-AI에서 리스크 계산 API, 실적 이벤트 API, LLM fallback과 RAG 결합 경로를 구현해 실제 사용자 의사결정에 연결했습니다.”</p>
+<hr />
+<h2 id="section-16">7. 제출 전략 (실무 팁)</h2>
+<ol>
+<li>백엔드 공고: 섹션 3만 압축 제출(보안/운영 수치 강조).</li>
+<li>풀스택 공고: 섹션 4 + 공통 코어 메시지 중심 제출.</li>
+<li>AI 공고: 섹션 5 중심으로 수치 계산/데이터 파이프라인 강조.</li>
+<li>어떤 포지션이든 “내가 바꾼 코드 파일 5개”를 마지막에 붙이면 신뢰도가 높아진다.</li>
+</ol>
+
+        </article>
+      </section>
+    </div>
+
+    <div class="footer">
+      View file: <code>docs/PORTFOLIO_FULL.html</code>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var buttons = document.querySelectorAll(".tab-btn");
+      var panels = {
+        dossier: document.getElementById("panel-dossier"),
+        roles: document.getElementById("panel-roles")
+      };
+      var tocList = document.getElementById("tocList");
+      var tocTitle = document.getElementById("tocTitle");
+
+      function ensureHeadingIds(panelKey) {
+        var panel = panels[panelKey];
+        if (!panel) return;
+        var headings = panel.querySelectorAll("h1, h2, h3");
+        headings.forEach(function (heading, index) {
+          if (!heading.id) {
+            heading.id = panelKey + "-heading-" + index;
+          } else {
+            heading.id = panelKey + "-" + heading.id;
+          }
+        });
+      }
+
+      function wrapTables(panelKey) {
+        var panel = panels[panelKey];
+        if (!panel) return;
+        panel.querySelectorAll("table").forEach(function (table) {
+          if (table.parentElement && table.parentElement.classList.contains("table-wrap")) {
+            return;
+          }
+          var wrapper = document.createElement("div");
+          wrapper.className = "table-wrap";
+          table.parentNode.insertBefore(wrapper, table);
+          wrapper.appendChild(table);
+        });
+      }
+
+      function buildToc(panelKey) {
+        var panel = panels[panelKey];
+        if (!panel) return;
+
+        tocList.innerHTML = "";
+        tocTitle.textContent = panelKey === "dossier" ? "기술문서 목차" : "포지션 문서 목차";
+
+        var headings = panel.querySelectorAll("h1, h2, h3");
+        headings.forEach(function (heading) {
+          var anchor = document.createElement("a");
+          anchor.href = "#" + heading.id;
+          anchor.textContent = heading.textContent;
+          anchor.className = "lvl-" + heading.tagName.toLowerCase();
+          tocList.appendChild(anchor);
+        });
+      }
+
+      function switchTab(target) {
+        Object.keys(panels).forEach(function (key) {
+          panels[key].classList.toggle("active", key === target);
+        });
+
+        buttons.forEach(function (button) {
+          button.classList.toggle("active", button.dataset.target === target);
+        });
+
+        buildToc(target);
+      }
+
+      ensureHeadingIds("dossier");
+      ensureHeadingIds("roles");
+      wrapTables("dossier");
+      wrapTables("roles");
+      buildToc("dossier");
+
+      buttons.forEach(function (button) {
+        button.addEventListener("click", function () {
+          switchTab(button.dataset.target);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+    }());
+  </script>
+</body>
+</html>

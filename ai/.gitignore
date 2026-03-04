@@ -1,0 +1,8 @@
+*.log
+__pycache__/
+*.pyc
+test_*.py
+uvicorn*.log
+rag_data/
+key.txt
+.env

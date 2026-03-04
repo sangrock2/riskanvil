@@ -1,0 +1,178 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-3xl);
+  color: var(--color-text);
+}
+
+.subtitle {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-secondary);
+}
+
+.controls {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.select {
+  min-width: 140px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.riskBadgeWrap {
+  margin-bottom: 14px;
+}
+
+.riskBadge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.risklow {
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.riskmedium {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.riskhigh {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.card span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.card strong {
+  font-size: var(--text-2xl);
+}
+
+.section h2 {
+  margin: 0 0 10px;
+}
+
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-3);
+}
+
+.chartCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  padding: var(--space-3);
+}
+
+.chartCard h3 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-base);
+  color: var(--color-text-secondary);
+}
+
+.chartWrap {
+  width: 100%;
+  height: 260px;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.table {
+  min-width: 700px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-text);
+}
+
+.table th {
+  background: var(--color-bg-secondary);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.loading,
+.empty,
+.error {
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.error {
+  color: var(--color-danger-dark);
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-light);
+}
+
+@media (max-width: 900px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .controls,
+  .select {
+    width: 100%;
+  }
+
+  .title {
+    font-size: var(--text-2xl);
+  }
+}

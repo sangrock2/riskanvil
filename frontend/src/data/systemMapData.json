@@ -1,0 +1,1911 @@
+{
+  "generatedAt": "2026-03-03T16:44:12.282Z",
+  "stats": {
+    "totalFiles": 572,
+    "frontendFiles": 173,
+    "backendFiles": 249,
+    "aiFiles": 92,
+    "docsFiles": 25,
+    "scriptFiles": 15
+  },
+  "files": [
+    ".claude/settings.local.json",
+    ".env.example",
+    ".github/workflows/ci.yml",
+    ".gitignore",
+    "CLAUDE.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "ai/.env",
+    "ai/.gitignore",
+    "ai/Dockerfile",
+    "ai/analysis/__init__.py",
+    "ai/analysis/scoring.py",
+    "ai/analysis/sectors.py",
+    "ai/analysis/technicals.py",
+    "ai/cache.py",
+    "ai/config.py",
+    "ai/data_sources/__init__.py",
+    "ai/data_sources/alpha_client.py",
+    "ai/data_sources/fdr_client.py",
+    "ai/data_sources/finnhub_ws.py",
+    "ai/data_sources/yfinance_client.py",
+    "ai/key.txt",
+    "ai/llm/__init__.py",
+    "ai/llm/ollama_client.py",
+    "ai/llm/openai_client.py",
+    "ai/main.py",
+    "ai/rag/__init__.py",
+    "ai/rag/crawler.py",
+    "ai/rag/store.py",
+    "ai/request_id.py",
+    "ai/requirements.txt",
+    "ai/routes/__init__.py",
+    "ai/routes/backtest.py",
+    "ai/routes/chatbot.py",
+    "ai/routes/correlation.py",
+    "ai/routes/dividend.py",
+    "ai/routes/earnings.py",
+    "ai/routes/etf.py",
+    "ai/routes/intelligence.py",
+    "ai/routes/market_data.py",
+    "ai/routes/monte_carlo.py",
+    "ai/routes/portfolio_optimize.py",
+    "ai/routes/portfolio_risk.py",
+    "ai/routes/prices.py",
+    "ai/routes/rag.py",
+    "ai/routes/realtime.py",
+    "ai/routes/screener.py",
+    "ai/routes/similarity.py",
+    "ai/test_endpoints.py",
+    "ai/test_yfinance.py",
+    "ai/testdata/alpha__GLOBAL_QUOTE__AAPL.txt",
+    "ai/testdata/alpha__GLOBAL_QUOTE__AGQ.txt",
+    "ai/testdata/alpha__GLOBAL_QUOTE__DIA.txt",
+    "ai/testdata/alpha__GLOBAL_QUOTE__META.txt",
+    "ai/testdata/alpha__GLOBAL_QUOTE__MSFT.txt",
+    "ai/testdata/alpha__GLOBAL_QUOTE__NVDA.txt",
+    "ai/testdata/alpha__GLOBAL_QUOTE__QQQ.txt",
+    "ai/testdata/alpha__GLOBAL_QUOTE__SPY.txt",
+    "ai/testdata/alpha__GLOBAL_QUOTE__TSLA.txt",
+    "ai/testdata/alpha__INCOME_STATEMENT__AAPL.txt",
+    "ai/testdata/alpha__INCOME_STATEMENT__AGQ.txt",
+    "ai/testdata/alpha__INCOME_STATEMENT__META.txt",
+    "ai/testdata/alpha__INCOME_STATEMENT__MSFT.txt",
+    "ai/testdata/alpha__INCOME_STATEMENT__NVDA.txt",
+    "ai/testdata/alpha__INCOME_STATEMENT__TSLA.txt",
+    "ai/testdata/alpha__NEWS_SENTIMENT__AAPL.txt",
+    "ai/testdata/alpha__NEWS_SENTIMENT__AGQ.txt",
+    "ai/testdata/alpha__NEWS_SENTIMENT__META.txt",
+    "ai/testdata/alpha__NEWS_SENTIMENT__MSFT.txt",
+    "ai/testdata/alpha__NEWS_SENTIMENT__NVDA.txt",
+    "ai/testdata/alpha__NEWS_SENTIMENT__QQQ.txt",
+    "ai/testdata/alpha__NEWS_SENTIMENT__TSLA.txt",
+    "ai/testdata/alpha__OBV__TSLA.txt",
+    "ai/testdata/alpha__OVERVIEW__AAPL.txt",
+    "ai/testdata/alpha__OVERVIEW__AGQ.txt",
+    "ai/testdata/alpha__OVERVIEW__META.txt",
+    "ai/testdata/alpha__OVERVIEW__MSFT.txt",
+    "ai/testdata/alpha__OVERVIEW__NVDA.txt",
+    "ai/testdata/alpha__OVERVIEW__TSLA.txt",
+    "ai/testdata/alpha__TIME_SERIES_DAILY__AAPL.txt",
+    "ai/testdata/alpha__TIME_SERIES_DAILY__AGQ.txt",
+    "ai/testdata/alpha__TIME_SERIES_DAILY__META.txt",
+    "ai/testdata/alpha__TIME_SERIES_DAILY__MSFT.txt",
+    "ai/testdata/alpha__TIME_SERIES_DAILY__NVDA.txt",
+    "ai/testdata/alpha__TIME_SERIES_DAILY__SPY.txt",
+    "ai/testdata/alpha__TIME_SERIES_DAILY__TSLA.txt",
+    "ai/testdata/alpha__TREASURY_YIELD__na.txt",
+    "ai/testdata/report_AAPL_US.txt",
+    "ai/testdata/report_TSLA_US.txt",
+    "ai/tests/test_earnings.py",
+    "ai/tests/test_portfolio_risk.py",
+    "ai/tests/test_prices_single_endpoint.py",
+    "ai/uvicorn.log",
+    "ai/uvicorn_clean.log",
+    "ai/uvicorn_debug.log",
+    "ai/uvicorn_final.log",
+    "ai/uvicorn_new.log",
+    "ai/uvicorn_v2.log",
+    "ai/uvicorn_v3.log",
+    "artifacts/reports/.gitkeep",
+    "artifacts/screenshots/.gitkeep",
+    "backend/.gitattributes",
+    "backend/.gitignore",
+    "backend/.gradle-local/wrapper/dists/gradle-9.2.1-bin/2t0n5ozlw9xmuyvbp7dnzaxug/gradle-9.2.1-bin.zip.lck",
+    "backend/.gradle-local/wrapper/dists/gradle-9.2.1-bin/2t0n5ozlw9xmuyvbp7dnzaxug/gradle-9.2.1-bin.zip.part",
+    "backend/Dockerfile",
+    "backend/HELP.md",
+    "backend/backend.log",
+    "backend/backend_v2.log",
+    "backend/backend_v3.log",
+    "backend/build.gradle",
+    "backend/gradle/wrapper/gradle-wrapper.jar",
+    "backend/gradle/wrapper/gradle-wrapper.properties",
+    "backend/gradlew",
+    "backend/gradlew.bat",
+    "backend/nul",
+    "backend/settings.gradle",
+    "backend/src/main/java/com/sw103302/backend/BackendApplication.java",
+    "backend/src/main/java/com/sw103302/backend/component/AiCacheEvictor.java",
+    "backend/src/main/java/com/sw103302/backend/component/AiCallMetrics.java",
+    "backend/src/main/java/com/sw103302/backend/component/AiClient.java",
+    "backend/src/main/java/com/sw103302/backend/component/AiClientException.java",
+    "backend/src/main/java/com/sw103302/backend/component/AiHealthIndicator.java",
+    "backend/src/main/java/com/sw103302/backend/component/AuthRateLimitFilter.java",
+    "backend/src/main/java/com/sw103302/backend/component/CorrelationIdFilter.java",
+    "backend/src/main/java/com/sw103302/backend/component/InFlightDeduplicator.java",
+    "backend/src/main/java/com/sw103302/backend/component/InMemoryInFlightDeduplicator.java",
+    "backend/src/main/java/com/sw103302/backend/component/JwtAuthenticationFilter.java",
+    "backend/src/main/java/com/sw103302/backend/component/MdcTaskDecorator.java",
+    "backend/src/main/java/com/sw103302/backend/component/QuoteSubscriptionEvent.java",
+    "backend/src/main/java/com/sw103302/backend/component/QuoteWebSocketHandler.java",
+    "backend/src/main/java/com/sw103302/backend/component/QuoteWebSocketRelay.java",
+    "backend/src/main/java/com/sw103302/backend/component/RequestIdFilter.java",
+    "backend/src/main/java/com/sw103302/backend/component/SseEmitterRegistry.java",
+    "backend/src/main/java/com/sw103302/backend/component/SseShutdownHook.java",
+    "backend/src/main/java/com/sw103302/backend/config/AiResilienceConfig.java",
+    "backend/src/main/java/com/sw103302/backend/config/AsyncConfig.java",
+    "backend/src/main/java/com/sw103302/backend/config/CacheConfig.java",
+    "backend/src/main/java/com/sw103302/backend/config/ExecutorConfig.java",
+    "backend/src/main/java/com/sw103302/backend/config/JacksonConfig.java",
+    "backend/src/main/java/com/sw103302/backend/config/OpenApiConfig.java",
+    "backend/src/main/java/com/sw103302/backend/config/PropsConfig.java",
+    "backend/src/main/java/com/sw103302/backend/config/SecurityConfig.java",
+    "backend/src/main/java/com/sw103302/backend/config/ValuationProperties.java",
+    "backend/src/main/java/com/sw103302/backend/config/WebClientConfig.java",
+    "backend/src/main/java/com/sw103302/backend/config/WebSocketConfig.java",
+    "backend/src/main/java/com/sw103302/backend/controller/AnalysisController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/AuthController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/BacktestController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/ChatbotController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/CorrelationController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/DividendController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/InsightController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/MarketController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/MonteCarloController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/PaperTradingController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/PortfolioAiController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/PortfolioController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/ReportExportController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/ReportStreamController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/ScreenerController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/TwoFactorController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/UsageController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/UserSettingsController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/ValuationController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/WatchlistController.java",
+    "backend/src/main/java/com/sw103302/backend/controller/WatchlistTagController.java",
+    "backend/src/main/java/com/sw103302/backend/dto/AddPositionRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/AiAnalyzeRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/AiBacktestRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/AiBacktestResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/AnalysisRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/AnalysisResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/AnalysisRunSummary.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ApiError.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ApiErrorResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/AuthResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/BacktestRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/BacktestResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/BacktestRunSummary.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ChatMessageResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ChatRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ChatResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ConversationListResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/CorrelationRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/CorrelationResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/CreatePortfolioRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/DisableTotpRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/DividendCalendarResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/DividendHistoryResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/DividendResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/EarningsCalendarResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/InsightRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/LoginRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/MonteCarloRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/MonteCarloResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/PageResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/PaperAccountResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/PaperOrderRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/PaperOrderResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/PaperPositionResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/PortfolioDetailResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/PortfolioResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/RebalanceRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/RebalanceResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/RefreshRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/RegisterRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ReportExportResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/RiskDashboardResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/SaveScreenerPresetRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ScreenerPresetResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ScreenerRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ScreenerResult.java",
+    "backend/src/main/java/com/sw103302/backend/dto/SetupTotpResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/TagCreateRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/TagResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/TagUpdateRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/UpdatePortfolioRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/UpdatePositionRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/UpdateSettingsRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/UsageAgg.java",
+    "backend/src/main/java/com/sw103302/backend/dto/UsageDailyAgg.java",
+    "backend/src/main/java/com/sw103302/backend/dto/UsageErrorAgg.java",
+    "backend/src/main/java/com/sw103302/backend/dto/UsageTickerAgg.java",
+    "backend/src/main/java/com/sw103302/backend/dto/UserSettingsResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/ValuationResult.java",
+    "backend/src/main/java/com/sw103302/backend/dto/VerifyTotpRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/VerifyTwoFactorLoginRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/WatchlistAddRequest.java",
+    "backend/src/main/java/com/sw103302/backend/dto/WatchlistItemResponse.java",
+    "backend/src/main/java/com/sw103302/backend/dto/WatchlistUpdateTagsRequest.java",
+    "backend/src/main/java/com/sw103302/backend/entity/AnalysisRun.java",
+    "backend/src/main/java/com/sw103302/backend/entity/ApiUsageLog.java",
+    "backend/src/main/java/com/sw103302/backend/entity/BacktestRun.java",
+    "backend/src/main/java/com/sw103302/backend/entity/BackupCode.java",
+    "backend/src/main/java/com/sw103302/backend/entity/ChatConversation.java",
+    "backend/src/main/java/com/sw103302/backend/entity/ChatMessage.java",
+    "backend/src/main/java/com/sw103302/backend/entity/Dividend.java",
+    "backend/src/main/java/com/sw103302/backend/entity/MarketCache.java",
+    "backend/src/main/java/com/sw103302/backend/entity/MarketReportHistory.java",
+    "backend/src/main/java/com/sw103302/backend/entity/PaperAccount.java",
+    "backend/src/main/java/com/sw103302/backend/entity/PaperOrder.java",
+    "backend/src/main/java/com/sw103302/backend/entity/PaperPosition.java",
+    "backend/src/main/java/com/sw103302/backend/entity/Portfolio.java",
+    "backend/src/main/java/com/sw103302/backend/entity/PortfolioPosition.java",
+    "backend/src/main/java/com/sw103302/backend/entity/PriceAlert.java",
+    "backend/src/main/java/com/sw103302/backend/entity/RefreshToken.java",
+    "backend/src/main/java/com/sw103302/backend/entity/ScreenerPreset.java",
+    "backend/src/main/java/com/sw103302/backend/entity/TotpSecret.java",
+    "backend/src/main/java/com/sw103302/backend/entity/User.java",
+    "backend/src/main/java/com/sw103302/backend/entity/UserSettings.java",
+    "backend/src/main/java/com/sw103302/backend/entity/WatchlistItem.java",
+    "backend/src/main/java/com/sw103302/backend/entity/WatchlistTag.java",
+    "backend/src/main/java/com/sw103302/backend/repository/AnalysisRunRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/ApiUsageLogRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/BacktestRunRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/BackupCodeRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/ChatConversationRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/ChatMessageRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/DividendRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/MarketCacheRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/MarketReportHistoryRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/PaperAccountRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/PaperOrderRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/PaperPositionRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/PortfolioPositionRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/PortfolioRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/PriceAlertRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/RefreshTokenRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/ScreenerPresetRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/TotpSecretRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/UserRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/UserSettingsRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/WatchlistRepository.java",
+    "backend/src/main/java/com/sw103302/backend/repository/WatchlistTagRepository.java",
+    "backend/src/main/java/com/sw103302/backend/service/AnalysisService.java",
+    "backend/src/main/java/com/sw103302/backend/service/AuthService.java",
+    "backend/src/main/java/com/sw103302/backend/service/BacktestService.java",
+    "backend/src/main/java/com/sw103302/backend/service/ChatbotService.java",
+    "backend/src/main/java/com/sw103302/backend/service/CorrelationService.java",
+    "backend/src/main/java/com/sw103302/backend/service/CustomUserDetailsService.java",
+    "backend/src/main/java/com/sw103302/backend/service/DividendService.java",
+    "backend/src/main/java/com/sw103302/backend/service/EarningsCalendarService.java",
+    "backend/src/main/java/com/sw103302/backend/service/JwtService.java",
+    "backend/src/main/java/com/sw103302/backend/service/MarketCacheService.java",
+    "backend/src/main/java/com/sw103302/backend/service/MonteCarloService.java",
+    "backend/src/main/java/com/sw103302/backend/service/PaperTradingService.java",
+    "backend/src/main/java/com/sw103302/backend/service/PortfolioService.java",
+    "backend/src/main/java/com/sw103302/backend/service/PriceService.java",
+    "backend/src/main/java/com/sw103302/backend/service/QuantAnalysisService.java",
+    "backend/src/main/java/com/sw103302/backend/service/RiskDashboardService.java",
+    "backend/src/main/java/com/sw103302/backend/service/ScreenerService.java",
+    "backend/src/main/java/com/sw103302/backend/service/TokenHashService.java",
+    "backend/src/main/java/com/sw103302/backend/service/TwoFactorService.java",
+    "backend/src/main/java/com/sw103302/backend/service/UsageService.java",
+    "backend/src/main/java/com/sw103302/backend/service/UserSettingsService.java",
+    "backend/src/main/java/com/sw103302/backend/service/ValuationService.java",
+    "backend/src/main/java/com/sw103302/backend/service/WatchlistService.java",
+    "backend/src/main/java/com/sw103302/backend/service/WatchlistTagService.java",
+    "backend/src/main/java/com/sw103302/backend/util/AiCacheKey.java",
+    "backend/src/main/java/com/sw103302/backend/util/AnalysisRunSpecs.java",
+    "backend/src/main/java/com/sw103302/backend/util/BacktestRunSpecs.java",
+    "backend/src/main/java/com/sw103302/backend/util/ErrorCode.java",
+    "backend/src/main/java/com/sw103302/backend/util/GlobalExceptionHandler.java",
+    "backend/src/main/java/com/sw103302/backend/util/SecurityUtil.java",
+    "backend/src/main/resources/application-dev.properties",
+    "backend/src/main/resources/application-prod.properties",
+    "backend/src/main/resources/application.properties",
+    "backend/src/main/resources/db/migration/V10__create_refresh_tokens.sql",
+    "backend/src/main/resources/db/migration/V11__optimize_indexes.sql",
+    "backend/src/main/resources/db/migration/V12__add_portfolios.sql",
+    "backend/src/main/resources/db/migration/V13__add_2fa_tables.sql",
+    "backend/src/main/resources/db/migration/V14__add_dividends.sql",
+    "backend/src/main/resources/db/migration/V15__add_screener_presets.sql",
+    "backend/src/main/resources/db/migration/V16__add_chatbot_tables.sql",
+    "backend/src/main/resources/db/migration/V17__add_price_alerts.sql",
+    "backend/src/main/resources/db/migration/V18__add_performance_indexes.sql",
+    "backend/src/main/resources/db/migration/V19__add_paper_trading.sql",
+    "backend/src/main/resources/db/migration/V1__init.sql",
+    "backend/src/main/resources/db/migration/V20__harden_refresh_tokens.sql",
+    "backend/src/main/resources/db/migration/V2__backtest_runs.sql",
+    "backend/src/main/resources/db/migration/V3__create_market_cache.sql",
+    "backend/src/main/resources/db/migration/V4__create_watchlist.sql",
+    "backend/src/main/resources/db/migration/V5__create_usage_log.sql",
+    "backend/src/main/resources/db/migration/V6__create_market_report_history.sql",
+    "backend/src/main/resources/db/migration/V7__alter_usage_log_add_trace.sql",
+    "backend/src/main/resources/db/migration/V8__add_missing_indexes.sql",
+    "backend/src/main/resources/db/migration/V9__add_watchlist_tags.sql",
+    "backend/src/main/resources/db/text.txt",
+    "backend/src/test/java/com/sw103302/backend/AnalysisFlowTest.java",
+    "backend/src/test/java/com/sw103302/backend/AuthFlowTest.java",
+    "backend/src/test/java/com/sw103302/backend/BackendApplicationTests.java",
+    "backend/src/test/java/com/sw103302/backend/BacktestFlowTest.java",
+    "backend/src/test/java/com/sw103302/backend/WatchlistFlowTest.java",
+    "backend/src/test/java/com/sw103302/backend/component/InMemoryInFlightDeduplicatorTest.java",
+    "backend/src/test/java/com/sw103302/backend/component/QuoteWebSocketHandlerTest.java",
+    "backend/src/test/java/com/sw103302/backend/config/CacheConfigTest.java",
+    "backend/src/test/java/com/sw103302/backend/dto/UpdateSettingsRequestValidationTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/AnalysisServiceTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/AuthServiceTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/BacktestServiceTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/EarningsCalendarServiceContractTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/JwtServiceTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/PortfolioServiceTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/PriceServiceTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/RiskDashboardServiceContractTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/TokenHashServiceTest.java",
+    "backend/src/test/java/com/sw103302/backend/service/WatchlistServiceTest.java",
+    "backend/src/test/java/com/sw103302/backend/util/GlobalExceptionHandlerContractTest.java",
+    "backend/src/test/resources/application-test.properties",
+    "docker-compose.yml",
+    "docs/API.md",
+    "docs/ARCHITECTURE_DECISIONS.md",
+    "docs/AUTH_FLOW_FIX.md",
+    "docs/CHANGELOG.md",
+    "docs/DEMO_SEED_GUIDE.md",
+    "docs/DOCS_INDEX.md",
+    "docs/ENGINEERING_HANDBOOK.md",
+    "docs/INCIDENT_POSTMORTEM_AI_TIMEOUT_2026-02-28.md",
+    "docs/OPERATIONS_MANUAL.md",
+    "docs/PATCH_NOTES.md",
+    "docs/PORTFOLIO_FINAL_SUBMISSION.md",
+    "docs/PORTFOLIO_FULL.html",
+    "docs/PORTFOLIO_READABLE.html",
+    "docs/PORTFOLIO_ROLE_HIGHLIGHTS.md",
+    "docs/PORTFOLIO_TECHNICAL_DOSSIER.md",
+    "docs/PRODUCT_MANUAL.md",
+    "docs/PUBLIC_SERVICE_EVIDENCE.md",
+    "docs/REFRESH_TOKEN.md",
+    "docs/ROADMAP.md",
+    "docs/SECURITY_FIXES.md",
+    "docs/SERVICE_MANUAL.html",
+    "docs/TEST_RESULTS.md",
+    "docs/UPGRADE_GUIDE.md",
+    "docs/VALIDATION_BACKTEST_RISK.md",
+    "docs/openapi/stock-ai.openapi.json",
+    "frontend/.gitignore",
+    "frontend/Dockerfile",
+    "frontend/README.md",
+    "frontend/package-lock.json",
+    "frontend/package.json",
+    "frontend/public/favicon.ico",
+    "frontend/public/index.html",
+    "frontend/public/logo192.png",
+    "frontend/public/logo512.png",
+    "frontend/public/manifest.json",
+    "frontend/public/robots.txt",
+    "frontend/public/service-worker.js",
+    "frontend/src/App.css",
+    "frontend/src/App.js",
+    "frontend/src/App.test.js",
+    "frontend/src/api/ai.js",
+    "frontend/src/api/analysis.js",
+    "frontend/src/api/chatbot.js",
+    "frontend/src/api/config.js",
+    "frontend/src/api/dividend.js",
+    "frontend/src/api/etf.js",
+    "frontend/src/api/generated/README.md",
+    "frontend/src/api/generated/client.ts",
+    "frontend/src/api/generated/index.ts",
+    "frontend/src/api/http.js",
+    "frontend/src/api/paperTrading.js",
+    "frontend/src/api/portfolio.js",
+    "frontend/src/api/queryClient.js",
+    "frontend/src/api/report.js",
+    "frontend/src/api/screener.js",
+    "frontend/src/api/settings.js",
+    "frontend/src/api/sseFetch.js",
+    "frontend/src/api/userLists.js",
+    "frontend/src/api/ws.js",
+    "frontend/src/api/ws.test.js",
+    "frontend/src/auth/token.js",
+    "frontend/src/components/AdvancedCharts.js",
+    "frontend/src/components/AnalysisOptions.js",
+    "frontend/src/components/DailyUsageChartCanvas.js",
+    "frontend/src/components/DividendCard.js",
+    "frontend/src/components/ETFInfo.js",
+    "frontend/src/components/EquityCurveChart.js",
+    "frontend/src/components/ErrorBoundary.js",
+    "frontend/src/components/EvidenceTabs.js",
+    "frontend/src/components/InsightCharts.js",
+    "frontend/src/components/InsightConfidence.js",
+    "frontend/src/components/InsightsPanel.js",
+    "frontend/src/components/InteractiveChart.js",
+    "frontend/src/components/LineChartCanvas.js",
+    "frontend/src/components/MultiLineChartCanvas.js",
+    "frontend/src/components/MultiTimeframeChart.js",
+    "frontend/src/components/NavBar.js",
+    "frontend/src/components/OfflineIndicator.js",
+    "frontend/src/components/PriceChart.js",
+    "frontend/src/components/ProtectedRoute.js",
+    "frontend/src/components/QuantPanel.js",
+    "frontend/src/components/ReportGenerator.js",
+    "frontend/src/components/SearchAutocomplete.js",
+    "frontend/src/components/TickerSearch.js",
+    "frontend/src/components/ui/EmptyState.js",
+    "frontend/src/components/ui/ErrorMessage.js",
+    "frontend/src/components/ui/LazyImage.js",
+    "frontend/src/components/ui/Loading.js",
+    "frontend/src/components/ui/ProgressBar.js",
+    "frontend/src/components/ui/Skeleton.js",
+    "frontend/src/components/ui/SkeletonCard.js",
+    "frontend/src/components/ui/SkeletonTable.js",
+    "frontend/src/components/ui/Spinner.js",
+    "frontend/src/components/ui/Term.js",
+    "frontend/src/components/ui/ThemeToggle.js",
+    "frontend/src/components/ui/Toast.js",
+    "frontend/src/components/ui/Tooltip.js",
+    "frontend/src/components/ui/VirtualList.js",
+    "frontend/src/components/ui/index.js",
+    "frontend/src/context/LanguageContext.js",
+    "frontend/src/context/PreferencesContext.js",
+    "frontend/src/css/AdvancedCharts.module.css",
+    "frontend/src/css/AnalysisOptions.module.css",
+    "frontend/src/css/Analyze.module.css",
+    "frontend/src/css/Backtest.module.css",
+    "frontend/src/css/Chatbot.module.css",
+    "frontend/src/css/Compare.module.css",
+    "frontend/src/css/Correlation.module.css",
+    "frontend/src/css/Dashboard.module.css",
+    "frontend/src/css/DividendCalendar.module.css",
+    "frontend/src/css/DividendCard.module.css",
+    "frontend/src/css/ETFInfo.module.css",
+    "frontend/src/css/EarningsCalendar.module.css",
+    "frontend/src/css/ErrorBoundary.module.css",
+    "frontend/src/css/EvidenceTabs.module.css",
+    "frontend/src/css/Glossary.module.css",
+    "frontend/src/css/InsightCharts.module.css",
+    "frontend/src/css/InsightConfidence.module.css",
+    "frontend/src/css/InsightDetail.module.css",
+    "frontend/src/css/InteractiveChart.module.css",
+    "frontend/src/css/Landing.module.css",
+    "frontend/src/css/LazyImage.module.css",
+    "frontend/src/css/Learn.module.css",
+    "frontend/src/css/LineChartCanvas.module.css",
+    "frontend/src/css/Login.module.css",
+    "frontend/src/css/MultiLineChartCanvas.module.css",
+    "frontend/src/css/MultiTimeframeChart.module.css",
+    "frontend/src/css/NavBar.module.css",
+    "frontend/src/css/OfflineIndicator.module.css",
+    "frontend/src/css/PaperTrading.module.css",
+    "frontend/src/css/Portfolio.module.css",
+    "frontend/src/css/ProgressBar.module.css",
+    "frontend/src/css/QuantPanel.module.css",
+    "frontend/src/css/Register.module.css",
+    "frontend/src/css/ReportGenerator.module.css",
+    "frontend/src/css/RiskDashboard.module.css",
+    "frontend/src/css/Screener.module.css",
+    "frontend/src/css/SearchAutocomplete.module.css",
+    "frontend/src/css/Settings.module.css",
+    "frontend/src/css/SkeletonCard.module.css",
+    "frontend/src/css/SkeletonTable.module.css",
+    "frontend/src/css/SystemMap.module.css",
+    "frontend/src/css/Toast.module.css",
+    "frontend/src/css/Tooltip.module.css",
+    "frontend/src/css/Usage.module.css",
+    "frontend/src/css/VirtualList.module.css",
+    "frontend/src/css/Watchlist.module.css",
+    "frontend/src/css/common.module.css",
+    "frontend/src/css/variables.css",
+    "frontend/src/data/glossary.json",
+    "frontend/src/data/systemMapData.json",
+    "frontend/src/hooks/queries/index.js",
+    "frontend/src/hooks/queries/useBacktestHistory.js",
+    "frontend/src/hooks/queries/useConversations.js",
+    "frontend/src/hooks/queries/useDividendCalendar.js",
+    "frontend/src/hooks/queries/useInsights.js",
+    "frontend/src/hooks/queries/useMonteCarloSimulation.js",
+    "frontend/src/hooks/queries/usePortfolio.js",
+    "frontend/src/hooks/queries/useQuote.js",
+    "frontend/src/hooks/queries/useWatchlist.js",
+    "frontend/src/hooks/useActivityDetection.js",
+    "frontend/src/hooks/useAuthSync.js",
+    "frontend/src/hooks/useRealtimeQuote.js",
+    "frontend/src/hooks/useTranslation.js",
+    "frontend/src/i18n/translations.js",
+    "frontend/src/index.css",
+    "frontend/src/index.js",
+    "frontend/src/logo.svg",
+    "frontend/src/pages/Analyze.js",
+    "frontend/src/pages/Backtest.js",
+    "frontend/src/pages/Chatbot.js",
+    "frontend/src/pages/Compare.js",
+    "frontend/src/pages/Correlation.js",
+    "frontend/src/pages/Dashboard.js",
+    "frontend/src/pages/DividendCalendar.js",
+    "frontend/src/pages/EarningsCalendar.js",
+    "frontend/src/pages/Glossary.js",
+    "frontend/src/pages/InsightDetail.js",
+    "frontend/src/pages/Landing.js",
+    "frontend/src/pages/Learn.js",
+    "frontend/src/pages/Login.js",
+    "frontend/src/pages/PaperTrading.js",
+    "frontend/src/pages/Portfolio.js",
+    "frontend/src/pages/Register.js",
+    "frontend/src/pages/RiskDashboard.js",
+    "frontend/src/pages/Screener.js",
+    "frontend/src/pages/Settings.js",
+    "frontend/src/pages/SystemMap.js",
+    "frontend/src/pages/Usage.js",
+    "frontend/src/pages/Watchlist.js",
+    "frontend/src/reportWebVitals.js",
+    "frontend/src/setupTests.js",
+    "frontend/src/utils/debounce.js",
+    "frontend/src/utils/formatters.js",
+    "frontend/src/utils/serviceWorker.js",
+    "frontend/src/utils/storage.js",
+    "frontend/src/utils/theme.js",
+    "frontend/src/utils/validators.js",
+    "monitoring/grafana/provisioning/dashboards/dashboard.yml",
+    "monitoring/grafana/provisioning/datasources/prometheus.yml",
+    "monitoring/prometheus.yml",
+    "nginx/nginx.conf",
+    "nul",
+    "scripts/capture_monitoring_screenshots.ps1",
+    "scripts/e2e_smoke.py",
+    "scripts/generate_openapi_client.ps1",
+    "scripts/generate_portfolio_full_html.ps1",
+    "scripts/generate_service_manual_html.ps1",
+    "scripts/generate_system_map_data.js",
+    "scripts/generate_typed_client.py",
+    "scripts/integration_tests.ps1",
+    "scripts/openapi_sync.ps1",
+    "scripts/run_all_tests.ps1",
+    "scripts/seed_demo_data.ps1",
+    "scripts/smoke.ps1",
+    "scripts/sql/seed_demo_data.sql",
+    "scripts/validate_backtest_risk.ps1",
+    "scripts/verify_public_service.ps1",
+    "version"
+  ],
+  "backend": {
+    "controllers": [
+      {
+        "name": "AnalysisController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/AnalysisController.java",
+        "basePath": "/api/analysis",
+        "dependencies": [
+          "AnalysisService"
+        ],
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/api/analysis/history"
+          },
+          {
+            "method": "GET",
+            "path": "/api/analysis/{id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/analysis/{id}"
+          },
+          {
+            "method": "GET",
+            "path": "/api/analysis/{id}"
+          }
+        ]
+      },
+      {
+        "name": "AuthController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/AuthController.java",
+        "basePath": "/api/auth",
+        "dependencies": [
+          "AuthService"
+        ],
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/api/auth/register"
+          },
+          {
+            "method": "POST",
+            "path": "/api/auth/login"
+          },
+          {
+            "method": "POST",
+            "path": "/api/auth/verify-2fa"
+          },
+          {
+            "method": "POST",
+            "path": "/api/auth/refresh"
+          },
+          {
+            "method": "POST",
+            "path": "/api/auth/logout"
+          }
+        ]
+      },
+      {
+        "name": "BacktestController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/BacktestController.java",
+        "basePath": "/api/backtest",
+        "dependencies": [
+          "BacktestService"
+        ],
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/api/backtest/history"
+          },
+          {
+            "method": "GET",
+            "path": "/api/backtest/{id}"
+          }
+        ]
+      },
+      {
+        "name": "ChatbotController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/ChatbotController.java",
+        "basePath": "/api/chatbot",
+        "dependencies": [
+          "ChatbotService"
+        ],
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/api/chatbot/chat"
+          },
+          {
+            "method": "GET",
+            "path": "/api/chatbot/conversations"
+          },
+          {
+            "method": "GET",
+            "path": "/api/chatbot/conversations/{id}/messages"
+          },
+          {
+            "method": "DELETE",
+            "path": "/api/chatbot/conversations/{id}"
+          }
+        ]
+      },
+      {
+        "name": "CorrelationController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/CorrelationController.java",
+        "basePath": "/api/correlation",
+        "dependencies": [
+          "CorrelationService"
+        ],
+        "endpoints": []
+      },
+      {
+        "name": "DividendController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/DividendController.java",
+        "basePath": "/api/dividend",
+        "dependencies": [
+          "DividendService"
+        ],
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/api/dividend/position/{positionId}/fetch"
+          },
+          {
+            "method": "GET",
+            "path": "/api/dividend/position/{positionId}/history"
+          },
+          {
+            "method": "GET",
+            "path": "/api/dividend/portfolio/{portfolioId}/calendar"
+          }
+        ]
+      },
+      {
+        "name": "InsightController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/InsightController.java",
+        "basePath": "/api",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper"
+        ],
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/api/insights"
+          }
+        ]
+      },
+      {
+        "name": "MarketController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/MarketController.java",
+        "basePath": "/api/market",
+        "dependencies": [
+          "AiClient",
+          "MarketCacheService"
+        ],
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/api/market/search"
+          },
+          {
+            "method": "POST",
+            "path": "/api/market/insights"
+          },
+          {
+            "method": "GET",
+            "path": "/api/market/quote"
+          },
+          {
+            "method": "GET",
+            "path": "/api/market/prices"
+          },
+          {
+            "method": "GET",
+            "path": "/api/market/ohlc"
+          },
+          {
+            "method": "POST",
+            "path": "/api/market/report"
+          },
+          {
+            "method": "GET",
+            "path": "/api/market/report-history"
+          }
+        ]
+      },
+      {
+        "name": "MonteCarloController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/MonteCarloController.java",
+        "basePath": "/api/monte-carlo",
+        "dependencies": [
+          "MonteCarloService"
+        ],
+        "endpoints": []
+      },
+      {
+        "name": "PaperTradingController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/PaperTradingController.java",
+        "basePath": "/api/paper",
+        "dependencies": [
+          "PaperTradingService"
+        ],
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/api/paper/accounts"
+          },
+          {
+            "method": "POST",
+            "path": "/api/paper/accounts/reset"
+          },
+          {
+            "method": "POST",
+            "path": "/api/paper/order"
+          },
+          {
+            "method": "GET",
+            "path": "/api/paper/positions"
+          },
+          {
+            "method": "GET",
+            "path": "/api/paper/orders"
+          }
+        ]
+      },
+      {
+        "name": "PortfolioAiController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/PortfolioAiController.java",
+        "basePath": "",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper"
+        ],
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/api/portfolio/efficient-frontier"
+          },
+          {
+            "method": "POST",
+            "path": "/api/similarity/find"
+          }
+        ]
+      },
+      {
+        "name": "PortfolioController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/PortfolioController.java",
+        "basePath": "/api/portfolio",
+        "dependencies": [
+          "PortfolioService",
+          "EarningsCalendarService",
+          "RiskDashboardService"
+        ],
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/api/portfolio/{id}"
+          },
+          {
+            "method": "PUT",
+            "path": "/api/portfolio/{id}"
+          },
+          {
+            "method": "DELETE",
+            "path": "/api/portfolio/{id}"
+          },
+          {
+            "method": "POST",
+            "path": "/api/portfolio/{id}/position"
+          },
+          {
+            "method": "PUT",
+            "path": "/api/portfolio/{portfolioId}/position/{positionId}"
+          },
+          {
+            "method": "DELETE",
+            "path": "/api/portfolio/{portfolioId}/position/{positionId}"
+          },
+          {
+            "method": "POST",
+            "path": "/api/portfolio/{id}/rebalance"
+          },
+          {
+            "method": "GET",
+            "path": "/api/portfolio/{id}/earnings-calendar"
+          },
+          {
+            "method": "GET",
+            "path": "/api/portfolio/{id}/risk-dashboard"
+          }
+        ]
+      },
+      {
+        "name": "ReportExportController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/ReportExportController.java",
+        "basePath": "/api/market/report/export",
+        "dependencies": [
+          "MarketCacheRepository",
+          "UserRepository",
+          "ObjectMapper"
+        ],
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/api/market/report/export/txt"
+          },
+          {
+            "method": "POST",
+            "path": "/api/market/report/export/json"
+          },
+          {
+            "method": "POST",
+            "path": "/api/market/report/export/pdf"
+          }
+        ]
+      },
+      {
+        "name": "ReportStreamController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/ReportStreamController.java",
+        "basePath": "/api/market",
+        "dependencies": [
+          "UserRepository",
+          "MarketCacheService",
+          "Executor",
+          "ObjectMapper",
+          "SseEmitterRegistry"
+        ],
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/api/market/report/stream"
+          }
+        ]
+      },
+      {
+        "name": "ScreenerController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/ScreenerController.java",
+        "basePath": "/api/screener",
+        "dependencies": [
+          "ScreenerService"
+        ],
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/api/screener/preset"
+          },
+          {
+            "method": "GET",
+            "path": "/api/screener/preset"
+          },
+          {
+            "method": "GET",
+            "path": "/api/screener/preset/public"
+          }
+        ]
+      },
+      {
+        "name": "TwoFactorController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/TwoFactorController.java",
+        "basePath": "/api/2fa",
+        "dependencies": [
+          "TwoFactorService"
+        ],
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/api/2fa/setup"
+          },
+          {
+            "method": "POST",
+            "path": "/api/2fa/verify"
+          },
+          {
+            "method": "POST",
+            "path": "/api/2fa/disable"
+          }
+        ]
+      },
+      {
+        "name": "UsageController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/UsageController.java",
+        "basePath": "/api/usage",
+        "dependencies": [
+          "UsageService",
+          "UserRepository"
+        ],
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/api/usage/summary"
+          },
+          {
+            "method": "GET",
+            "path": "/api/usage/dashboard"
+          },
+          {
+            "method": "DELETE",
+            "path": "/api/usage/cleanup"
+          }
+        ]
+      },
+      {
+        "name": "UserSettingsController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/UserSettingsController.java",
+        "basePath": "/api/settings",
+        "dependencies": [
+          "UserSettingsService"
+        ],
+        "endpoints": []
+      },
+      {
+        "name": "ValuationController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/ValuationController.java",
+        "basePath": "/api/market",
+        "dependencies": [
+          "UserRepository",
+          "MarketCacheService",
+          "ValuationService",
+          "UsageService"
+        ],
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/api/market/valuation"
+          }
+        ]
+      },
+      {
+        "name": "WatchlistController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/WatchlistController.java",
+        "basePath": "/api/watchlist",
+        "dependencies": [
+          "WatchlistService"
+        ],
+        "endpoints": [
+          {
+            "method": "PUT",
+            "path": "/api/watchlist/{itemId}/tags"
+          },
+          {
+            "method": "PUT",
+            "path": "/api/watchlist/{itemId}/notes"
+          }
+        ]
+      },
+      {
+        "name": "WatchlistTagController",
+        "file": "backend/src/main/java/com/sw103302/backend/controller/WatchlistTagController.java",
+        "basePath": "/api/watchlist/tags",
+        "dependencies": [
+          "WatchlistTagService"
+        ],
+        "endpoints": [
+          {
+            "method": "PUT",
+            "path": "/api/watchlist/tags/{tagId}"
+          },
+          {
+            "method": "DELETE",
+            "path": "/api/watchlist/tags/{tagId}"
+          }
+        ]
+      }
+    ],
+    "services": [
+      {
+        "name": "AnalysisService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/AnalysisService.java",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper",
+          "UserRepository",
+          "AnalysisRunRepository",
+          "InFlightDeduplicator"
+        ]
+      },
+      {
+        "name": "AuthService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/AuthService.java",
+        "dependencies": [
+          "UserRepository",
+          "RefreshTokenRepository",
+          "UserSettingsRepository",
+          "PasswordEncoder",
+          "JwtService",
+          "TokenHashService",
+          "TwoFactorService",
+          "StringRedisTemplate"
+        ]
+      },
+      {
+        "name": "BacktestService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/BacktestService.java",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper",
+          "UserRepository",
+          "BacktestRunRepository"
+        ]
+      },
+      {
+        "name": "ChatbotService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/ChatbotService.java",
+        "dependencies": [
+          "ChatConversationRepository",
+          "ChatMessageRepository",
+          "UserRepository",
+          "AiClient",
+          "ObjectMapper",
+          "PortfolioRepository",
+          "PortfolioPositionRepository",
+          "WatchlistRepository"
+        ]
+      },
+      {
+        "name": "CorrelationService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/CorrelationService.java",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "CustomUserDetailsService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/CustomUserDetailsService.java",
+        "dependencies": [
+          "UserRepository"
+        ]
+      },
+      {
+        "name": "DividendService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/DividendService.java",
+        "dependencies": [
+          "DividendRepository",
+          "PortfolioPositionRepository",
+          "UserRepository",
+          "AiClient",
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "EarningsCalendarService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/EarningsCalendarService.java",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper",
+          "UserRepository",
+          "PortfolioRepository",
+          "PortfolioPositionRepository"
+        ]
+      },
+      {
+        "name": "JwtService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/JwtService.java",
+        "dependencies": []
+      },
+      {
+        "name": "MarketCacheService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/MarketCacheService.java",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper",
+          "UserRepository",
+          "MarketCacheRepository",
+          "UsageService",
+          "MarketReportHistoryRepository",
+          "QuantAnalysisService",
+          "TransactionTemplate",
+          "InFlightDeduplicator",
+          "AiCacheEvictor"
+        ]
+      },
+      {
+        "name": "MonteCarloService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/MonteCarloService.java",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "PaperTradingService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/PaperTradingService.java",
+        "dependencies": [
+          "PaperAccountRepository",
+          "PaperPositionRepository",
+          "PaperOrderRepository",
+          "UserRepository",
+          "AiClient",
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "PortfolioService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/PortfolioService.java",
+        "dependencies": [
+          "PortfolioRepository",
+          "PortfolioPositionRepository",
+          "UserRepository",
+          "PriceService",
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "PriceService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/PriceService.java",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "QuantAnalysisService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/QuantAnalysisService.java",
+        "dependencies": [
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "RiskDashboardService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/RiskDashboardService.java",
+        "dependencies": [
+          "AiClient",
+          "ObjectMapper",
+          "UserRepository",
+          "PortfolioRepository",
+          "PortfolioPositionRepository",
+          "PriceService"
+        ]
+      },
+      {
+        "name": "ScreenerService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/ScreenerService.java",
+        "dependencies": [
+          "AiClient",
+          "ScreenerPresetRepository",
+          "UserRepository",
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "TokenHashService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/TokenHashService.java",
+        "dependencies": [
+          "String"
+        ]
+      },
+      {
+        "name": "TwoFactorService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/TwoFactorService.java",
+        "dependencies": [
+          "UserSettingsRepository",
+          "TotpSecretRepository",
+          "BackupCodeRepository",
+          "UserRepository",
+          "PasswordEncoder"
+        ]
+      },
+      {
+        "name": "UsageService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/UsageService.java",
+        "dependencies": [
+          "ApiUsageLogRepository",
+          "ObjectProvider",
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "UserSettingsService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/UserSettingsService.java",
+        "dependencies": [
+          "UserSettingsRepository",
+          "UserRepository"
+        ]
+      },
+      {
+        "name": "ValuationService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/ValuationService.java",
+        "dependencies": [
+          "ObjectMapper",
+          "ValuationProperties",
+          "AiClient"
+        ]
+      },
+      {
+        "name": "WatchlistService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/WatchlistService.java",
+        "dependencies": [
+          "WatchlistRepository",
+          "MarketCacheRepository",
+          "UserRepository",
+          "WatchlistTagRepository",
+          "ObjectMapper"
+        ]
+      },
+      {
+        "name": "WatchlistTagService",
+        "file": "backend/src/main/java/com/sw103302/backend/service/WatchlistTagService.java",
+        "dependencies": [
+          "WatchlistTagRepository",
+          "UserRepository"
+        ]
+      }
+    ],
+    "repositories": [
+      {
+        "name": "AnalysisRunRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/AnalysisRunRepository.java"
+      },
+      {
+        "name": "ApiUsageLogRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/ApiUsageLogRepository.java"
+      },
+      {
+        "name": "BacktestRunRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/BacktestRunRepository.java"
+      },
+      {
+        "name": "BackupCodeRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/BackupCodeRepository.java"
+      },
+      {
+        "name": "ChatConversationRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/ChatConversationRepository.java"
+      },
+      {
+        "name": "ChatMessageRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/ChatMessageRepository.java"
+      },
+      {
+        "name": "DividendRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/DividendRepository.java"
+      },
+      {
+        "name": "MarketCacheRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/MarketCacheRepository.java"
+      },
+      {
+        "name": "MarketReportHistoryRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/MarketReportHistoryRepository.java"
+      },
+      {
+        "name": "PaperAccountRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/PaperAccountRepository.java"
+      },
+      {
+        "name": "PaperOrderRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/PaperOrderRepository.java"
+      },
+      {
+        "name": "PaperPositionRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/PaperPositionRepository.java"
+      },
+      {
+        "name": "PortfolioPositionRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/PortfolioPositionRepository.java"
+      },
+      {
+        "name": "PortfolioRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/PortfolioRepository.java"
+      },
+      {
+        "name": "PriceAlertRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/PriceAlertRepository.java"
+      },
+      {
+        "name": "RefreshTokenRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/RefreshTokenRepository.java"
+      },
+      {
+        "name": "ScreenerPresetRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/ScreenerPresetRepository.java"
+      },
+      {
+        "name": "TotpSecretRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/TotpSecretRepository.java"
+      },
+      {
+        "name": "UserRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/UserRepository.java"
+      },
+      {
+        "name": "UserSettingsRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/UserSettingsRepository.java"
+      },
+      {
+        "name": "WatchlistRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/WatchlistRepository.java"
+      },
+      {
+        "name": "WatchlistTagRepository",
+        "file": "backend/src/main/java/com/sw103302/backend/repository/WatchlistTagRepository.java"
+      }
+    ]
+  },
+  "ai": {
+    "routes": [
+      {
+        "file": "ai/routes/__init__.py",
+        "module": "__init__",
+        "endpoints": [],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/backtest.py",
+        "module": "backtest",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/backtest"
+          },
+          {
+            "method": "POST",
+            "path": "/backtest/optimize"
+          },
+          {
+            "method": "POST",
+            "path": "/analyze"
+          }
+        ],
+        "dependencies": [
+          "routes.intelligence.InsightRequest",
+          "routes.intelligence.insights\n\n    ins"
+        ]
+      },
+      {
+        "file": "ai/routes/chatbot.py",
+        "module": "chatbot",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/chatbot"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/correlation.py",
+        "module": "correlation",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/correlation"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/dividend.py",
+        "module": "dividend",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/dividend/history"
+          },
+          {
+            "method": "POST",
+            "path": "/dividend/upcoming"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/earnings.py",
+        "module": "earnings",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/earnings/calendar"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/etf.py",
+        "module": "etf",
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/holdings/{ticker}"
+          },
+          {
+            "method": "GET",
+            "path": "/info/{ticker}"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/intelligence.py",
+        "module": "intelligence",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/insights"
+          },
+          {
+            "method": "POST",
+            "path": "/insights_legacy"
+          },
+          {
+            "method": "POST",
+            "path": "/report"
+          }
+        ],
+        "dependencies": [
+          "analysis.technicals.compute_technicals_from_points\r\nfrom routes",
+          "llm.ollama_client",
+          "llm.openai_client\r\n\r\nlogger"
+        ]
+      },
+      {
+        "file": "ai/routes/market_data.py",
+        "module": "market_data",
+        "endpoints": [
+          {
+            "method": "GET",
+            "path": "/symbol_search"
+          },
+          {
+            "method": "GET",
+            "path": "/prices"
+          },
+          {
+            "method": "GET",
+            "path": "/ohlc"
+          },
+          {
+            "method": "GET",
+            "path": "/quote"
+          },
+          {
+            "method": "GET",
+            "path": "/fundamentals"
+          },
+          {
+            "method": "GET",
+            "path": "/news"
+          },
+          {
+            "method": "GET",
+            "path": "/obv"
+          },
+          {
+            "method": "GET",
+            "path": "/market_env"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/monte_carlo.py",
+        "module": "monte_carlo",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/monte-carlo"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/portfolio_optimize.py",
+        "module": "portfolio_optimize",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/efficient-frontier"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/portfolio_risk.py",
+        "module": "portfolio_risk",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/portfolio/risk"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/prices.py",
+        "module": "prices",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/prices/batch"
+          },
+          {
+            "method": "POST",
+            "path": "/prices/info"
+          },
+          {
+            "method": "GET",
+            "path": "/prices/{ticker}"
+          },
+          {
+            "method": "POST",
+            "path": "/prices/historical"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/rag.py",
+        "module": "rag",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/index"
+          },
+          {
+            "method": "GET",
+            "path": "/search"
+          },
+          {
+            "method": "GET",
+            "path": "/status"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/realtime.py",
+        "module": "realtime",
+        "endpoints": [
+          {
+            "method": "WEBSOCKET",
+            "path": "/ws/quotes"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/screener.py",
+        "module": "screener",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/screener"
+          }
+        ],
+        "dependencies": []
+      },
+      {
+        "file": "ai/routes/similarity.py",
+        "module": "similarity",
+        "endpoints": [
+          {
+            "method": "POST",
+            "path": "/find"
+          }
+        ],
+        "dependencies": []
+      }
+    ]
+  },
+  "frontend": {
+    "apiModules": [
+      {
+        "file": "frontend/src/api/ai.js",
+        "paths": [
+          "/api/market/ohlc?ticker=${encodeURIComponent(ticker)}&market=${encodeURIComponent(market)}&days=${days}"
+        ]
+      },
+      {
+        "file": "frontend/src/api/analysis.js",
+        "paths": [
+          "/api/correlation",
+          "/api/monte-carlo"
+        ]
+      },
+      {
+        "file": "frontend/src/api/chatbot.js",
+        "paths": [
+          "/api/chatbot/conversations/${conversationId}/messages",
+          "/api/chatbot/conversations/${conversationId}",
+          "/api/chatbot/chat",
+          "/api/chatbot/conversations"
+        ]
+      },
+      {
+        "file": "frontend/src/api/config.js",
+        "paths": []
+      },
+      {
+        "file": "frontend/src/api/dividend.js",
+        "paths": [
+          "/api/dividend/position/${positionId}/history",
+          "/api/dividend/position/${positionId}/fetch",
+          "/api/dividend/portfolio/${portfolioId}/calendar"
+        ]
+      },
+      {
+        "file": "frontend/src/api/etf.js",
+        "paths": [
+          "/api/ai/etf/holdings/${ticker}?${params}",
+          "/api/ai/etf/info/${ticker}?${params}"
+        ]
+      },
+      {
+        "file": "frontend/src/api/http.js",
+        "paths": []
+      },
+      {
+        "file": "frontend/src/api/paperTrading.js",
+        "paths": [
+          "/api/paper/accounts/reset?market=${market}",
+          "/api/paper/positions?market=${market}",
+          "/api/paper/orders?market=${market}&page=${page}&size=${size}",
+          "/api/paper/accounts",
+          "/api/paper/order"
+        ]
+      },
+      {
+        "file": "frontend/src/api/portfolio.js",
+        "paths": [
+          "/api/portfolio/${id}",
+          "/api/portfolio/${portfolioId}/position",
+          "/api/portfolio/${portfolioId}/position/${positionId}",
+          "/api/portfolio/${portfolioId}/earnings-calendar?daysAhead=${daysAhead}",
+          "/api/portfolio/${portfolioId}/risk-dashboard?lookbackDays=${lookbackDays}",
+          "/api/portfolio/${portfolioId}/rebalance",
+          "/api/similarity/find",
+          "/api/portfolio",
+          "/api/portfolio/efficient-frontier"
+        ]
+      },
+      {
+        "file": "frontend/src/api/queryClient.js",
+        "paths": []
+      },
+      {
+        "file": "frontend/src/api/report.js",
+        "paths": [
+          "/api/market/report/export/txt",
+          "/api/market/report/export/pdf",
+          "/api/market/report/export/json"
+        ]
+      },
+      {
+        "file": "frontend/src/api/screener.js",
+        "paths": [
+          "/api/screener",
+          "/api/screener/preset",
+          "/api/screener/preset/public"
+        ]
+      },
+      {
+        "file": "frontend/src/api/settings.js",
+        "paths": [
+          "/api/settings",
+          "/api/2fa/setup",
+          "/api/2fa/verify",
+          "/api/2fa/disable"
+        ]
+      },
+      {
+        "file": "frontend/src/api/sseFetch.js",
+        "paths": []
+      },
+      {
+        "file": "frontend/src/api/userLists.js",
+        "paths": []
+      },
+      {
+        "file": "frontend/src/api/ws.js",
+        "paths": []
+      },
+      {
+        "file": "frontend/src/api/ws.test.js",
+        "paths": []
+      }
+    ],
+    "hooks": [
+      {
+        "file": "frontend/src/hooks/queries/index.js",
+        "paths": [],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/queries/useBacktestHistory.js",
+        "paths": [
+          "/api/backtest/history?${qs.toString()}",
+          "/api/backtest/${id}",
+          "/api/backtest"
+        ],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/queries/useConversations.js",
+        "paths": [],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/queries/useDividendCalendar.js",
+        "paths": [],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/queries/useInsights.js",
+        "paths": [
+          "/api/market/insights?test=${test}&refresh=${refresh}"
+        ],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/queries/useMonteCarloSimulation.js",
+        "paths": [],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/queries/usePortfolio.js",
+        "paths": [],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/queries/useQuote.js",
+        "paths": [
+          "/api/market/quote?ticker=${encodeURIComponent(ticker)}&market=${encodeURIComponent(market)}"
+        ],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/queries/useWatchlist.js",
+        "paths": [
+          "/api/watchlist?test=${test}",
+          "/api/watchlist?ticker=${encodeURIComponent(ticker)}&market=${encodeURIComponent(market)}&test=${test}",
+          "/api/watchlist/${itemId}/notes",
+          "/api/watchlist/${itemId}/tags",
+          "/api/watchlist/tags/${tagId}",
+          "/api/market/insights?test=${test}&refresh=true",
+          "/api/watchlist/tags"
+        ],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/useActivityDetection.js",
+        "paths": [],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/useAuthSync.js",
+        "paths": [],
+        "wsUsage": false
+      },
+      {
+        "file": "frontend/src/hooks/useRealtimeQuote.js",
+        "paths": [],
+        "wsUsage": true
+      },
+      {
+        "file": "frontend/src/hooks/useTranslation.js",
+        "paths": [],
+        "wsUsage": false
+      }
+    ],
+    "pages": [
+      "frontend/src/pages/Analyze.js",
+      "frontend/src/pages/Backtest.js",
+      "frontend/src/pages/Chatbot.js",
+      "frontend/src/pages/Compare.js",
+      "frontend/src/pages/Correlation.js",
+      "frontend/src/pages/Dashboard.js",
+      "frontend/src/pages/DividendCalendar.js",
+      "frontend/src/pages/EarningsCalendar.js",
+      "frontend/src/pages/Glossary.js",
+      "frontend/src/pages/InsightDetail.js",
+      "frontend/src/pages/Landing.js",
+      "frontend/src/pages/Learn.js",
+      "frontend/src/pages/Login.js",
+      "frontend/src/pages/PaperTrading.js",
+      "frontend/src/pages/Portfolio.js",
+      "frontend/src/pages/Register.js",
+      "frontend/src/pages/RiskDashboard.js",
+      "frontend/src/pages/Screener.js",
+      "frontend/src/pages/Settings.js",
+      "frontend/src/pages/SystemMap.js",
+      "frontend/src/pages/Usage.js",
+      "frontend/src/pages/Watchlist.js"
+    ],
+    "components": [
+      "frontend/src/components/AdvancedCharts.js",
+      "frontend/src/components/AnalysisOptions.js",
+      "frontend/src/components/DailyUsageChartCanvas.js",
+      "frontend/src/components/DividendCard.js",
+      "frontend/src/components/ETFInfo.js",
+      "frontend/src/components/EquityCurveChart.js",
+      "frontend/src/components/ErrorBoundary.js",
+      "frontend/src/components/EvidenceTabs.js",
+      "frontend/src/components/InsightCharts.js",
+      "frontend/src/components/InsightConfidence.js",
+      "frontend/src/components/InsightsPanel.js",
+      "frontend/src/components/InteractiveChart.js",
+      "frontend/src/components/LineChartCanvas.js",
+      "frontend/src/components/MultiLineChartCanvas.js",
+      "frontend/src/components/MultiTimeframeChart.js",
+      "frontend/src/components/NavBar.js",
+      "frontend/src/components/OfflineIndicator.js",
+      "frontend/src/components/PriceChart.js",
+      "frontend/src/components/ProtectedRoute.js",
+      "frontend/src/components/QuantPanel.js",
+      "frontend/src/components/ReportGenerator.js",
+      "frontend/src/components/SearchAutocomplete.js",
+      "frontend/src/components/TickerSearch.js",
+      "frontend/src/components/ui/EmptyState.js",
+      "frontend/src/components/ui/ErrorMessage.js",
+      "frontend/src/components/ui/LazyImage.js",
+      "frontend/src/components/ui/Loading.js",
+      "frontend/src/components/ui/ProgressBar.js",
+      "frontend/src/components/ui/Skeleton.js",
+      "frontend/src/components/ui/SkeletonCard.js",
+      "frontend/src/components/ui/SkeletonTable.js",
+      "frontend/src/components/ui/Spinner.js",
+      "frontend/src/components/ui/Term.js",
+      "frontend/src/components/ui/ThemeToggle.js",
+      "frontend/src/components/ui/Toast.js",
+      "frontend/src/components/ui/Tooltip.js",
+      "frontend/src/components/ui/VirtualList.js",
+      "frontend/src/components/ui/index.js"
+    ]
+  }
+}

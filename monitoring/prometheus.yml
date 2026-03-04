@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: "stock-ai"
+    environment: "production"
+
+scrape_configs:
+  # Spring Boot Actuator (Micrometer + Prometheus)
+  - job_name: "backend"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["backend:8080"]
+    scrape_interval: 15s
+
+  # FastAPI AI service (if prometheus_fastapi_instrumentator is added)
+  - job_name: "ai"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["ai:8000"]
+    scrape_interval: 30s
+
+  # Prometheus self-monitoring
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]

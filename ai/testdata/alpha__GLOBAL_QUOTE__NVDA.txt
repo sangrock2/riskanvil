@@ -1,0 +1,1 @@
+{"Global Quote": {"01. symbol": "NVDA", "02. open": "191.7600", "03. high": "193.6300", "04. low": "186.1500", "05. price": "188.1200", "06. volume": "183529733", "07. latest trading day": "2026-01-05", "08. previous close": "188.8500", "09. change": "-0.7300", "10. change percent": "-0.3866%"}}

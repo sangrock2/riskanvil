@@ -1,0 +1,34 @@
+# Environment files (contain sensitive data)
+.env
+.env.local
+.env.*.local
+
+# Keep the example template
+!.env.example
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+nul
+
+# Build artifacts / local caches
+node_modules/
+frontend/build/
+frontend/dist/
+backend/build/
+backend/.gradle-local/
+**/__pycache__/
+*.pyc
+.npm-cache/
+
+# Runtime artifacts
+artifacts/reports/*
+!artifacts/reports/.gitkeep
+artifacts/screenshots/*
+!artifacts/screenshots/.gitkeep

@@ -1,0 +1,379 @@
+{
+  "terms": {
+    "RSI": {
+      "name": "RSI (Relative Strength Index)",
+      "definition": "상대강도지수. 0~100 사이의 값으로 표시되며, 일반적으로 70 이상이면 과매수, 30 이하면 과매도 상태를 나타냅니다.",
+      "category": "technical"
+    },
+    "MACD": {
+      "name": "MACD (Moving Average Convergence Divergence)",
+      "definition": "이동평균수렴확산지수. 단기와 장기 이동평균선의 차이를 이용한 기술적 지표로, 추세 전환을 파악하는 데 사용됩니다.",
+      "category": "technical"
+    },
+    "PE": {
+      "name": "P/E Ratio (Price-to-Earnings)",
+      "definition": "주가수익비율. 주가를 주당순이익(EPS)으로 나눈 값으로, 주가가 이익의 몇 배에 거래되는지를 나타냅니다.",
+      "category": "fundamental"
+    },
+    "PB": {
+      "name": "P/B Ratio (Price-to-Book)",
+      "definition": "주가순자산비율. 주가를 주당순자산(BPS)으로 나눈 값으로, 회사의 자산가치 대비 주가 수준을 나타냅니다.",
+      "category": "fundamental"
+    },
+    "PS": {
+      "name": "P/S Ratio (Price-to-Sales)",
+      "definition": "주가매출비율. 주가를 주당매출액으로 나눈 값으로, 매출 대비 주가 수준을 평가합니다.",
+      "category": "fundamental"
+    },
+    "EPS": {
+      "name": "EPS (Earnings Per Share)",
+      "definition": "주당순이익. 기업의 순이익을 발행 주식 수로 나눈 값으로, 주주 1주당 얼마의 이익이 돌아가는지를 나타냅니다.",
+      "category": "fundamental"
+    },
+    "ROE": {
+      "name": "ROE (Return on Equity)",
+      "definition": "자기자본이익률. 기업이 자기자본으로 얼마나 효율적으로 이익을 창출했는지를 나타내는 지표입니다.",
+      "category": "fundamental"
+    },
+    "MarketCap": {
+      "name": "시가총액 (Market Capitalization)",
+      "definition": "기업의 발행 주식 수에 현재 주가를 곱한 값으로, 기업의 시장 가치를 나타냅니다.",
+      "category": "fundamental"
+    },
+    "Volume": {
+      "name": "거래량 (Trading Volume)",
+      "definition": "특정 기간 동안 거래된 주식의 총 수량. 시장의 유동성과 관심도를 나타냅니다.",
+      "category": "technical"
+    },
+    "Volatility": {
+      "name": "변동성 (Volatility)",
+      "definition": "주가가 얼마나 크게 움직이는지를 나타내는 지표. 높을수록 리스크가 크고, 낮을수록 안정적입니다.",
+      "category": "risk"
+    },
+    "Beta": {
+      "name": "베타 (Beta)",
+      "definition": "시장 전체 대비 개별 주식의 변동성. 1보다 크면 시장보다 변동성이 크고, 작으면 안정적입니다.",
+      "category": "risk"
+    },
+    "DividendYield": {
+      "name": "배당수익률 (Dividend Yield)",
+      "definition": "연간 배당금을 현재 주가로 나눈 값. 투자금액 대비 배당으로 받는 수익률을 나타냅니다.",
+      "category": "fundamental"
+    },
+    "MovingAverage": {
+      "name": "이동평균 (Moving Average)",
+      "definition": "일정 기간 동안의 주가 평균. 추세를 파악하고 매매 시점을 판단하는 데 사용됩니다.",
+      "category": "technical"
+    },
+    "SMA": {
+      "name": "SMA (Simple Moving Average)",
+      "definition": "단순이동평균. 일정 기간의 종가를 단순 평균한 값입니다.",
+      "category": "technical"
+    },
+    "EMA": {
+      "name": "EMA (Exponential Moving Average)",
+      "definition": "지수이동평균. 최근 가격에 더 큰 가중치를 부여한 이동평균입니다.",
+      "category": "technical"
+    },
+    "Resistance": {
+      "name": "저항선 (Resistance)",
+      "definition": "주가가 상승하다가 막히는 가격대. 매도 압력이 강해 돌파가 어려운 수준입니다.",
+      "category": "technical"
+    },
+    "Support": {
+      "name": "지지선 (Support)",
+      "definition": "주가가 하락하다가 반등하는 가격대. 매수 세력이 강해 하락이 멈추는 수준입니다.",
+      "category": "technical"
+    },
+    "Bullish": {
+      "name": "강세 (Bullish)",
+      "definition": "주가가 상승할 것으로 예상되는 시장 분위기. 매수 심리가 우세한 상태입니다.",
+      "category": "sentiment"
+    },
+    "Bearish": {
+      "name": "약세 (Bearish)",
+      "definition": "주가가 하락할 것으로 예상되는 시장 분위기. 매도 심리가 우세한 상태입니다.",
+      "category": "sentiment"
+    },
+    "Momentum": {
+      "name": "모멘텀 (Momentum)",
+      "definition": "주가의 상승 또는 하락 추세의 강도. 높을수록 추세가 강합니다.",
+      "category": "technical"
+    },
+    "Overbought": {
+      "name": "과매수 (Overbought)",
+      "definition": "과도한 매수로 주가가 고평가된 상태. 조정 가능성이 높습니다.",
+      "category": "technical"
+    },
+    "Oversold": {
+      "name": "과매도 (Oversold)",
+      "definition": "과도한 매도로 주가가 저평가된 상태. 반등 가능성이 높습니다.",
+      "category": "technical"
+    },
+    "Breakout": {
+      "name": "돌파 (Breakout)",
+      "definition": "주가가 저항선이나 지지선을 뚫고 나가는 현상. 새로운 추세의 시작을 의미할 수 있습니다.",
+      "category": "technical"
+    },
+    "Backtest": {
+      "name": "백테스트 (Backtest)",
+      "definition": "투자 전략을 과거 데이터에 적용하여 성과를 검증하는 과정입니다.",
+      "category": "strategy"
+    },
+    "SharpeRatio": {
+      "name": "샤프 비율 (Sharpe Ratio)",
+      "definition": "초과 수익률을 위험으로 나눈 값. 위험 대비 수익률을 평가하는 지표입니다.",
+      "category": "risk"
+    },
+    "Drawdown": {
+      "name": "최대낙폭 (Maximum Drawdown)",
+      "definition": "고점 대비 최대 하락폭. 투자 전략의 위험도를 나타냅니다.",
+      "category": "risk"
+    },
+    "RevenueYoY": {
+      "name": "매출 YoY (Year-over-Year Revenue)",
+      "definition": "전년 동기 대비 매출 증가율. 기업의 성장성을 평가하는 지표입니다.",
+      "category": "fundamental"
+    },
+    "OperatingMargin": {
+      "name": "영업이익률 (Operating Margin)",
+      "definition": "영업이익을 매출로 나눈 값. 기업의 본업 수익성을 나타냅니다.",
+      "category": "fundamental"
+    },
+    "DebtRatio": {
+      "name": "부채비율 (Debt Ratio)",
+      "definition": "총부채를 총자산으로 나눈 값. 기업의 재무 건전성을 평가합니다.",
+      "category": "fundamental"
+    },
+    "QuickRatio": {
+      "name": "당좌비율 (Quick Ratio)",
+      "definition": "당좌자산을 유동부채로 나눈 값. 단기 지급능력을 평가합니다.",
+      "category": "fundamental"
+    },
+    "Stochastic": {
+      "name": "스토캐스틱 (Stochastic Oscillator)",
+      "definition": "현재 가격이 일정 기간 동안의 가격 범위에서 어느 위치에 있는지를 나타내는 모멘텀 지표. 0~100 사이 값으로, 80 이상은 과매수, 20 이하는 과매도를 나타냅니다.",
+      "category": "technical"
+    },
+    "ADX": {
+      "name": "ADX (Average Directional Index)",
+      "definition": "추세의 강도를 측정하는 지표. 0~100 사이 값으로, 25 이상이면 강한 추세, 20 이하면 약한 추세를 의미합니다. 방향성은 알려주지 않고 강도만 측정합니다.",
+      "category": "technical"
+    },
+    "ATR": {
+      "name": "ATR (Average True Range)",
+      "definition": "평균 실제 범위. 가격 변동성을 측정하는 지표로, 값이 클수록 변동성이 크고 작을수록 안정적입니다. 스톱로스 설정에 자주 사용됩니다.",
+      "category": "technical"
+    },
+    "Fibonacci": {
+      "name": "피보나치 되돌림 (Fibonacci Retracement)",
+      "definition": "주요 가격 움직임 후 되돌림 수준을 예측하는 기술적 분석 도구. 주요 비율은 23.6%, 38.2%, 50%, 61.8%, 78.6%입니다.",
+      "category": "technical"
+    },
+    "Ichimoku": {
+      "name": "일목균형표 (Ichimoku Cloud)",
+      "definition": "전환선, 기준선, 선행스팬, 후행스팬으로 구성된 종합 기술적 지표. 지지/저항, 추세 방향, 모멘텀을 한눈에 파악할 수 있습니다.",
+      "category": "technical"
+    },
+    "CCI": {
+      "name": "CCI (Commodity Channel Index)",
+      "definition": "가격이 평균에서 얼마나 벗어났는지를 측정하는 지표. +100 이상은 과매수, -100 이하는 과매도를 나타냅니다.",
+      "category": "technical"
+    },
+    "VWAP": {
+      "name": "VWAP (Volume Weighted Average Price)",
+      "definition": "거래량 가중 평균 가격. 일중 거래에서 평균 매수/매도 가격을 나타내며, 기관투자자들이 자주 참고합니다.",
+      "category": "technical"
+    },
+    "ParabolicSAR": {
+      "name": "파라볼릭 SAR (Parabolic Stop and Reverse)",
+      "definition": "가격 차트에 점으로 표시되는 추세 추종 지표. 가격 위에 점이 있으면 하락 추세, 아래에 있으면 상승 추세를 나타냅니다.",
+      "category": "technical"
+    },
+    "WilliamsR": {
+      "name": "윌리엄스 %R (Williams %R)",
+      "definition": "과매수/과매도를 판단하는 모멘텀 지표. -20 이상은 과매수, -80 이하는 과매도를 나타냅니다. 스토캐스틱과 유사하지만 음수 값을 사용합니다.",
+      "category": "technical"
+    },
+    "HeadAndShoulders": {
+      "name": "헤드앤숄더 (Head and Shoulders)",
+      "definition": "강력한 추세 반전 패턴. 왼쪽 어깨, 머리(고점), 오른쪽 어깨로 구성되며, 넥라인 돌파 시 하락 신호입니다. 역헤드앤숄더는 상승 신호입니다.",
+      "category": "technical"
+    },
+    "Triangle": {
+      "name": "삼각형 패턴 (Triangle Pattern)",
+      "definition": "상승, 하락, 대칭 삼각형이 있으며, 가격이 수렴하다가 한 방향으로 돌파하는 패턴. 돌파 방향으로 강한 추세가 나타날 가능성이 높습니다.",
+      "category": "technical"
+    },
+    "Flag": {
+      "name": "깃발형 패턴 (Flag Pattern)",
+      "definition": "급격한 가격 변동 후 짧은 조정을 거쳐 원래 추세로 돌아가는 패턴. 강세 깃발과 약세 깃발이 있습니다.",
+      "category": "technical"
+    },
+    "DoubleTop": {
+      "name": "이중 천정 (Double Top)",
+      "definition": "두 번의 고점을 형성한 후 하락하는 약세 반전 패턴. 'M' 모양으로 나타나며, 지지선 돌파 시 하락 신호입니다.",
+      "category": "technical"
+    },
+    "DoubleBottom": {
+      "name": "이중 바닥 (Double Bottom)",
+      "definition": "두 번의 저점을 형성한 후 상승하는 강세 반전 패턴. 'W' 모양으로 나타나며, 저항선 돌파 시 상승 신호입니다.",
+      "category": "technical"
+    },
+    "Doji": {
+      "name": "도지 (Doji)",
+      "definition": "시가와 종가가 거의 같은 캔들 패턴. 매수와 매도 세력이 균형을 이루고 있음을 나타내며, 추세 전환의 신호일 수 있습니다.",
+      "category": "technical"
+    },
+    "Hammer": {
+      "name": "망치형 (Hammer)",
+      "definition": "하락 추세 말기에 나타나는 강세 반전 캔들. 긴 아래 꼬리와 짧은 몸통이 특징이며, 매수 세력의 개입을 시사합니다.",
+      "category": "technical"
+    },
+    "Engulfing": {
+      "name": "포용형 (Engulfing Pattern)",
+      "definition": "이전 캔들을 완전히 감싸는 반대색 캔들. 강세 포용형은 상승 신호, 약세 포용형은 하락 신호입니다.",
+      "category": "technical"
+    },
+    "LimitOrder": {
+      "name": "지정가 주문 (Limit Order)",
+      "definition": "특정 가격 이하로 매수하거나 이상으로 매도하는 주문. 원하는 가격에 거래할 수 있지만, 체결되지 않을 수 있습니다.",
+      "category": "trading"
+    },
+    "MarketOrder": {
+      "name": "시장가 주문 (Market Order)",
+      "definition": "현재 시장 가격에 즉시 매수 또는 매도하는 주문. 즉시 체결되지만 가격 변동 위험이 있습니다.",
+      "category": "trading"
+    },
+    "StopLoss": {
+      "name": "손절매 (Stop Loss)",
+      "definition": "설정한 가격 이하로 하락하면 자동으로 매도하는 주문. 손실을 제한하기 위한 위험 관리 도구입니다.",
+      "category": "trading"
+    },
+    "StopLimit": {
+      "name": "스톱 리밋 주문 (Stop-Limit Order)",
+      "definition": "스톱 가격 도달 시 지정가 주문으로 전환되는 주문. 손절매와 지정가의 장점을 결합한 방식입니다.",
+      "category": "trading"
+    },
+    "TrailingStop": {
+      "name": "트레일링 스톱 (Trailing Stop)",
+      "definition": "주가가 유리한 방향으로 움직일 때 손절가가 자동으로 따라가는 동적 손절매. 이익을 보호하면서 추가 상승 여력을 남깁니다.",
+      "category": "trading"
+    },
+    "Options": {
+      "name": "옵션 (Options)",
+      "definition": "특정 가격에 주식을 사거나 팔 수 있는 권리를 거래하는 파생상품. 콜옵션(매수권)과 풋옵션(매도권)이 있습니다.",
+      "category": "trading"
+    },
+    "Futures": {
+      "name": "선물 (Futures)",
+      "definition": "미래의 특정 시점에 정해진 가격으로 자산을 사고팔기로 약속하는 계약. 레버리지 효과가 있어 위험도가 높습니다.",
+      "category": "trading"
+    },
+    "ShortSelling": {
+      "name": "공매도 (Short Selling)",
+      "definition": "보유하지 않은 주식을 빌려서 먼저 팔고, 나중에 낮은 가격에 사서 갚는 거래. 주가 하락에 베팅하는 전략입니다.",
+      "category": "trading"
+    },
+    "AssetAllocation": {
+      "name": "자산 배분 (Asset Allocation)",
+      "definition": "주식, 채권, 현금 등 다양한 자산군에 투자금을 분산하는 전략. 위험과 수익의 균형을 맞추는 핵심 원칙입니다.",
+      "category": "portfolio"
+    },
+    "Rebalancing": {
+      "name": "리밸런싱 (Rebalancing)",
+      "definition": "포트폴리오의 자산 비율을 원래 목표로 재조정하는 것. 정기적으로 수익이 난 자산을 매도하고 저평가된 자산을 매수합니다.",
+      "category": "portfolio"
+    },
+    "Diversification": {
+      "name": "분산 투자 (Diversification)",
+      "definition": "여러 종목, 섹터, 지역에 투자하여 위험을 줄이는 전략. '계란을 한 바구니에 담지 말라'는 투자 원칙입니다.",
+      "category": "portfolio"
+    },
+    "Hedging": {
+      "name": "헤징 (Hedging)",
+      "definition": "손실 위험을 줄이기 위해 반대 포지션을 취하는 전략. 옵션, 선물 등을 활용하여 포트폴리오를 보호합니다.",
+      "category": "portfolio"
+    },
+    "VaR": {
+      "name": "VaR (Value at Risk)",
+      "definition": "일정 신뢰수준과 기간 동안 발생할 수 있는 최대 손실 금액. 예: 95% VaR $10,000는 95% 확률로 손실이 $10,000 이하임을 의미합니다.",
+      "category": "risk"
+    },
+    "KellyCriterion": {
+      "name": "켈리 기준 (Kelly Criterion)",
+      "definition": "승률과 손익비를 고려하여 최적의 베팅 비율을 계산하는 공식. 장기적 자산 증가율을 최대화하는 포지션 크기를 결정합니다.",
+      "category": "portfolio"
+    },
+    "PositionSizing": {
+      "name": "포지션 크기 조절 (Position Sizing)",
+      "definition": "각 거래에 투자할 자본의 비율을 결정하는 것. 위험 관리의 핵심으로, 계좌의 일정 비율(예: 1-2%)만 위험에 노출합니다.",
+      "category": "portfolio"
+    },
+    "RiskRewardRatio": {
+      "name": "손익비 (Risk-Reward Ratio)",
+      "definition": "잠재적 손실 대비 이익의 비율. 예: 1:3 손익비는 $100 리스크로 $300 이익을 노리는 것. 최소 1:2 이상 권장됩니다.",
+      "category": "risk"
+    },
+    "CorrelationMatrix": {
+      "name": "상관관계 행렬 (Correlation Matrix)",
+      "definition": "포트폴리오 내 자산 간 상관관계를 나타내는 표. 낮은 상관관계(-1에 가까움)는 분산 효과가 큽니다.",
+      "category": "portfolio"
+    },
+    "ExpectedValue": {
+      "name": "기댓값 (Expected Value)",
+      "definition": "거래 전략의 평균 손익. (승률 × 평균 이익) - (패률 × 평균 손실)로 계산하며, 양수여야 장기적으로 수익이 납니다.",
+      "category": "portfolio"
+    },
+    "FreeCashFlow": {
+      "name": "잉여현금흐름 (Free Cash Flow)",
+      "definition": "영업활동으로 창출한 현금에서 자본적 지출을 차감한 금액. 기업이 자유롭게 사용할 수 있는 현금을 나타냅니다.",
+      "category": "fundamental"
+    },
+    "EBITDA": {
+      "name": "EBITDA (Earnings Before Interest, Taxes, Depreciation, and Amortization)",
+      "definition": "이자, 세금, 감가상각 전 이익. 기업의 영업 성과를 순수하게 평가하는 지표입니다.",
+      "category": "fundamental"
+    },
+    "CurrentRatio": {
+      "name": "유동비율 (Current Ratio)",
+      "definition": "유동자산을 유동부채로 나눈 값. 단기 지급능력을 나타내며, 2.0 이상이 안정적으로 간주됩니다.",
+      "category": "fundamental"
+    },
+    "PEG": {
+      "name": "PEG Ratio (Price/Earnings to Growth)",
+      "definition": "PE 비율을 EPS 성장률로 나눈 값. 성장성을 고려한 밸류에이션 지표로, 1.0 이하면 저평가로 간주됩니다.",
+      "category": "fundamental"
+    },
+    "BookValue": {
+      "name": "장부가치 (Book Value)",
+      "definition": "회사의 총자산에서 총부채를 뺀 순자산. 주당 장부가치(BPS)는 순자산을 발행 주식 수로 나눈 값입니다.",
+      "category": "fundamental"
+    },
+    "EV": {
+      "name": "EV (Enterprise Value)",
+      "definition": "기업가치. 시가총액 + 순부채로 계산하며, 기업을 인수하는 데 필요한 총 비용을 나타냅니다.",
+      "category": "fundamental"
+    },
+    "ROIC": {
+      "name": "ROIC (Return on Invested Capital)",
+      "definition": "투하자본이익률. 기업이 투자한 자본으로 얼마나 효율적으로 이익을 창출했는지 나타냅니다.",
+      "category": "fundamental"
+    },
+    "DividendPayout": {
+      "name": "배당성향 (Dividend Payout Ratio)",
+      "definition": "순이익 중 배당금으로 지급하는 비율. 높을수록 주주 친화적이지만, 재투자 여력은 줄어듭니다.",
+      "category": "fundamental"
+    },
+    "BollingerBands": {
+      "name": "볼린저 밴드 (Bollinger Bands)",
+      "definition": "이동평균선을 중심으로 표준편차만큼 위아래로 그은 밴드. 가격이 상단 밴드에 닿으면 과매수, 하단 밴드에 닿으면 과매도 신호입니다.",
+      "category": "technical"
+    },
+    "OBV": {
+      "name": "OBV (On-Balance Volume)",
+      "definition": "거래량 기반 누적 지표. 가격이 상승한 날의 거래량은 더하고, 하락한 날의 거래량은 빼서 계산합니다. 추세 확인에 사용됩니다.",
+      "category": "technical"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+{"Global Quote": {"01. symbol": "AGQ", "02. open": "217.1800", "03. high": "228.4900", "04. low": "216.4000", "05. price": "222.4900", "06. volume": "6559683", "07. latest trading day": "2026-01-12", "08. previous close": "195.8900", "09. change": "26.6000", "10. change percent": "13.5790%"}}

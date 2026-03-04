@@ -1,0 +1,334 @@
+/**
+ * Compare Page Styles
+ * 주식 비교 페이지 스타일
+ */
+
+.container {
+  max-width: var(--max-width-xl);
+  margin: 0 auto;
+  padding: var(--space-4);
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-extrabold);
+  letter-spacing: -0.3px;
+  color: var(--color-text);
+}
+
+.sub {
+  margin-top: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Card */
+.card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-3);
+  animation: fadeInUp var(--transition-slow) ease-out;
+}
+
+.h3 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-extrabold);
+  color: var(--color-text);
+  margin-bottom: var(--space-3);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* Inputs */
+.input {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--text-base);
+  outline: none;
+  transition:
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.input:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: var(--text-base);
+  transition:
+    background var(--transition-base),
+    transform var(--transition-fast);
+}
+
+.btn:hover {
+  background: var(--color-bg-hover);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btnPrimary {
+  composes: btn;
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+  color: var(--color-primary);
+  font-weight: var(--font-bold);
+}
+
+.btnPrimary:hover {
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.linkBtn {
+  text-decoration: none;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  background: var(--color-bg);
+  transition: background var(--transition-base);
+}
+
+.linkBtn:hover {
+  background: var(--color-bg-hover);
+}
+
+.miniBtn {
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  transition: background var(--transition-base);
+}
+
+.miniBtn:hover {
+  background: var(--color-bg-hover);
+}
+
+/* Small text */
+.small {
+  margin-top: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+}
+
+/* Error */
+.error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--color-danger-light);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger-dark);
+  animation: fadeInUp var(--transition-slow) ease-out;
+}
+
+.error::before {
+  content: "!";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background: var(--color-danger);
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Table */
+.tableWrap {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.table th,
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: top;
+  text-align: left;
+  font-size: var(--text-sm);
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-secondary);
+  z-index: 1;
+  border-bottom: 1px solid var(--color-border);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-secondary);
+}
+
+.table tbody tr {
+  transition: background var(--transition-fast);
+}
+
+.table tbody tr:hover {
+  background: var(--color-bg-hover);
+}
+
+.thTicker {
+  min-width: 220px;
+}
+
+.thTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+}
+
+.badgeTop {
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: var(--font-bold);
+}
+
+.badgeLow {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-light);
+  color: var(--color-danger-dark);
+  font-weight: var(--font-bold);
+}
+
+/* Highlight cells */
+.best {
+  background: var(--color-primary-light);
+}
+
+.worst {
+  background: var(--color-danger-light);
+}
+
+.bestCell {
+  background: rgba(59, 130, 246, 0.12);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-bold);
+}
+
+.worstCell {
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: var(--radius-md);
+  font-weight: var(--font-bold);
+}
+
+/* Toggles */
+.toggles {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin: var(--space-3) 0;
+}
+
+.togBtn {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  transition:
+    background var(--transition-base),
+    opacity var(--transition-base);
+}
+
+.togBtn:hover {
+  background: var(--color-bg-hover);
+}
+
+.togBtnOff {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .btn,
+  .btnPrimary {
+    width: 100%;
+  }
+}

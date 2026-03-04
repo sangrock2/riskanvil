@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap");
+@import "./css/variables.css";
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+}
+
+#root {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Ambient background layers for a softer, modern look */
+#root::before,
+#root::after {
+  content: "";
+  position: fixed;
+  inset: -20vh -10vw auto;
+  pointer-events: none;
+  z-index: -1;
+}
+
+#root::before {
+  height: 70vh;
+  background:
+    radial-gradient(circle at 14% 22%, rgba(14, 165, 233, 0.24), transparent 46%),
+    radial-gradient(circle at 86% 14%, rgba(16, 185, 129, 0.16), transparent 36%);
+  filter: blur(14px);
+}
+
+#root::after {
+  inset: auto -10vw -25vh;
+  height: 65vh;
+  background:
+    radial-gradient(circle at 8% 78%, rgba(34, 211, 238, 0.14), transparent 44%),
+    radial-gradient(circle at 92% 90%, rgba(14, 165, 233, 0.18), transparent 50%);
+  filter: blur(20px);
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+code {
+  font-family: var(--font-mono);
+}

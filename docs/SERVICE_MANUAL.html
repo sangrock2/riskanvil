@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock-AI 서비스 사용/운영 매뉴얼</title>
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --text: #172334;
+      --line: #d9e2ee;
+      --shadow: 0 10px 26px rgba(18, 35, 60, 0.08);
+      --radius: 14px;
+      --max: 1160px;
+      --code-bg: #f5f8fc;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: radial-gradient(circle at 0% 0%, #f9fcff 0%, var(--bg) 45%);
+      color: var(--text);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.62;
+    }
+
+    .page { max-width: var(--max); margin: 0 auto; padding: 24px 18px 42px; }
+    .hero {
+      background: linear-gradient(135deg, #0f5fa7 0%, #093f74 100%);
+      color: #f2f8ff;
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 24px 22px;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: -0.4px; }
+    .hero p { margin: 0; color: #d5e7fb; }
+    .meta { margin-top: 10px; font-size: 12px; color: #dbeafd; opacity: 0.95; }
+
+    .article {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 24px 24px;
+    }
+
+    .article h1, .article h2, .article h3 { color: #173a61; letter-spacing: -0.2px; }
+    .article h1 { margin-top: 0; border-bottom: 1px solid #e2eaf3; padding-bottom: 10px; }
+    .article h2 { margin-top: 30px; border-left: 4px solid #96bce2; padding-left: 10px; }
+    .article p, .article li { font-size: 15px; }
+    .article ul, .article ol { padding-left: 20px; }
+
+    .article code {
+      background: var(--code-bg);
+      border: 1px solid #dbe6f2;
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.93em;
+      color: #18385a;
+    }
+
+    .article pre {
+      background: #111a26;
+      color: #ebf2fd;
+      border-radius: 10px;
+      border: 1px solid #2e415c;
+      padding: 12px;
+      overflow: auto;
+      font-size: 13px;
+    }
+
+    .article pre code {
+      background: transparent;
+      border: 0;
+      padding: 0;
+      color: inherit;
+    }
+
+    @media (max-width: 880px) {
+      .page { padding: 16px 12px 28px; }
+      .hero { padding: 18px 16px; }
+      .hero h1 { font-size: 24px; }
+      .article { padding: 14px 14px 18px; }
+      .article p, .article li { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>Stock-AI 서비스 사용/운영 매뉴얼</h1>
+      <p>사용자 기능 사용법과 운영 기능 사용법을 한 문서에서 빠르게 확인할 수 있는 통합 가이드입니다.</p>
+      <div class="meta">Generated at: 2026-02-27 02:21:22</div>
+    </section>
+    <article class="article">
+      <h1 id="stock-ai">Stock-AI 서비스 사용/운영 매뉴얼</h1>
+<p>기준일: 2026-02-26<br />
+기준 코드: <code>C:\Users\Sw103\Desktop\stock-ai</code></p>
+<p>이 문서는 다음 2가지 목적을 동시에 지원한다.</p>
+<ol>
+<li>사용자 관점: 기능을 실제로 어떻게 쓰는지</li>
+<li>운영 관점: 서비스 상태를 어떻게 확인하고 운영하는지</li>
+</ol>
+<hr />
+<h2 id="section">1. 서비스 개요</h2>
+<p>Stock-AI는 다음 3개 앱으로 구성된 멀티서비스 플랫폼이다.</p>
+<ol>
+<li>Frontend: React 기반 사용자 웹 UI</li>
+<li>Backend: Spring Boot 기반 인증/도메인/API 서버</li>
+<li>AI Service: FastAPI 기반 분석/수치 계산/리포트 엔진</li>
+</ol>
+<p>핵심 사용자 가치:</p>
+<ol>
+<li>종목 분석 자동화 (기술적/기본적/뉴스)</li>
+<li>전략 검증 (백테스트)</li>
+<li>포트폴리오 관리 (보유, 실적 일정, 리스크 분석)</li>
+<li>모의투자 및 AI 챗봇 보조</li>
+</ol>
+<hr />
+<h2 id="section-1">2. 사용자 기능 사용법</h2>
+<h3 id="section-2">2.1 가입/로그인/인증</h3>
+<p>사용 경로:</p>
+<ol>
+<li>회원가입: <code>/register</code></li>
+<li>로그인: <code>/login</code></li>
+<li>2FA 사용 시: 로그인 후 6자리 OTP 또는 백업 코드 입력</li>
+</ol>
+<p>유의사항:</p>
+<ol>
+<li>로그인 세션 만료/비활성 종료 시 로그인 화면에서 사유 메시지가 표시된다.</li>
+<li>Refresh Token 기반 재인증이 동작하며, 로그아웃 시 서버 토큰 폐기 후 로컬 토큰이 정리된다.</li>
+</ol>
+<h3 id="dashboard">2.2 대시보드 (<code>/dashboard</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>빠른 분석 위젯에서 티커 입력 후 분석 상세 페이지로 이동</li>
+<li>관심종목/최근 분석/시장 개요 위젯으로 핵심 상태 파악</li>
+<li><code>사용자화</code> 버튼으로 위젯 표시/숨김 및 순서 변경</li>
+</ol>
+<p>팁:</p>
+<ol>
+<li>자주 보는 위젯만 노출하면 첫 화면 탐색 시간이 줄어든다.</li>
+<li>대시보드 구성은 브라우저 로컬에 저장된다.</li>
+</ol>
+<h3 id="analyze">2.3 분석 (<code>/analyze</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>티커/시장/리스크 프로필 선택</li>
+<li>분석 실행 후 인사이트/추천/근거 확인</li>
+<li>필요 시 <code>업데이트</code>로 최신 데이터 재조회</li>
+<li>상세 보기에서 근거/차트/리포트 생성으로 확장</li>
+</ol>
+<p>핵심 확인 포인트:</p>
+<ol>
+<li>추천 점수와 confidence를 같이 본다.</li>
+<li>fundamentals와 news ratio를 함께 확인해 단일 지표 편향을 피한다.</li>
+</ol>
+<h3 id="backtest">2.4 백테스트 (<code>/backtest</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>전략/자본/수수료 입력 후 실행</li>
+<li>결과에서 <code>총수익률</code>, <code>CAGR</code>, <code>Max Drawdown</code>, <code>Sharpe</code> 확인</li>
+<li>히스토리 목록에서 과거 실행 결과 재확인</li>
+</ol>
+<p>해석 팁:</p>
+<ol>
+<li>총수익률만 보지 말고 최대낙폭/샤프를 같이 본다.</li>
+<li>동일 전략이라도 티커/기간에 따라 결과가 크게 달라질 수 있다.</li>
+</ol>
+<h3 id="watchlist">2.5 관심종목 (<code>/watchlist</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>종목 추가</li>
+<li>태그 생성/할당으로 그룹 관리</li>
+<li>메모를 기록해 투자 가설/리스크 포인트 축적</li>
+<li>항목 단위 인사이트 업데이트</li>
+</ol>
+<p>실무적 활용:</p>
+<ol>
+<li>태그로 테마(예: 반도체, 배당, 경기민감) 분류</li>
+<li>메모 필드에 매수/매도 기준을 남겨 회고 품질 개선</li>
+</ol>
+<h3 id="portfolio">2.6 포트폴리오 (<code>/portfolio</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>포트폴리오 생성</li>
+<li>보유 포지션 추가(티커/시장/수량/매수가/매수일)</li>
+<li>포트폴리오 상세에서 손익/비중/요약 확인</li>
+<li>필요 시 리밸런싱 기능 활용</li>
+</ol>
+<h3 id="dividends">2.7 배당 캘린더 (<code>/dividends</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>포트폴리오 선택</li>
+<li>예정/최근 배당 이벤트 확인</li>
+<li>지급 일정과 규모를 포트폴리오 현금흐름 관점에서 점검</li>
+</ol>
+<h3 id="earnings">2.8 실적 캘린더 (<code>/earnings</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>포트폴리오 선택</li>
+<li>조회 기간(30/60/90/180일) 선택</li>
+<li>예정 실적 발표일, EPS 예상/실제 확인</li>
+</ol>
+<p>활용 팁:</p>
+<ol>
+<li>실적 전후로 변동성 확대 가능성이 높아 포지션 크기/손절 기준을 사전 점검한다.</li>
+</ol>
+<h3 id="risk-dashboard">2.9 리스크 대시보드 (<code>/risk-dashboard</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>포트폴리오 선택</li>
+<li>조회 기간(6개월/1년/15개월) 선택</li>
+<li>핵심 리스크 지표 확인:
+<ul>
+<li>연환산 변동성</li>
+<li>최대 낙폭</li>
+<li>VaR 95%</li>
+<li>Expected Shortfall 95%</li>
+<li>Sharpe, Beta, 분산 점수, 집중도</li>
+</ul>
+</li>
+<li>시계열 차트(Drawdown/롤링 변동성)로 구간 리스크 확인</li>
+</ol>
+<p>해석 팁:</p>
+<ol>
+<li>집중도(최대 비중)가 높으면 단일 종목 이벤트 리스크가 커진다.</li>
+<li>VaR와 ES를 함께 봐서 꼬리 리스크를 확인한다.</li>
+</ol>
+<h3 id="screener">2.10 스크리너 (<code>/screener</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>시장/밸류에이션/수익성 조건 설정</li>
+<li>결과 목록에서 지표 비교</li>
+<li>후보 종목을 분석/관심종목으로 이동</li>
+</ol>
+<h3 id="correlation">2.11 상관관계 (<code>/correlation</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>비교 티커 입력</li>
+<li>상관계수 및 보조 지표 확인</li>
+<li>포트폴리오 분산 효과가 있는 조합 탐색</li>
+</ol>
+<h3 id="paper-trading">2.12 모의투자 (<code>/paper-trading</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>시장(US/KR) 선택</li>
+<li>가상 주문(매수/매도, 수량) 실행</li>
+<li>잔고/보유/주문 이력 확인</li>
+<li>필요 시 계좌 초기화</li>
+</ol>
+<p>주의사항:</p>
+<ol>
+<li>모의투자는 학습용이며 실제 체결/슬리피지와 차이가 있다.</li>
+</ol>
+<h3 id="ai-chatbot">2.13 AI 챗봇 (<code>/chatbot</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>질문 입력</li>
+<li>대화별 문맥 유지</li>
+<li>필요 시 새 대화 생성/기존 대화 삭제</li>
+</ol>
+<p>권장 질문 방식:</p>
+<ol>
+<li>&quot;어떤 지표를 왜 봐야 하는지&quot;처럼 목적+조건을 함께 입력하면 응답 품질이 높다.</li>
+</ol>
+<h3 id="usage">2.14 사용량 대시보드 (<code>/usage</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>기간(7/30/90/180/365일) 선택</li>
+<li>호출량/캐시적중률/오류 상위 항목 확인</li>
+<li>데이터 내보내기/오래된 로그 정리 수행</li>
+</ol>
+<h3 id="settings">2.15 설정 (<code>/settings</code>)</h3>
+<p>주요 사용 흐름:</p>
+<ol>
+<li>2FA 활성화/비활성화</li>
+<li>알림/요약 설정 변경</li>
+<li>테마(다크/라이트), 언어(한국어/영어), 기본 시장 설정</li>
+</ol>
+<hr />
+<h2 id="section-3">3. 언어 모드 사용 가이드</h2>
+<p>지원 언어:</p>
+<ol>
+<li>한국어(<code>ko</code>)</li>
+<li>영어(<code>en</code>)</li>
+</ol>
+<p>변경 방법:</p>
+<ol>
+<li><code>설정 &gt; 언어</code>에서 변경</li>
+<li>변경 즉시 UI 텍스트 반영</li>
+</ol>
+<p>동작 원칙:</p>
+<ol>
+<li>선택 언어 번역 키가 누락되면 한국어(<code>ko</code>)로 자동 폴백</li>
+<li>한국어에도 없으면 키 문자열 표시(개발 검출용)</li>
+</ol>
+<p>번역 품질 점검 체크리스트:</p>
+<ol>
+<li>로그인/2FA/설정 알림 메시지 언어 일관성</li>
+<li>대시보드 설정 패널 문자열 언어 일관성</li>
+<li>실적 캘린더/리스크 대시보드 신규 화면 번역 여부</li>
+<li>모의투자 주문 성공 메시지/주문일시 포맷 언어별 표시</li>
+</ol>
+<hr />
+<h2 id="section-4">4. 운영 기능 사용법</h2>
+<h3 id="section-5">4.1 운영자가 주로 보는 엔드포인트</h3>
+<ol>
+<li>Backend health: <code>/actuator/health</code></li>
+<li>Backend metrics: <code>/actuator/prometheus</code></li>
+<li>AI health: <code>/health</code></li>
+<li>Nginx health: <code>/nginx-health</code></li>
+</ol>
+<h3 id="section-6">4.2 실행/중지</h3>
+<p>프로덕션 유사 실행:</p>
+<pre><code class="language-bash">docker compose up -d --build
+docker compose ps
+</code></pre>
+<p>중지:</p>
+<pre><code class="language-bash">docker compose down
+</code></pre>
+<h3 id="section-7">4.3 로그 확인</h3>
+<p>전체 로그:</p>
+<pre><code class="language-bash">docker compose logs -f
+</code></pre>
+<p>서비스별 로그:</p>
+<pre><code class="language-bash">docker compose logs -f backend
+docker compose logs -f ai
+docker compose logs -f nginx
+</code></pre>
+<h3 id="section-8">4.4 운영 관측</h3>
+<p>구성:</p>
+<ol>
+<li>Prometheus: 메트릭 수집</li>
+<li>Grafana: 시각화</li>
+<li>Sentry: 애플리케이션 에러 추적</li>
+</ol>
+<p>핵심 지표:</p>
+<ol>
+<li><code>ai_client_requests_total</code></li>
+<li><code>ai_client_latency</code></li>
+<li>인증 실패율/에러코드 추이</li>
+<li>캐시 적중률 관련 지표</li>
+</ol>
+<h3 id="section-9">4.5 장애 대응 기본 절차</h3>
+<ol>
+<li><code>X-Request-Id</code> 확보</li>
+<li>동일 requestId로 백엔드/AI 로그 추적</li>
+<li>AI 타임아웃/HTTP 오류 비중 확인</li>
+<li>캐시/DB/외부 API 상태 점검</li>
+<li>필요 시 설정값(timeout/retry) 보수 조정 후 재검증</li>
+</ol>
+<p>관련 문서:</p>
+<ol>
+<li><code>docs/OPERATIONS_RUNBOOK.md</code></li>
+<li><code>docs/ERROR_CATALOG.md</code></li>
+<li><code>docs/DEPLOY_CHECKLIST.md</code></li>
+</ol>
+<h3 id="section-10">4.6 릴리스/배포 체크</h3>
+<p>배포 전:</p>
+<ol>
+<li>필수 환경변수 설정 확인</li>
+<li>DB 마이그레이션(Flyway) 적용 가능 상태 확인</li>
+<li>CI 통과 여부 확인</li>
+</ol>
+<p>배포 후:</p>
+<ol>
+<li>헬스 체크</li>
+<li>핵심 사용자 플로우 로그인/조회 점검</li>
+<li>메트릭 이상 유무 점검</li>
+</ol>
+<hr />
+<h2 id="cie2e">5. CI/E2E 운영 체크</h2>
+<p>CI 구성:</p>
+<ol>
+<li>Frontend 테스트/빌드</li>
+<li>Backend 빌드/테스트</li>
+<li>AI 문법검사/린트/테스트</li>
+<li>Docker Compose 기반 E2E 스모크 테스트</li>
+</ol>
+<p>E2E 스모크가 확인하는 핵심 플로우:</p>
+<ol>
+<li>회원가입/로그인/토큰갱신/로그아웃</li>
+<li>보호 API 접근</li>
+<li>포트폴리오 생성/조회</li>
+<li>관심종목 add/list/remove</li>
+<li>실적 캘린더/리스크 대시보드 호출</li>
+</ol>
+<p>관련 파일:</p>
+<ol>
+<li><code>.github/workflows/ci.yml</code></li>
+<li><code>scripts/e2e_smoke.py</code></li>
+</ol>
+<hr />
+<h2 id="url">6. 실서비스 URL 오픈 가이드</h2>
+<p>실서비스 공개는 아래 문서를 기준으로 수행한다.</p>
+<ol>
+<li><code>docs/OPERATIONS_MANUAL.md</code></li>
+</ol>
+<p>요약 절차:</p>
+<ol>
+<li>도메인/DNS 연결</li>
+<li>서버에서 Docker Compose 실행</li>
+<li>리버스 프록시(Caddy/Nginx)로 HTTPS 종단</li>
+<li>배포 후 스모크 테스트 수행</li>
+</ol>
+<hr />
+<h2 id="section-11">7. 자주 묻는 질문</h2>
+<p>Q1. 분석 결과가 비어 보입니다.<br />
+A1. 외부 데이터 소스 상태, 티커 유효성, 캐시 상태를 먼저 확인한다.</p>
+<p>Q2. 리스크 대시보드가 빈 값으로 보입니다.<br />
+A2. 포지션/가격 데이터 부족 또는 조회 기간 데이터 부족일 수 있다. 보유 종목과 기간을 점검한다.</p>
+<p>Q3. 실적 캘린더 이벤트가 없습니다.<br />
+A3. 선택 포트폴리오 종목의 향후 이벤트 데이터가 없는 경우 빈 결과가 정상이다.</p>
+<p>Q4. 언어가 일부만 바뀝니다.<br />
+A4. 최신 빌드 반영 여부와 번역 키 누락을 확인한다. 본 코드베이스는 누락 시 한국어 폴백을 사용한다.</p>
+<hr />
+<h2 id="section-12">8. 참고 문서</h2>
+<ol>
+<li><code>docs/PRODUCT_MANUAL.md</code></li>
+<li><code>docs/API.md</code></li>
+<li><code>docs/ENGINEERING_HANDBOOK.md</code></li>
+<li><code>docs/OPERATIONS_RUNBOOK.md</code></li>
+<li><code>docs/OPERATIONS_MANUAL.md</code></li>
+</ol>
+
+    </article>
+  </div>
+</body>
+</html>
+

@@ -1,0 +1,35 @@
+# Pinned dependency set for reproducible AI service builds.
+# Update this file intentionally when upgrading dependencies.
+
+fastapi==0.128.0
+uvicorn==0.40.0
+httpx==0.28.1
+pydantic==2.12.5
+python-dotenv==1.2.1
+
+# Data sources
+yfinance==1.1.0
+FinanceDataReader==0.9.70
+pandas==3.0.0
+numpy==2.2.6
+pandas-ta==0.4.71b0
+
+# WebSocket (Finnhub real-time)
+websockets==16.0
+
+# AI Chatbot
+anthropic==0.77.0
+openai==1.0.0
+
+# Statistical calculations
+scipy==1.17.0
+
+# RAG
+chromadb==0.4.0
+beautifulsoup4==4.14.3
+
+# Error monitoring
+sentry-sdk[fastapi]==2.0.0
+
+# Utilities
+pytest==8.2.0

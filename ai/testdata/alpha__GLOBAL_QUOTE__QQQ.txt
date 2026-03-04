@@ -1,0 +1,1 @@
+{"Global Quote": {"01. symbol": "QQQ", "02. open": "619.7300", "03. high": "625.3999", "04. low": "618.6500", "05. price": "622.7200", "06. volume": "43645825", "07. latest trading day": "2026-01-23", "08. previous close": "620.7600", "09. change": "1.9600", "10. change percent": "0.3157%"}}

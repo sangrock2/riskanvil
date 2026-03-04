@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock-AI Portfolio Brief</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --text: #172231;
+      --muted: #5c6b7a;
+      --line: #dbe3ec;
+      --primary: #0f6ec9;
+      --primary-soft: #e8f2ff;
+      --success: #0a8f5a;
+      --warning: #b67800;
+      --shadow: 0 10px 24px rgba(15, 39, 69, 0.08);
+      --radius: 14px;
+      --max: 1060px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f7fbff 0%, var(--bg) 45%);
+      color: var(--text);
+      font-family: "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 28px 18px 44px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f6ec9 0%, #0d4f91 100%);
+      color: #f2f7ff;
+      border-radius: 18px;
+      padding: 28px 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      letter-spacing: -0.3px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #dceaff;
+      max-width: 860px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      color: #eff6ff;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      margin-top: 14px;
+    }
+
+    .panel h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: -0.2px;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .grid.kpi {
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fbfdff;
+    }
+
+    .card b {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 3px;
+      color: #12395e;
+    }
+
+    .card span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px;
+    }
+
+    .node {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .node h3 {
+      margin: 0 0 6px;
+      font-size: 16px;
+    }
+
+    .node ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #eef5fd;
+      color: #23405c;
+      font-weight: 700;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 3px 9px;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+
+    .ok { background: #eaf8f1; color: var(--success); }
+    .warn { background: #fff3df; color: var(--warning); }
+    .info { background: var(--primary-soft); color: var(--primary); }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      padding: 10px 12px;
+      margin-top: 8px;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: #1f3852;
+    }
+
+    .foot {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .linklist a {
+      color: var(--primary);
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 24px; }
+      .wrap { padding-top: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <h1>Stock-AI Portfolio Brief</h1>
+      <p>
+        포트폴리오/면접 제출용으로 정리한 읽기 쉬운 요약판입니다.
+        원문 기술문서는 유지하고, 여기서는 핵심 성과와 포지션별 강조 포인트만 빠르게 확인할 수 있게 재배치했습니다.
+      </p>
+      <div class="chips">
+        <span class="chip">React 19</span>
+        <span class="chip">Spring Boot 4 + Java 21</span>
+        <span class="chip">FastAPI</span>
+        <span class="chip">MySQL + Redis</span>
+        <span class="chip">SSE + WebSocket</span>
+        <span class="chip">Prometheus + Grafana</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>한눈에 보는 프로젝트</h2>
+      <p class="sub">구성/규모/기능의 핵심 지표</p>
+      <div class="grid kpi">
+        <div class="card"><b>3</b><span>핵심 서비스 계층(FE/BE/AI)</span></div>
+        <div class="card"><b>74+</b><span>백엔드 API 엔드포인트</span></div>
+        <div class="card"><b>34+</b><span>AI 라우트/WS 엔드포인트</span></div>
+        <div class="card"><b>20</b><span>Flyway 마이그레이션</span></div>
+        <div class="card"><b>22</b><span>핵심 엔티티(도메인 모델)</span></div>
+        <div class="card"><b>8</b><span>Docker Compose 서비스</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>아키텍처</h2>
+      <div class="flow">
+        <div class="node">
+          <h3>Frontend (React)</h3>
+          <ul>
+            <li>React Query 기반 서버 상태 관리</li>
+            <li>보호 라우트 + 토큰 갱신</li>
+            <li>실시간 WS/SSE UI 반영</li>
+          </ul>
+        </div>
+        <div class="node">
+          <h3>Nginx</h3>
+          <ul>
+            <li>/api, /ws 경로 프록시</li>
+            <li>auth/API 레이트리밋 분리</li>
+            <li>SSE/WS 전달 최적화</li>
+          </ul>
+        </div>
+        <div class="node">
+          <h3>Backend (Spring)</h3>
+          <ul>
+            <li>JWT/2FA/권한 체크</li>
+            <li>도메인 로직 + 저장소</li>
+            <li>AI 호출 오케스트레이션</li>
+          </ul>
+        </div>
+        <div class="node">
+          <h3>AI Service (FastAPI)</h3>
+          <ul>
+            <li>시장 데이터 수집/정규화</li>
+            <li>리스크/분석 계산 API</li>
+            <li>LLM fallback + RAG</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>핵심 성과</h2>
+      <p>
+        <span class="badge ok">Security</span>
+        Refresh token 해시 저장, 회전, 만료 정리 스케줄 도입
+      </p>
+      <p>
+        <span class="badge info">Reliability</span>
+        AI 연동 구간에 timeout/retry + Redis cache + in-flight dedup 적용
+      </p>
+      <p>
+        <span class="badge info">Realtime</span>
+        WebSocket relay + 재연결 시 구독 동기화 구현
+      </p>
+      <p>
+        <span class="badge ok">Feature</span>
+        실적 캘린더/리스크 대시보드 신규 추가(시계열 차트 포함)
+      </p>
+      <p>
+        <span class="badge warn">Ops</span>
+        Request-ID 추적, Prometheus/Grafana, actuator 정책 분리 적용
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>포지션별 강조 포인트</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>포지션</th>
+            <th>가장 먼저 말할 내용</th>
+            <th>추천 키워드</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>Backend</b></td>
+            <td>토큰 하드닝, AI 연동 안정성, 실시간 릴레이, 운영 관측성</td>
+            <td>JWT, token hash, retry/caching, WS relay, observability</td>
+          </tr>
+          <tr>
+            <td><b>Fullstack</b></td>
+            <td>사용자 흐름 완성(로그인→분석→리포트→포트폴리오), FE-BE 계약 설계</td>
+            <td>React Query, API contract, SSE/WS UX, product delivery</td>
+          </tr>
+          <tr>
+            <td><b>AI/ML</b></td>
+            <td>분석 API 설계, 리스크 계산, 데이터 파이프라인, LLM+RAG 결합</td>
+            <td>risk metrics, time series, yfinance/FDR, LLM fallback, RAG</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>면접 Q&A (빠른 준비)</h2>
+      <details>
+        <summary>SSE와 WebSocket을 왜 분리했나요?</summary>
+        <p>리포트 생성은 서버 단방향 스트리밍이라 SSE가 간단하고, 시세 구독/해제는 양방향 제어가 필요해 WebSocket을 사용했습니다.</p>
+      </details>
+      <details>
+        <summary>AI 서비스 장애 시 어떻게 보호했나요?</summary>
+        <p>timeout/retry 정책을 분리하고, 캐시 + dedup으로 동일 요청 폭주를 억제해 전체 서비스의 안정성을 지켰습니다.</p>
+      </details>
+      <details>
+        <summary>보안에서 가장 큰 개선은 무엇인가요?</summary>
+        <p>refresh token의 원문 저장을 해시 저장으로 바꾸고 rotation을 도입한 부분입니다. 유출 시 재사용 위험을 줄였습니다.</p>
+      </details>
+    </section>
+
+    <section class="panel linklist">
+      <h2>원문 문서</h2>
+      <p class="sub">상세 설명이 필요하면 아래 문서를 함께 확인하세요.</p>
+      <p><a href="./PORTFOLIO_TECHNICAL_DOSSIER.md">PORTFOLIO_TECHNICAL_DOSSIER.md</a></p>
+      <p><a href="./PORTFOLIO_ROLE_HIGHLIGHTS.md">PORTFOLIO_ROLE_HIGHLIGHTS.md</a></p>
+    </section>
+
+    <p class="foot">
+      작성 기준: 실제 코드/설정 파일 기반 정리 (2026-02-25)
+    </p>
+  </main>
+</body>
+</html>
+

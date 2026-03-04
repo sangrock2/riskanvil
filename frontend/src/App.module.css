@@ -1,0 +1,72 @@
+.routeViewport {
+  width: 100%;
+}
+
+.routeViewportApp {
+  min-height: calc(100vh - 72px);
+}
+
+.routeViewportLanding {
+  min-height: 100vh;
+}
+
+.routeScene {
+  --route-duration: 340ms;
+  --route-shift: 10px;
+  --route-scale: 0.997;
+  --route-blur: 2px;
+  --route-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  width: 100%;
+  will-change: transform, opacity, filter;
+  animation: routeSceneEnter var(--route-duration) var(--route-ease);
+  transform-origin: 50% 0%;
+}
+
+.routeSceneQuick {
+  --route-duration: 220ms;
+  --route-shift: 6px;
+  --route-scale: 0.999;
+  --route-blur: 1px;
+}
+
+.routeSceneStandard {
+  --route-duration: 340ms;
+  --route-shift: 10px;
+  --route-scale: 0.997;
+  --route-blur: 2px;
+}
+
+.routeSceneFocus {
+  --route-duration: 280ms;
+  --route-shift: 8px;
+  --route-scale: 0.998;
+  --route-blur: 1.4px;
+}
+
+.routeSceneHero {
+  --route-duration: 460ms;
+  --route-shift: 16px;
+  --route-scale: 0.994;
+  --route-blur: 3px;
+  --route-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes routeSceneEnter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--route-shift)) scale(var(--route-scale));
+    filter: blur(var(--route-blur));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .routeScene {
+    animation: none;
+    will-change: auto;
+  }
+}

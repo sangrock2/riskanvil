@@ -1,0 +1,858 @@
+.page {
+  max-width: 1800px;
+  margin: 0 auto;
+  padding: 16px;
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+.header {
+  margin-bottom: 14px;
+}
+
+.titleBlock {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 18px;
+  background:
+    radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 42%),
+    radial-gradient(circle at 90% 70%, color-mix(in srgb, var(--color-success) 16%, transparent), transparent 45%),
+    var(--color-bg);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2vw, 2rem);
+  font-weight: var(--font-extrabold);
+  letter-spacing: -0.3px;
+}
+
+.subtitle {
+  margin: 8px 0 12px;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.statRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.statPill {
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-secondary);
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 14px;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.panelTitle {
+  margin: 0 0 10px;
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+}
+
+.label {
+  display: block;
+  margin-top: 8px;
+  margin-bottom: 6px;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.labelInline {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.select,
+.search,
+.textarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.select,
+.search {
+  padding: 10px 12px;
+}
+
+.select:focus,
+.search:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.textarea {
+  min-height: 120px;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 10px 12px;
+}
+
+.scenarioDesc {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn,
+.btnPrimary {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition-fast), background var(--transition-base), border-color var(--transition-base);
+}
+
+.btn {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.btnPrimary {
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-bg));
+  border-color: color-mix(in srgb, var(--color-primary) 36%, var(--color-border));
+  color: var(--color-primary);
+}
+
+.btn:hover,
+.btnPrimary:hover {
+  transform: translateY(-1px);
+}
+
+.btn:disabled,
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.speedRow,
+.stepProgress {
+  margin-top: 10px;
+}
+
+.speedRow input,
+.stepProgress input {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.progressLabel {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.currentStep {
+  margin-top: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg));
+  border-radius: 12px;
+  padding: 10px;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+.currentTitle {
+  font-size: 11px;
+  color: var(--color-primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.currentStepName {
+  margin-top: 4px;
+  font-weight: 700;
+}
+
+.currentStepDetail {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.stepList {
+  max-height: 340px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stepItem {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: start;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.stepItemActive {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg));
+}
+
+.stepIndex {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.stepText {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.stepDelta {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tab {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.tabActive {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg));
+  color: var(--color-primary);
+}
+
+.canvasPanel,
+.sequencePanel,
+.filePanel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.archStack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.canvasHeader,
+.fileHeader {
+  padding: 10px;
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-bg-secondary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zoomControl {
+  min-width: 200px;
+  margin-left: auto;
+}
+
+.zoomLabel {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+  text-align: right;
+}
+
+.zoomControl input {
+  width: 100%;
+}
+
+.fileMeta {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.mapViewport {
+  overflow: auto;
+  max-height: calc(100vh - 210px);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      color-mix(in srgb, var(--color-border) 50%, transparent) 28px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 27px,
+      color-mix(in srgb, var(--color-border) 50%, transparent) 28px
+    ),
+    var(--color-bg);
+}
+
+.svg {
+  display: block;
+}
+
+.expertPanel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.expertHeader {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border-light);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-primary) 10%, var(--color-bg-secondary)),
+    var(--color-bg-secondary)
+  );
+}
+
+.expertTitle {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.expertSub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.expertGrid {
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.expertBlock {
+  border: 1px solid var(--color-border-light);
+  border-radius: 10px;
+  padding: 10px;
+  background: var(--color-bg-secondary);
+}
+
+.expertBlockTitle {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.expertTextStrong {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.expertText {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.expertMeta {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.expertContextGrid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.expertKv {
+  border: 1px solid var(--color-border-light);
+  border-radius: 8px;
+  background: var(--color-bg);
+  padding: 7px 8px;
+}
+
+.expertKvLabel {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+}
+
+.expertList {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.expertCode {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.expertDim {
+  color: var(--color-text-muted);
+}
+
+.expertDeltaRow {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.expertEmpty {
+  padding: 14px;
+  color: var(--color-text-muted);
+}
+
+.layerBadge {
+  fill: color-mix(in srgb, var(--color-primary) 11%, var(--color-bg-secondary));
+  stroke: color-mix(in srgb, var(--color-primary) 34%, var(--color-border));
+  stroke-width: 1.3;
+  filter: drop-shadow(0 1px 4px color-mix(in srgb, var(--color-primary) 26%, transparent));
+}
+
+.layerLabel {
+  font-size: 11.5px;
+  font-weight: 800;
+  fill: color-mix(in srgb, var(--color-primary) 62%, var(--color-text));
+  letter-spacing: 0.015em;
+}
+
+.edge {
+  fill: none;
+  stroke: var(--color-border-hover);
+  stroke-width: 1.4;
+  color: var(--color-border-hover);
+}
+
+.edgeLabel {
+  font-size: 10px;
+  fill: var(--color-text-muted);
+  paint-order: stroke;
+  stroke: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  stroke-width: 3px;
+}
+
+.edgeLabelActive {
+  fill: color-mix(in srgb, var(--color-primary) 72%, var(--color-text));
+  font-weight: 700;
+}
+
+.edgeActive .edge {
+  stroke: var(--color-primary);
+  color: var(--color-primary);
+  stroke-width: 2.6;
+  stroke-dasharray: 6 4;
+  animation: flowDash 0.9s linear infinite;
+}
+
+.edgeDim {
+  opacity: 0.14;
+}
+
+.node {
+  fill: var(--color-bg);
+  stroke: var(--color-border);
+  stroke-width: 1.2;
+}
+
+.nodeGroup {
+  transition: opacity var(--transition-base), filter var(--transition-base);
+}
+
+.nodeTitle {
+  font-size: 9.5px;
+  font-weight: 700;
+  fill: var(--color-text);
+}
+
+.nodeSub {
+  font-size: 8px;
+  fill: var(--color-text-muted);
+}
+
+.nodeActive .node {
+  stroke: var(--color-primary);
+  stroke-width: 2.2;
+  fill: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg));
+}
+
+.nodeActive .nodeTitle {
+  fill: var(--color-primary);
+}
+
+.nodeActiveFlow .node {
+  stroke-width: 2.9;
+  fill: color-mix(in srgb, var(--color-primary) 18%, var(--color-bg));
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--color-primary) 36%, transparent));
+  animation: nodeFlowPulse 1.2s ease-in-out infinite;
+}
+
+.nodeActiveFlow .nodeTitle {
+  fill: color-mix(in srgb, var(--color-primary) 86%, var(--color-text));
+  font-weight: 800;
+}
+
+.nodeActiveFlow .nodeSub {
+  fill: color-mix(in srgb, var(--color-primary) 62%, var(--color-text-muted));
+}
+
+.nodeFlowMuted {
+  opacity: 0.33;
+  filter: saturate(0.45) brightness(0.94);
+}
+
+.nodeDim {
+  opacity: 0.2;
+}
+
+.sequenceMeta {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-bg-secondary);
+}
+
+.sequenceTitle {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.sequenceDesc {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.sequenceSteps {
+  padding: 12px;
+  max-height: calc(100vh - 240px);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.sequenceCard {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 10px;
+  background: var(--color-bg);
+  cursor: pointer;
+}
+
+.sequenceCardActive {
+  border-color: color-mix(in srgb, var(--color-primary) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 9%, var(--color-bg));
+  box-shadow: var(--shadow-sm);
+}
+
+.sequenceNum {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--color-bg-tertiary);
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sequenceCardTitle {
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+.sequenceCardDetail {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.45;
+}
+
+.sequenceNodeList {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nodeChip {
+  font-size: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: var(--color-bg-secondary);
+}
+
+.fileTree {
+  padding: 8px 0;
+  max-height: calc(100vh - 240px);
+  overflow: auto;
+}
+
+.treeNode {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.treeRow {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.treeRow:hover {
+  background: var(--color-bg-hover);
+}
+
+.treeCaret {
+  width: 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.treeName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.treeCount {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.treeMatch {
+  background: color-mix(in srgb, var(--color-warning) 24%, transparent);
+}
+
+.empty {
+  padding: 14px;
+  color: var(--color-text-muted);
+}
+
+.error {
+  margin-top: 8px;
+  border: 1px solid var(--color-danger-border);
+  background: var(--color-danger-light);
+  color: var(--color-danger-dark);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.dataFlow {
+  margin-top: 10px;
+}
+
+.dataGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dataCard {
+  border: 1px solid color-mix(in srgb, var(--color-border) 75%, transparent);
+  border-radius: 10px;
+  background: var(--color-bg);
+  padding: 8px;
+  min-height: 108px;
+}
+
+.dataTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+
+.dataJson {
+  margin: 0;
+  max-height: 180px;
+  overflow: auto;
+  font-size: 11px;
+  line-height: 1.4;
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.transformNote {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.deltaRow {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.deltaChip {
+  font-size: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: var(--color-bg-secondary);
+}
+
+.deltaAdded {
+  border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+}
+
+.deltaUpdated {
+  border-color: color-mix(in srgb, var(--color-warning) 45%, var(--color-border));
+}
+
+.deltaRemoved {
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+}
+
+@keyframes flowDash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 22%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+}
+
+@keyframes nodeFlowPulse {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-primary) 22%, transparent));
+  }
+  50% {
+    filter: drop-shadow(0 0 9px color-mix(in srgb, var(--color-primary) 42%, transparent));
+  }
+}
+
+@media (max-width: 1200px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .canvasHeader {
+    flex-wrap: wrap;
+  }
+
+  .zoomControl {
+    width: 100%;
+    margin-left: 0;
+    min-width: 0;
+  }
+
+  .zoomLabel {
+    text-align: left;
+  }
+
+  .dataGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .expertGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .expertContextGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .mapViewport,
+  .sequenceSteps,
+  .fileTree {
+    max-height: 65vh;
+  }
+}

@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: "Stock-AI Dashboards"
+    orgId: 1
+    folder: "Stock-AI"
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

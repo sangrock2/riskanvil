@@ -1,0 +1,1 @@
+{"Global Quote": {"01. symbol": "DIA", "02. open": "491.8200", "03. high": "492.1300", "04. low": "489.5600", "05. price": "490.9300", "06. volume": "4915704", "07. latest trading day": "2026-01-23", "08. previous close": "493.6900", "09. change": "-2.7600", "10. change percent": "-0.5591%"}}

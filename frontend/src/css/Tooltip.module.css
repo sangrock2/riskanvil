@@ -1,0 +1,112 @@
+.trigger {
+  display: inline;
+  cursor: help;
+  border-bottom: 1px dashed var(--color-text-secondary);
+  transition: border-color var(--transition-base);
+}
+
+.trigger:hover,
+.trigger:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  max-width: 300px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-text);
+  color: var(--color-bg);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  pointer-events: none;
+  animation: tooltipFadeIn var(--transition-base) ease-out;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+}
+
+.arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--color-text);
+  transform: rotate(45deg);
+}
+
+/* Position variants */
+.top {
+  transform: translateX(-50%) translateY(calc(-100% - 12px));
+}
+
+.top .arrow {
+  bottom: -4px;
+  left: 50%;
+  margin-left: -4px;
+}
+
+.bottom {
+  transform: translateX(-50%) translateY(12px);
+}
+
+.bottom .arrow {
+  top: -4px;
+  left: 50%;
+  margin-left: -4px;
+}
+
+.left {
+  transform: translateX(calc(-100% - 12px)) translateY(-50%);
+}
+
+.left .arrow {
+  right: -4px;
+  top: 50%;
+  margin-top: -4px;
+}
+
+.right {
+  transform: translateX(12px) translateY(-50%);
+}
+
+.right .arrow {
+  left: -4px;
+  top: 50%;
+  margin-top: -4px;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(calc(-100% - 8px));
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(calc(-100% - 12px));
+  }
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .tooltip {
+  background: var(--color-bg-secondary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="dark"] .arrow {
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .tooltip {
+    animation: none;
+  }
+}
