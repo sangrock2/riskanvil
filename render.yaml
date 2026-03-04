@@ -4,7 +4,6 @@ services:
     runtime: docker
     dockerfilePath: ./ai/Dockerfile
     dockerContext: ./ai
-    healthCheckPath: /health
     envVars:
       - key: DATA_PROVIDER
         value: yfinance
@@ -19,6 +18,7 @@ services:
 
   - type: keyvalue
     name: stock-ai-redis
+    ipAllowList: []
 
   - type: web
     name: stock-ai-backend
