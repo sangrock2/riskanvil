@@ -6,7 +6,6 @@ import logging
 from typing import Optional, Literal
 
 import pandas as pd
-import pandas_ta as ta
 import numpy as np
 import yfinance as yf
 
@@ -169,12 +168,50 @@ def _downsample_equity(df: pd.DataFrame, max_points: int) -> list[dict]:
     return [{"date": d.strftime("%Y-%m-%d"), "equity": float(v)} for d, v in zip(sampled["dt"], sampled["equity"])]
 
 
+def _calc_sma(close: pd.Series, length: int) -> pd.Series:
+    """단순 이동평균(SMA) 계산."""
+    return close.rolling(window=length, min_periods=length).mean()
+
+
+def _calc_rsi(close: pd.Series, length: int = 14) -> pd.Series:
+    """Wilder RSI 계산."""
+    delta = close.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+
+    avg_gain = gain.ewm(alpha=1 / length, adjust=False, min_periods=length).mean()
+    avg_loss = loss.ewm(alpha=1 / length, adjust=False, min_periods=length).mean()
+
+    rs = avg_gain / avg_loss.replace(0, np.nan)
+    rsi = 100 - (100 / (1 + rs))
+    return rsi.fillna(50)
+
+
+def _calc_macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
+    """MACD(라인/시그널/히스토그램) 계산."""
+    ema_fast = close.ewm(span=fast, adjust=False, min_periods=fast).mean()
+    ema_slow = close.ewm(span=slow, adjust=False, min_periods=slow).mean()
+    macd = ema_fast - ema_slow
+    signal_line = macd.ewm(span=signal, adjust=False, min_periods=signal).mean()
+    hist = macd - signal_line
+    return pd.DataFrame({"MACD": macd, "MACDs": signal_line, "MACDh": hist})
+
+
+def _calc_bbands(close: pd.Series, length: int = 20, std: float = 2.0) -> pd.DataFrame:
+    """Bollinger Bands(상/중/하단) 계산."""
+    mid = close.rolling(window=length, min_periods=length).mean()
+    sigma = close.rolling(window=length, min_periods=length).std(ddof=0)
+    upper = mid + std * sigma
+    lower = mid - std * sigma
+    return pd.DataFrame({"BBL": lower, "BBM": mid, "BBU": upper})
+
+
 # ── Strategy Functions ──
 
 def _apply_sma_cross(df: pd.DataFrame, close: pd.Series) -> pd.DataFrame:
     """골든크로스/데드크로스 (SMA 20 vs SMA 60)"""
-    sma_fast = pd.to_numeric(ta.sma(close, length=20), errors="coerce")
-    sma_slow = pd.to_numeric(ta.sma(close, length=60), errors="coerce")
+    sma_fast = pd.to_numeric(_calc_sma(close, length=20), errors="coerce")
+    sma_slow = pd.to_numeric(_calc_sma(close, length=60), errors="coerce")
     signal = (sma_fast > sma_slow).fillna(False).astype(int)
     df["pos"] = signal.shift(1).fillna(0)
     df["strategy_note"] = "SMA Cross (20/60)"
@@ -183,7 +220,7 @@ def _apply_sma_cross(df: pd.DataFrame, close: pd.Series) -> pd.DataFrame:
 
 def _apply_rsi_reversal(df: pd.DataFrame, close: pd.Series) -> pd.DataFrame:
     """RSI 역추세: RSI < 30 매수, RSI > 70 청산"""
-    rsi = pd.to_numeric(ta.rsi(close, length=14), errors="coerce").fillna(50)
+    rsi = pd.to_numeric(_calc_rsi(close, length=14), errors="coerce").fillna(50)
     pos_arr = []
     current = 0
     for r in rsi:
@@ -199,7 +236,7 @@ def _apply_rsi_reversal(df: pd.DataFrame, close: pd.Series) -> pd.DataFrame:
 
 def _apply_macd_cross(df: pd.DataFrame, close: pd.Series) -> pd.DataFrame:
     """MACD 히스토그램 전환: 양전환 매수, 음전환 청산 (12/26/9)"""
-    macd_df = ta.macd(close, fast=12, slow=26, signal=9)
+    macd_df = _calc_macd(close, fast=12, slow=26, signal=9)
     if macd_df is None or macd_df.empty:
         df["pos"] = 0.0
         df["strategy_note"] = "MACD Cross (insufficient data)"
@@ -216,7 +253,7 @@ def _apply_macd_cross(df: pd.DataFrame, close: pd.Series) -> pd.DataFrame:
 
 def _apply_bollinger_band(df: pd.DataFrame, close: pd.Series) -> pd.DataFrame:
     """볼린저 밴드 평균회귀: 하단 터치 매수, 상단 터치 청산 (20일/2σ)"""
-    bb = ta.bbands(close, length=20, std=2.0)
+    bb = _calc_bbands(close, length=20, std=2.0)
     if bb is None or bb.empty:
         df["pos"] = 1.0
         df["strategy_note"] = "Bollinger Band (insufficient data)"
@@ -346,8 +383,8 @@ def optimize_backtest(req: GridSearchRequest):
                 continue
             df = df_raw.copy()
             df["ret"] = close.pct_change().fillna(0.0)
-            sma_f = pd.to_numeric(ta.sma(close, length=fast), errors="coerce")
-            sma_s = pd.to_numeric(ta.sma(close, length=slow), errors="coerce")
+            sma_f = pd.to_numeric(_calc_sma(close, length=fast), errors="coerce")
+            sma_s = pd.to_numeric(_calc_sma(close, length=slow), errors="coerce")
             df["pos"] = (sma_f > sma_s).fillna(False).astype(int).shift(1).fillna(0)
             df = _calc_equity(df, req.initialCapital, req.feeBps)
             results.append({
@@ -366,7 +403,7 @@ def optimize_backtest(req: GridSearchRequest):
                 continue
             df = df_raw.copy()
             df["ret"] = close.pct_change().fillna(0.0)
-            rsi = pd.to_numeric(ta.rsi(close, length=period), errors="coerce").fillna(50)
+            rsi = pd.to_numeric(_calc_rsi(close, length=period), errors="coerce").fillna(50)
             pos_arr, cur = [], 0
             for r in rsi:
                 if r < oversold: cur = 1
@@ -386,7 +423,7 @@ def optimize_backtest(req: GridSearchRequest):
         for period, std in iterproduct(req.bbPeriods, req.bbStds):
             df = df_raw.copy()
             df["ret"] = close.pct_change().fillna(0.0)
-            bb = ta.bbands(close, length=period, std=std)
+            bb = _calc_bbands(close, length=period, std=std)
             if bb is None or bb.empty:
                 continue
             lower_col = next((c for c in bb.columns if str(c).startswith("BBL")), None)

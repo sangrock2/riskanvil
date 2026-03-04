@@ -9,7 +9,6 @@ yfinance>=0.2.40
 finance-datareader>=0.9.70
 pandas>=2.2.0
 numpy>=1.26.0
-pandas_ta>=0.3.14
 
 # WebSocket (Finnhub real-time)
 websockets>=13.0
