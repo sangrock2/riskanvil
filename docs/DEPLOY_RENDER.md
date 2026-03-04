@@ -17,25 +17,25 @@ Stock-AI를 Render에 배포할 때 필요한 최소 설정입니다.
    Root Directory: `frontend`  
    Build Command: `npm ci && npm run build`  
    Publish Directory: `dist`
-4. `mysql`: 외부 MySQL 또는 Render 내부 Private Service(직접 운영)
-5. `redis`: Render Key Value 또는 외부 Redis
+4. `postgres`: Render PostgreSQL (Managed)
+5. `redis`: 선택 (미사용 시 `SPRING_CACHE_TYPE=simple`)
 
 ## 2. Backend 필수 환경변수
 
 아래 값은 Render Dashboard에서 `backend` 서비스에 설정합니다.
 
 ```env
-SPRING_PROFILES_ACTIVE=prod
+SPRING_PROFILES_ACTIVE=prod,postgres
 JWT_SECRET=<32바이트 이상 랜덤 문자열>
 REFRESH_TOKEN_PEPPER=<추가 시크릿 권장>
 
-# DB (둘 중 하나)
-DB_URL=jdbc:mysql://<host>:<port>/<db>?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-# 또는
-DB_HOSTPORT=<host>:<port>
+# DB (PostgreSQL 16)
+DB_URL=jdbc:postgresql://<host>:5432/stock_ai
 DB_USERNAME=<db_user>
 DB_PASSWORD=<db_password>
-MYSQL_DATABASE=<db_name>
+DB_DRIVER_CLASS_NAME=org.postgresql.Driver
+JPA_DDL_AUTO=update
+FLYWAY_ENABLED=false
 
 # AI 연결 (둘 중 하나)
 AI_BASE_URL=http://<ai-host>:8000
@@ -46,11 +46,12 @@ AI_SERVICE_HOSTPORT=<ai-host>:8000
 APP_CORS_ALLOWED_ORIGIN_PATTERNS=https://<your-frontend>.onrender.com
 
 # Redis (선택)
-# render.yaml의 Key Value를 쓰면 SPRING_DATA_REDIS_URL이 자동 주입됨
-# 외부 Redis를 쓸 때만 아래 사용
-REDIS_HOST=<redis-host>
-REDIS_PORT=6379
-REDIS_PASSWORD=<redis-password>
+# Redis를 쓰지 않으면 simple 캐시로 시작
+SPRING_CACHE_TYPE=simple
+# Redis를 쓸 때만 아래 사용
+# REDIS_HOST=<redis-host>
+# REDIS_PORT=6379
+# REDIS_PASSWORD=<redis-password>
 ```
 
 ## 3. Frontend 환경변수
@@ -67,7 +68,7 @@ VITE_WS_URL=https://<your-backend>.onrender.com
 ## 4. 배포 순서
 
 1. `ai` 배포
-2. `backend` 배포 (AI/DB/보안 env 설정)
+2. `backend` 배포 (AI/PostgreSQL/보안 env 설정)
 3. `frontend` 배포 (`VITE_API_BASE_URL`을 backend URL로 설정)
 4. frontend URL 확정 후 backend의 `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 값을 최종 URL로 업데이트 후 재배포
 
@@ -78,3 +79,4 @@ VITE_WS_URL=https://<your-backend>.onrender.com
 3. WebSocket env 값에 `https://...`를 넣어도 자동으로 `wss://.../ws/quotes`로 정규화
 4. Backend가 Render 기본 `PORT` 환경변수를 우선 사용하도록 변경
 5. Backend AI/DB 주소를 `AI_SERVICE_HOSTPORT`, `DB_HOSTPORT`로도 주입 가능하게 변경
+6. Postgres 전용 `postgres` 프로필 추가 (`SPRING_PROFILES_ACTIVE=prod,postgres`)

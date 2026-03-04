@@ -23,7 +23,7 @@ stock-ai/
 ### Backend
 - Spring Boot 4.0.0, Java 21
 - Spring Security (JWT 인증)
-- Spring Data JPA + MySQL 8.4
+- Spring Data JPA + PostgreSQL 16 (Render), MySQL 8.4 (local)
 - Redis (캐싱)
 - Resilience4j (서킷 브레이커)
 
@@ -67,7 +67,7 @@ python -m uvicorn main:app --reload  # http://localhost:8000
 - Render 배포 가이드: **[docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md)**
 - Blueprint: 저장소 루트 `render.yaml` 사용
 - Frontend Static Site에는 `VITE_API_BASE_URL` 설정 필요
-- Backend Web Service에는 `JWT_SECRET`, `DB_URL(또는 DB_HOSTPORT + 계정)`, `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 설정 필요
+- Backend Web Service에는 `SPRING_PROFILES_ACTIVE=prod,postgres`, `JWT_SECRET`, `DB_URL(PostgreSQL)`, `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 설정 필요
 
 ## 문서
 
@@ -108,7 +108,7 @@ python -m uvicorn main:app --reload  # http://localhost:8000
 
 ```env
 # Backend
-DB_URL=jdbc:mysql://localhost:3306/stock_ai?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+DB_URL=jdbc:postgresql://<host>:5432/stock_ai
 DB_USERNAME=your_db_username
 DB_PASSWORD=your_db_password
 JWT_SECRET=your-secret-key-min-32-bytes

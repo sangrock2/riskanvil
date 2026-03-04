@@ -2,6 +2,26 @@
 
 ---
 
+# v1.3.2 - Render PostgreSQL 16 배포 프로필 추가
+
+**릴리즈 날짜**: 2026-03-04  
+**이전 버전**: v1.3.1  
+**현재 버전**: v1.3.2
+
+---
+
+## 배포 설정 변경
+
+- Backend에 PostgreSQL 전용 프로필 추가: `application-postgres.properties`
+  - `SPRING_PROFILES_ACTIVE=prod,postgres` 조합 지원
+  - PostgreSQL 드라이버/URL 기본값 주입
+  - Postgres 배포 시 기본 `FLYWAY_ENABLED=false`, `JPA_DDL_AUTO=update`
+- Backend runtime dependency에 PostgreSQL JDBC 드라이버 추가
+- `application.properties`의 DB driver/Flyway/cache 타입을 env로 제어 가능하도록 변경
+- Render 문서/환경변수 예시를 PostgreSQL 16 기준으로 업데이트
+
+---
+
 # v1.3.1 - Render 배포 호환성 업데이트
 
 **릴리즈 날짜**: 2026-03-04  
