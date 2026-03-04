@@ -265,3 +265,17 @@
 .mutedBtn:hover {
   color: var(--color-text-secondary);
 }
+
+@media (max-width: 768px) {
+  .container {
+    margin: 16px 12px 24px;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .input,
+  .button {
+    min-height: 44px;
+    font-size: 16px;
+  }
+}

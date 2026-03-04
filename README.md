@@ -115,7 +115,7 @@ JWT_SECRET=your-secret-key-min-32-bytes
 REFRESH_TOKEN_PEPPER=optional-extra-secret
 
 # AI Service
-ALPHA_VANTAGE_API_KEY=your-api-key
+ALPHAVANTAGE_API_KEY=your-api-key
 OPENAI_API_KEY=your-api-key
 ```
 

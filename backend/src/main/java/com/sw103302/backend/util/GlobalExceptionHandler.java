@@ -113,6 +113,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public org.springframework.http.ResponseEntity<ApiErrorResponse> handleAny(Exception e, HttpServletRequest req) {
+        AiClientException ai = findCause(e, AiClientException.class);
+        if (ai != null) {
+            return handleAiClient(ai, req);
+        }
+
+        WebClientResponseException webResp = findCause(e, WebClientResponseException.class);
+        if (webResp != null) {
+            return handleWebClient(webResp, req);
+        }
+
+        WebClientRequestException webReq = findCause(e, WebClientRequestException.class);
+        if (webReq != null) {
+            return handleWebClientRequest(webReq, req);
+        }
+
         // ✅ 운영 안전: 내부 예외 메시지를 그대로 노출하지 않음
         log.error("Unhandled exception. path={} requestId={}", req.getRequestURI(), requestId(req), e);
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR, "Internal server error", req, null);
@@ -144,5 +159,20 @@ public class GlobalExceptionHandler {
 
         String hdr = req.getHeader("X-Request-Id");
         return (hdr == null || hdr.isBlank()) ? null : hdr;
+    }
+
+    private <T extends Throwable> T findCause(Throwable e, Class<T> type) {
+        Throwable cur = e;
+        while (cur != null) {
+            if (type.isInstance(cur)) {
+                return type.cast(cur);
+            }
+            Throwable next = cur.getCause();
+            if (next == cur) {
+                break;
+            }
+            cur = next;
+        }
+        return null;
     }
 }

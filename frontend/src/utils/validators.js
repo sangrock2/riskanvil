@@ -224,9 +224,10 @@ export function validateLoginForm({ email, password }, t) {
  * @param {object} form - Form data
  * @param {string} form.email - Email
  * @param {string} form.password - Password
- * @returns {{ valid: boolean, errors: { email?: string, password?: string } }}
+ * @param {string} form.confirmPassword - Confirm password
+ * @returns {{ valid: boolean, errors: { email?: string, password?: string, confirmPassword?: string } }}
  */
-export function validateRegisterForm({ email, password }, t) {
+export function validateRegisterForm({ email, password, confirmPassword }, t) {
   const errors = {};
 
   const emailResult = validateEmail(email, t);
@@ -237,6 +238,20 @@ export function validateRegisterForm({ email, password }, t) {
   const passwordResult = validatePassword(password, { minLength: 8 }, t);
   if (!passwordResult.valid) {
     errors.password = passwordResult.message;
+  }
+
+  const confirmPasswordResult = validateRequired(
+    confirmPassword,
+    typeof t === "function" ? t("auth.confirmPassword") : "비밀번호 확인",
+    t
+  );
+  if (!confirmPasswordResult.valid) {
+    errors.confirmPassword = confirmPasswordResult.message;
+  } else {
+    const matchResult = validatePasswordMatch(password, confirmPassword, t);
+    if (!matchResult.valid) {
+      errors.confirmPassword = matchResult.message;
+    }
   }
 
   return {

@@ -1,6 +1,7 @@
 package com.sw103302.backend.service;
 
 import com.sw103302.backend.dto.AuthResponse;
+import com.sw103302.backend.dto.EmailAvailabilityResponse;
 import com.sw103302.backend.dto.LoginRequest;
 import com.sw103302.backend.dto.RegisterRequest;
 import com.sw103302.backend.dto.VerifyTwoFactorLoginRequest;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -57,14 +59,23 @@ public class AuthService {
         this.redisTemplate = redisTemplate;
     }
 
+    @Transactional(readOnly = true)
+    public EmailAvailabilityResponse checkEmailAvailability(String rawEmail) {
+        String email = normalizeEmail(rawEmail);
+        boolean available = !users.existsByEmailIgnoreCase(email);
+        return new EmailAvailabilityResponse(email, available);
+    }
+
     @Transactional
     public AuthResponse register(RegisterRequest req) {
-        if (users.existsByEmail(req.email())) {
+        String email = normalizeEmail(req.email());
+
+        if (users.existsByEmailIgnoreCase(email)) {
             throw new IllegalStateException("email already exists");
         }
 
         String hash = passwordEncoder.encode(req.password());
-        User saved = users.save(new User(req.email(), hash, DEFAULT_ROLE));
+        User saved = users.save(new User(email, hash, DEFAULT_ROLE));
 
         String accessToken = jwtService.createAccessToken(saved.getEmail(), saved.getRole());
         String refreshToken = createRefreshToken(saved);
@@ -74,7 +85,8 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest req) {
-        User user = users.findByEmail(req.email())
+        String email = normalizeEmail(req.email());
+        User user = users.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalArgumentException("invalid credentials"));
 
         if (!passwordEncoder.matches(req.password(), user.getPasswordHash())) {
@@ -115,7 +127,7 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid or expired pending token");
         }
 
-        User user = users.findByEmail(email)
+        User user = users.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
 
         boolean verified = false;
@@ -211,5 +223,12 @@ public class AuthService {
             log.info("Cleaned up {} expired refresh tokens", deleted);
         }
         return deleted;
+    }
+
+    private String normalizeEmail(String rawEmail) {
+        if (rawEmail == null) {
+            return "";
+        }
+        return rawEmail.trim().toLowerCase(Locale.ROOT);
     }
 }

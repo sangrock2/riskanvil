@@ -32,6 +32,55 @@
   margin-bottom: 12px;
 }
 
+.emailCheckWrap {
+  display: flex;
+  gap: 8px;
+}
+
+.checkButton {
+  min-width: 112px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--gradient-surface);
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: var(--font-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.checkButton:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.checkButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.emailCheckStatus {
+  font-size: 12px;
+  font-weight: var(--font-medium);
+}
+
+.emailCheckStatusDefault {
+  color: var(--color-text-secondary);
+}
+
+.emailCheckStatusAvailable {
+  color: var(--color-success-dark);
+}
+
 .row label {
   color: var(--color-text-secondary);
   font-size: 12px;
@@ -205,4 +254,27 @@
 
 .linkText a:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .container {
+    margin: 16px 12px 24px;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .input,
+  .button,
+  .checkButton {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .emailCheckWrap {
+    flex-direction: column;
+  }
+
+  .checkButton {
+    width: 100%;
+  }
 }

@@ -235,9 +235,22 @@ async def _fetch_insight_inputs(ticker: str, market: str, days: int, news_limit:
     )
     q, p, f, n, obv_result, market_env_result = results
 
-    for required_result in (q, p, f, n):
+    for required_result in (q, p, f):
         if isinstance(required_result, Exception):
             raise required_result
+
+    news_data = n
+    if isinstance(n, Exception):
+        logger.warning("News sentiment unavailable for %s: %s", ticker, n)
+        news_data = {
+            "ticker": ticker,
+            "market": market,
+            "positiveRatio": None,
+            "headlines": [],
+            "items": [],
+            "summary": "",
+            "degraded": True,
+        }
 
     obv_data = None
     if isinstance(obv_result, Exception):
@@ -251,7 +264,7 @@ async def _fetch_insight_inputs(ticker: str, market: str, days: int, news_limit:
     else:
         market_env_data = market_env_result
 
-    return q, p, f, n, obv_data, market_env_data
+    return q, p, f, news_data, obv_data, market_env_data
 
 
 async def _build_recommendation(

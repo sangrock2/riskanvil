@@ -13,6 +13,7 @@ export default function NavBar() {
   const loggedIn = !!getToken();
   const { t } = useTranslation();
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const active = useMemo(function getActivePath() {
     return loc.pathname;
@@ -27,6 +28,10 @@ export default function NavBar() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [loc.pathname]);
 
   async function logout() {
     const refreshToken = getRefreshToken();
@@ -70,6 +75,16 @@ export default function NavBar() {
           </div>
 
           <div className={styles.right}>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.mobileMenuToggle}`}
+              onClick={() => setMenuOpen((prev) => !prev)}
+              aria-expanded={menuOpen}
+              aria-controls="main-nav-links"
+            >
+              {menuOpen ? t("nav.closeMenu") : t("nav.menu")}
+            </button>
+
             <ThemeToggle />
 
             {loggedIn ? (
@@ -103,7 +118,7 @@ export default function NavBar() {
         </div>
 
         {/* 둘째 줄: 네비게이션 링크들 */}
-        <div className={styles.nav} role="menubar">
+        <div id="main-nav-links" className={`${styles.nav} ${menuOpen ? styles.navOpen : ""}`} role="menubar">
             <Link
               className={getLinkClass("/dashboard")}
               to="/dashboard"

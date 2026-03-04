@@ -8,7 +8,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ── API Keys ──
-ALPHA_KEY = os.getenv("ALPHAVANTAGE_API_KEY", "").strip()
+ALPHA_KEY = (
+    os.getenv("ALPHAVANTAGE_API_KEY", "").strip()
+    or os.getenv("ALPHA_VANTAGE_API_KEY", "").strip()
+)
 OPENAI_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 FINNHUB_KEY = os.getenv("FINNHUB_API_KEY", "").strip()
 
