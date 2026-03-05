@@ -28,6 +28,53 @@ class AuthFlowTest {
     AiClient aiClient;
 
     @Test
+    void checkEmail_withAvailableEmail_shouldReturnAvailableTrue() throws Exception {
+        String body = """
+            {"email":"check-available@example.com"}
+            """;
+
+        mvc.perform(post("/api/auth/check-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.available").value(true));
+    }
+
+    @Test
+    void checkEmail_withRegisteredEmail_shouldReturnAvailableFalse() throws Exception {
+        String regBody = """
+            {"email":"check-taken@example.com","password":"password1234"}
+            """;
+
+        mvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(regBody))
+                .andExpect(status().isOk());
+
+        String checkBody = """
+            {"email":"CHECK-TAKEN@example.com"}
+            """;
+
+        mvc.perform(post("/api/auth/check-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(checkBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.available").value(false));
+    }
+
+    @Test
+    void checkEmail_withInvalidPayload_shouldFail() throws Exception {
+        String body = """
+            {"email":"not-an-email"}
+            """;
+
+        mvc.perform(post("/api/auth/check-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void register_shouldReturnAccessToken() throws Exception {
         String regBody = """
             {"email":"auth1@example.com","password":"password1234"}

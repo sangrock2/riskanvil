@@ -81,6 +81,10 @@
   color: var(--color-success-dark);
 }
 
+.emailCheckStatusError {
+  color: var(--color-danger-dark);
+}
+
 .row label {
   color: var(--color-text-secondary);
   font-size: 12px;

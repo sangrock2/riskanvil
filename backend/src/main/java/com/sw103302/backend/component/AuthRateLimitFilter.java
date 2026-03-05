@@ -20,7 +20,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 인증/고비용 엔드포인트 IP 기반 Rate Limiting 필터
- * - /api/auth/**: 60초당 10회
+ * - /api/auth/check-email(POST): 60초당 30회
+ * - /api/auth/**(기타): 60초당 10회
  * - /api/analysis(POST): 60초당 20회
  * - /api/market/report(POST): 60초당 8회
  * - /api/chatbot/chat(POST): 60초당 20회
@@ -33,6 +34,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private static final long WINDOW_MS = 60_000L; // 60초
     private static final List<RateLimitRule> RULES = List.of(
+            new RateLimitRule("check_email", "/api/auth/check-email", Set.of("POST"), 30),
             new RateLimitRule("auth", "/api/auth/", null, 10),
             new RateLimitRule("analysis", "/api/analysis", Set.of("POST"), 20),
             new RateLimitRule("report", "/api/market/report", Set.of("POST"), 8),

@@ -1,6 +1,7 @@
 package com.sw103302.backend.service;
 
 import com.sw103302.backend.dto.AuthResponse;
+import com.sw103302.backend.dto.EmailAvailabilityResponse;
 import com.sw103302.backend.dto.LoginRequest;
 import com.sw103302.backend.dto.RegisterRequest;
 import com.sw103302.backend.entity.RefreshToken;
@@ -77,7 +78,7 @@ class AuthServiceTest {
         String hashedPassword = "hashed_password";
         String expectedAccessToken = "jwt_token";
 
-        when(userRepository.existsByEmail(request.email())).thenReturn(false);
+        when(userRepository.existsByEmailIgnoreCase(request.email())).thenReturn(false);
         when(passwordEncoder.encode(request.password())).thenReturn(hashedPassword);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(jwtService.createAccessToken(anyString(), anyString())).thenReturn(expectedAccessToken);
@@ -99,7 +100,7 @@ class AuthServiceTest {
     @Test
     void register_withExistingEmail_shouldThrowException() {
         RegisterRequest request = new RegisterRequest("existing@example.com", "password123");
-        when(userRepository.existsByEmail(request.email())).thenReturn(true);
+        when(userRepository.existsByEmailIgnoreCase(request.email())).thenReturn(true);
 
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(IllegalStateException.class)
@@ -114,7 +115,7 @@ class AuthServiceTest {
         User user = new User("user@example.com", "hashed_password", "ROLE_USER");
         String expectedAccessToken = "jwt_token";
 
-        when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(request.email())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.password(), user.getPasswordHash())).thenReturn(true);
         when(userSettingsRepository.findByUser_Id(any())).thenReturn(Optional.empty());
         when(jwtService.createAccessToken(user.getEmail(), user.getRole())).thenReturn(expectedAccessToken);
@@ -130,7 +131,7 @@ class AuthServiceTest {
     @Test
     void login_withNonExistentEmail_shouldThrowException() {
         LoginRequest request = new LoginRequest("nonexistent@example.com", "password123");
-        when(userRepository.findByEmail(request.email())).thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoreCase(request.email())).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -142,7 +143,7 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest("user@example.com", "wrongpassword");
         User user = new User("user@example.com", "hashed_password", "ROLE_USER");
 
-        when(userRepository.findByEmail(request.email())).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase(request.email())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(request.password(), user.getPasswordHash())).thenReturn(false);
 
         assertThatThrownBy(() -> authService.login(request))
@@ -171,5 +172,25 @@ class AuthServiceTest {
         assertThat(response.accessToken()).isEqualTo("new_access_token");
         assertThat(response.refreshToken()).isNotBlank();
         assertThat(response.refreshToken()).isNotEqualTo("old_raw_refresh_token");
+    }
+
+    @Test
+    void checkEmailAvailability_shouldNormalizeAndReturnAvailable() {
+        when(userRepository.existsByEmailIgnoreCase("new@example.com")).thenReturn(false);
+
+        EmailAvailabilityResponse response = authService.checkEmailAvailability("  NEW@example.com ");
+
+        assertThat(response.available()).isTrue();
+        verify(userRepository).existsByEmailIgnoreCase("new@example.com");
+    }
+
+    @Test
+    void checkEmailAvailability_shouldReturnUnavailableWhenUserExists() {
+        when(userRepository.existsByEmailIgnoreCase("taken@example.com")).thenReturn(true);
+
+        EmailAvailabilityResponse response = authService.checkEmailAvailability("taken@example.com");
+
+        assertThat(response.available()).isFalse();
+        verify(userRepository).existsByEmailIgnoreCase("taken@example.com");
     }
 }

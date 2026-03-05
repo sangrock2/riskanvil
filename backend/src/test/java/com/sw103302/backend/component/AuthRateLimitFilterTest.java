@@ -49,6 +49,49 @@ class AuthRateLimitFilterTest {
     }
 
     @Test
+    void shouldRateLimitCheckEmailWithOwnRule() throws ServletException, IOException {
+        for (int i = 1; i <= 31; i++) {
+            MockHttpServletRequest req = new MockHttpServletRequest("POST", "/api/auth/check-email");
+            req.setRemoteAddr("10.0.0.11");
+            MockHttpServletResponse res = new MockHttpServletResponse();
+
+            filter.doFilter(req, res, new MockFilterChain());
+
+            if (i <= 30) {
+                assertThat(res.getStatus()).isEqualTo(200);
+            } else {
+                assertThat(res.getStatus()).isEqualTo(429);
+                assertThat(res.getContentAsString()).contains("\"rule\":\"check_email\"");
+            }
+        }
+    }
+
+    @Test
+    void checkEmailRuleShouldNotConsumeAuthBucket() throws ServletException, IOException {
+        for (int i = 1; i <= 30; i++) {
+            MockHttpServletRequest checkReq = new MockHttpServletRequest("POST", "/api/auth/check-email");
+            checkReq.setRemoteAddr("10.0.0.12");
+            MockHttpServletResponse checkRes = new MockHttpServletResponse();
+            filter.doFilter(checkReq, checkRes, new MockFilterChain());
+            assertThat(checkRes.getStatus()).isEqualTo(200);
+        }
+
+        for (int i = 1; i <= 11; i++) {
+            MockHttpServletRequest loginReq = new MockHttpServletRequest("POST", "/api/auth/login");
+            loginReq.setRemoteAddr("10.0.0.12");
+            MockHttpServletResponse loginRes = new MockHttpServletResponse();
+            filter.doFilter(loginReq, loginRes, new MockFilterChain());
+
+            if (i <= 10) {
+                assertThat(loginRes.getStatus()).isEqualTo(200);
+            } else {
+                assertThat(loginRes.getStatus()).isEqualTo(429);
+                assertThat(loginRes.getContentAsString()).contains("\"rule\":\"auth\"");
+            }
+        }
+    }
+
+    @Test
     void shouldRateLimitHighCostReportEndpoint() throws ServletException, IOException {
         for (int i = 1; i <= 9; i++) {
             MockHttpServletRequest req = new MockHttpServletRequest("POST", "/api/market/report");

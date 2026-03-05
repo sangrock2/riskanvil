@@ -1,6 +1,7 @@
 package com.sw103302.backend.controller;
 
 import com.sw103302.backend.dto.AuthResponse;
+import com.sw103302.backend.dto.EmailAvailabilityRequest;
 import com.sw103302.backend.dto.EmailAvailabilityResponse;
 import com.sw103302.backend.dto.LoginRequest;
 import com.sw103302.backend.dto.RefreshRequest;
@@ -13,16 +14,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -37,7 +33,7 @@ public class AuthController {
         this.auth = auth;
     }
 
-    @GetMapping("/check-email")
+    @PostMapping("/check-email")
     @Operation(summary = "Check email availability", description = "Check whether the email can be used for registration")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Email availability checked",
@@ -45,13 +41,9 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid email format")
     })
     public ResponseEntity<EmailAvailabilityResponse> checkEmailAvailability(
-            @RequestParam
-            @NotBlank(message = "Email is required")
-            @Email(message = "Email must be valid")
-            @Size(max = 255, message = "Email cannot exceed 255 characters")
-            String email
+            @Valid @RequestBody EmailAvailabilityRequest req
     ) {
-        return ResponseEntity.ok(auth.checkEmailAvailability(email));
+        return ResponseEntity.ok(auth.checkEmailAvailability(req.email()));
     }
 
     @PostMapping("/register")

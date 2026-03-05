@@ -59,12 +59,13 @@ export default function Register() {
             setEmailCheckStatus("checking");
             setEmailCheckMessage(t("auth.emailChecking"));
 
-            const result = await apiFetch(`/api/auth/check-email?email=${encodeURIComponent(emailToCheck)}`, {
-                method: "GET",
+            const result = await apiFetch("/api/auth/check-email", {
+                method: "POST",
+                body: JSON.stringify({ email: emailToCheck }),
                 retry: 0,
             });
 
-            setCheckedEmail(result?.email || emailToCheck);
+            setCheckedEmail(emailToCheck);
 
             if (result?.available) {
                 setEmailCheckStatus("available");
@@ -74,8 +75,9 @@ export default function Register() {
                 setEmailCheckMessage(t("auth.emailTaken"));
             }
         } catch (checkErr) {
+            setCheckedEmail(emailToCheck);
             setEmailCheckStatus("error");
-            setEmailCheckMessage(checkErr?.message || t("common.error"));
+            setEmailCheckMessage(t("auth.emailCheckFailedFallback"));
         } finally {
             setCheckingEmail(false);
         }
@@ -93,7 +95,28 @@ export default function Register() {
             return;
         }
 
-        if (checkedEmail !== normalized || emailCheckStatus !== "available") {
+        const checkedCurrentEmail = checkedEmail === normalized;
+        const isTaken = checkedCurrentEmail && emailCheckStatus === "taken";
+        const isCheckedAvailable = checkedCurrentEmail && emailCheckStatus === "available";
+        const isCheckError = checkedCurrentEmail && emailCheckStatus === "error";
+
+        if (isTaken) {
+            setFieldErrors((prev) => ({
+                ...prev,
+                email: t("auth.emailTaken"),
+            }));
+            return;
+        }
+
+        if (checkingEmail) {
+            setFieldErrors((prev) => ({
+                ...prev,
+                email: t("auth.emailChecking"),
+            }));
+            return;
+        }
+
+        if (!isCheckedAvailable && !isCheckError) {
             setFieldErrors((prev) => ({
                 ...prev,
                 email: t("auth.emailCheckRequired"),
@@ -149,7 +172,9 @@ export default function Register() {
                             className={`${styles.emailCheckStatus} ${
                                 emailCheckStatus === "available"
                                     ? styles.emailCheckStatusAvailable
-                                    : styles.emailCheckStatusDefault
+                                    : emailCheckStatus === "taken" || emailCheckStatus === "error"
+                                        ? styles.emailCheckStatusError
+                                        : styles.emailCheckStatusDefault
                             }`}
                         >
                             {emailCheckMessage}
@@ -206,7 +231,7 @@ export default function Register() {
                     )}
                 </div>
 
-                <button className={styles.button} type="submit" disabled={submitting}>
+                <button className={styles.button} type="submit" disabled={submitting || checkingEmail}>
                     {submitting ? t("common.loading") : t("auth.registerButton")}
                 </button>
                 {err && <div className={styles.error}>{err}</div>}

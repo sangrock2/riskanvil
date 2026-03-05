@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AuthService {
@@ -61,9 +62,11 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public EmailAvailabilityResponse checkEmailAvailability(String rawEmail) {
+        long startedNs = System.nanoTime();
         String email = normalizeEmail(rawEmail);
         boolean available = !users.existsByEmailIgnoreCase(email);
-        return new EmailAvailabilityResponse(email, available);
+        enforceMinimumLatency(startedNs, 120);
+        return new EmailAvailabilityResponse(available);
     }
 
     @Transactional
@@ -230,5 +233,18 @@ public class AuthService {
             return "";
         }
         return rawEmail.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private void enforceMinimumLatency(long startedNs, long minimumMs) {
+        long elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedNs);
+        long remainingMs = minimumMs - elapsedMs;
+        if (remainingMs <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(remainingMs);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
