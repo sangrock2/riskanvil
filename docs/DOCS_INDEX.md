@@ -32,12 +32,16 @@
    - 기여 방식, PR 기준, 테스트 규칙
 13. [../SECURITY.md](../SECURITY.md)
    - 취약점 제보 및 보안 운영 정책
+14. [OPERATIONS_CHECKLIST.md](./OPERATIONS_CHECKLIST.md)
+   - 실서비스 일일/배포/장애 대응 실행 체크리스트
+15. [ALERTING_TEMPLATES.md](./ALERTING_TEMPLATES.md)
+   - Render/Sentry 운영 알림 규칙 템플릿
 
 ## 2. Audience Guide
 
 - 제품/기획/포트폴리오 설명: `PRODUCT_MANUAL.md`
 - 신규 개발자 온보딩: `ENGINEERING_HANDBOOK.md` + `API.md`
-- 운영/배포 담당자: `OPERATIONS_MANUAL.md`
+- 운영/배포 담당자: `OPERATIONS_MANUAL.md` + `OPERATIONS_CHECKLIST.md` + `ALERTING_TEMPLATES.md`
 - 릴리즈 변경 확인: `PATCH_NOTES.md`
 
 ## 3. Consolidation Map (레거시 문서 통합 맵)
@@ -71,4 +75,6 @@
   3. `ENGINEERING_HANDBOOK.md` 구조/설계 영향 반영
   4. `PATCH_NOTES.md` 버전 섹션 반영
 - 운영 정책 변경 시 `OPERATIONS_MANUAL.md` 우선 수정
+- 운영 점검 항목 변경 시 `OPERATIONS_CHECKLIST.md` 동시 수정
+- 운영 알림 기준 변경 시 `ALERTING_TEMPLATES.md` 동시 수정
 - 중복 문서 신규 생성 금지. 필요 시 본 인덱스에 링크만 추가

@@ -1,177 +1,206 @@
 # Operations Manual
 
-이 문서는 배포/운영/장애 대응 문서 정본입니다.
+이 문서는 Stock-AI 실서비스 운영(특히 Render 배포)을 위한 정본입니다.  
+실행용 점검 항목은 [OPERATIONS_CHECKLIST.md](./OPERATIONS_CHECKLIST.md)와 함께 사용합니다.
 
-## 1. Deployment Models
+## 1. 운영 범위
 
-### 1.1 Local Development
+- Frontend: Render Static Site
+- Backend: Render Web Service (Spring Boot)
+- AI: Render Private Service (FastAPI)
+- Database: Render PostgreSQL (Managed)
+- Error Tracking: Sentry (Frontend/Backend/AI)
 
-- Frontend: `http://localhost:3000`
-- Backend: `http://localhost:8080`
-- AI: `http://localhost:8000`
+## 2. 필수 운영 환경변수
 
-### 1.2 Container Stack (권장)
+### 2.1 Backend
 
-`docker-compose.yml` 구성:
+- `SPRING_PROFILES_ACTIVE=prod,postgres`
+- `JWT_SECRET` (32바이트 이상 랜덤 문자열)
+- `DB_URL` (반드시 JDBC 형식)
+- `DB_USERNAME`, `DB_PASSWORD`
+- `APP_CORS_ALLOWED_ORIGIN_PATTERNS`
+- `AI_BASE_URL` 또는 `AI_SERVICE_HOSTPORT`
+- 선택: `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`
 
-- Core: `frontend`, `backend`, `ai`, `nginx`
-- Infra: `mysql`, `redis`
-- Monitoring: `prometheus`, `grafana`
+예시:
 
-## 2. Environment Baseline
-
-최소 필수 변수:
-
-- DB: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`
-- JWT: `JWT_SECRET`
-- AI: `AI_BASE_URL`, `OPENAI_API_KEY`(필요 시)
-- Docker/MySQL: `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`
-- CORS: `APP_CORS_ALLOWED_ORIGIN_PATTERNS`
-
-기준 템플릿: `.env.example`
-
-## 3. Standard Commands
-
-### 3.1 Start/Stop
-
-```bash
-docker compose up -d
-docker compose ps
-docker compose logs -f backend
-docker compose down
+```env
+DB_URL=jdbc:postgresql://dpg-xxxx-a:5432/your_db_name
+DB_USERNAME=your_db_user
+DB_PASSWORD=your_db_password
 ```
 
-### 3.2 Health Check
+### 2.2 AI
 
-```bash
-curl http://localhost:8080/actuator/health
-curl http://localhost:8000/health
-```
+- 선택: `SENTRY_DSN`
+- 선택: `OPENAI_API_KEY`, `ALPHAVANTAGE_API_KEY`
 
-### 3.3 Monitoring Access
+### 2.3 Frontend
 
-- Prometheus: `http://localhost:9090`
-- Grafana: `http://localhost:3001`
+- `VITE_API_BASE_URL=https://<backend-domain>`
+- 선택: `VITE_SENTRY_DSN`
 
-## 4. Public URL Deployment (요약)
+## 3. 관측성(Observability) 표준
 
-권장 순서:
+### 3.1 Health
 
-1. 서버 준비(Ubuntu + Docker/Compose)
-2. 코드 배포(`git clone` 후 `.env` 설정)
-3. `docker compose up -d --build`
-4. 도메인 DNS 연결
-5. Reverse Proxy(TLS) 설정
-6. 헬스체크/로그/알림 검증
+- Backend: `/actuator/health`
+- AI: `/health`
 
-상세는 이 문서와 `nginx/nginx.conf`를 기준으로 운영합니다.
+### 3.2 Logs
 
-## 5. Runtime Policies
+- Render Dashboard -> 서비스 -> `Logs`에서 확인
+- 장애 분석은 `requestId` 기준으로 추적
+- 에러 로그는 최소 `timestamp`, `status`, `path`, `requestId`를 남겨야 함
 
-- Backend timeout/retry: 환경변수(`AI_CLIENT_*`)로 제어
-- 에러 추적: Sentry DSN 설정 시 활성화
-- 리소스 제한: compose `deploy.resources.limits` 준수
-- 로그 로테이션: json-file `max-size/max-file` 사용
+### 3.3 Error Tracking
 
-## 6. Incident Response
+- Sentry를 Frontend/Backend/AI 각각 연결
+- 알림 규칙:
+  - 5분 내 에러 급증
+  - 신규 이슈 발생
+  - 재오픈 이슈 발생
+- 상세 알림 템플릿: `docs/ALERTING_TEMPLATES.md`
 
-### 6.1 공통 절차
+### 3.4 Metrics
 
-1. 영향 범위 확인(기능/사용자/시장)
-2. 최근 배포/설정 변경 확인
-3. 서비스별 헬스체크
-4. 로그/메트릭 기반 원인 분리
-5. 완화 조치 -> 근본 원인 수정 -> 패치노트 기록
+- Backend: `/actuator/prometheus`
+- 최소 추적 지표:
+  - HTTP 5xx 비율
+  - 응답시간 p95/p99
+  - AI 타임아웃 비율
+  - DB 연결 실패 건수
+  - `app_error_total`(error_code/status 기준 API 오류 카운트)
 
-### 6.2 빈발 시나리오
+### 3.5 운영 자동 진단(Backend)
 
-- AI 지연/타임아웃
-  - `AI_CLIENT_TIMEOUT_REPORT_SECONDS` 확인
-  - 외부 LLM/API 상태 확인
-- DB 연결 실패
-  - MySQL 컨테이너 상태/계정/비밀번호 확인
-- Redis 장애
-  - 캐시 실패 graceful fallback 확인
-- WebSocket/SSE 이상
-  - Nginx 업그레이드/버퍼링 설정과 네트워크 경로 점검
+- `DB_URL` 자동 보정:
+  - `postgresql://...` 또는 `postgres://...` 입력 시 `jdbc:postgresql://...`로 자동 정규화
+- 앱 기동 시 운영 기준 로그 출력:
+  - active profiles, datasource, aiBaseUrl, cacheType, sentryEnabled
+- prod 프로필에서 기본값/리스크 설정 경고:
+  - 개발용 JWT 시크릿 사용
+  - CORS placeholder 도메인 미변경
+  - Sentry 미설정
 
-## 7. Error Handling Standard
+## 4. 운영 절차
 
-- API는 HTTP 상태코드 + 구조화된 JSON 에러를 반환
-- 클라이언트는 사용자 메시지와 내부 디버깅 메시지를 분리
-- 운영 로그에는 request id/correlation id를 남김
+### 4.1 일일 운영
 
-## 8. Release Checklist (운영용)
+1. 서비스 상태 `Live` 확인
+2. 헬스체크 2종 확인(Backend/AI)
+3. 최근 배포 실패/재시작 반복 여부 확인
+4. Sentry 신규 에러 확인
+5. 핵심 사용자 플로우 스모크 테스트
 
-배포 전:
+### 4.2 배포 운영
 
-- DB 마이그레이션 파일 검토
-- 환경변수 diff 검토
-- smoke 테스트 실행
-- 롤백 계획 확인
+1. 배포 전 체크리스트 수행
+2. Render 배포 시작
+3. 배포 로그에서 서버 시작/포트 바인딩 확인
+4. 배포 후 체크리스트 수행
+5. 이상 징후 시 즉시 롤백
 
-배포 후:
+### 4.3 롤백 기준
 
-- `/actuator/health`, `/health` 확인
-- 주요 사용자 플로우 로그인/분석/포트폴리오 검증
-- Grafana 에러율/응답시간 급증 여부 확인
-- `scripts/verify_public_service.ps1` 실행 후 리포트 보관
-- `scripts/capture_monitoring_screenshots.ps1` 실행 후 증빙 스크린샷 보관
+- 로그인/분석/포트폴리오 핵심 기능 중 1개 이상 장애
+- 5xx 급증이 5분 이상 지속
+- DB 연결 실패가 연속 발생
 
-## 9. Backup & Recovery
+롤백 방법:
 
-- MySQL: 정기 dump + 보관 정책 운영
-- Redis: 캐시 재생성 가능 정책 유지
-- 복구 목표 예시:
-  - RPO: 24시간 이내
-  - RTO: 2시간 이내
+1. Render `Manual Deploy`로 직전 정상 배포 선택
+2. 재배포 후 헬스체크 및 핵심 플로우 검증
+3. 장애 타임라인 기록
 
-## 10. Demo Seed Operations
+## 5. 장애 대응 Runbook
 
-### 10.1 Docker 기반 자동 주입
+### 5.1 공통 트리아지
 
-```powershell
-pwsh -File scripts/seed_demo_data.ps1 -UserEmail "user@example.com"
-pwsh -File scripts/seed_demo_data.ps1 -AllUsers
-```
+1. 장애 등급 분류(P1/P2/P3)
+2. 영향 범위 기록(사용자/기능/API)
+3. 최근 변경 확인(코드/환경변수/인프라)
+4. `requestId` 확보
+5. Backend -> AI -> DB 순서로 원인 분리
 
-### 10.2 MySQL CLI 직접 주입
+### 5.2 API 500 발생 시
+
+1. Frontend 네트워크 탭에서 실패 API와 `requestId` 확인
+2. Backend 로그에서 동일 `requestId` 검색
+3. AI 호출 오류 여부 확인
+4. DB 예외(SQL/연결/권한) 여부 확인
+5. 즉시 완화(재시도 정책, 캐시 사용, 롤백) 후 근본 원인 수정
+
+### 5.3 DB 연결 오류 시
+
+자주 발생하는 원인:
+
+- `DB_URL`이 `postgresql://...` 형식(오류)
+- DB 이름 오입력
+- 계정/비밀번호 불일치
+
+조치:
+
+1. `DB_URL`를 `jdbc:postgresql://.../<db_name>`으로 교정
+2. Render PostgreSQL의 실제 DB 이름 확인
+3. `DB_USERNAME`, `DB_PASSWORD` 재설정
+4. 재배포 후 `/actuator/health` 확인
+
+### 5.4 AI 지연/타임아웃 시
+
+1. AI 서비스 헬스체크 확인
+2. 외부 API 한도/장애 여부 확인
+3. `AI_CLIENT_TIMEOUT_*`, `AI_CLIENT_RETRY_*` 설정 확인
+4. 필요 시 타임아웃 상향 또는 재시도 완화 적용
+
+## 6. 로그 운영 규칙
+
+- 민감정보(비밀번호, 토큰 원문, API 키)는 로그 금지
+- 사용자 문의 대응 시 `requestId`를 우선 수집
+- 동일 장애는 이슈 단위로 묶어서 추적
+- 장애 종료 후 Postmortem 문서화
+
+## 7. DB 운영
+
+### 7.1 상태 확인
+
+- Render PostgreSQL Dashboard에서:
+  - 상태, 연결, 스토리지, 백업 확인
+
+### 7.2 데이터 확인 예시
 
 ```sql
-USE stock_ai;
-SELECT id, email FROM users;
-SET @target_user_id := 1;
-SOURCE C:/Users/Sw103/Desktop/stock-ai/scripts/sql/seed_demo_data.sql;
+SELECT current_database();
+SELECT now();
+SELECT count(*) FROM users;
 ```
 
-## 11. Automated Verification Commands
+### 7.3 백업/복구
 
-```powershell
-# Core E2E 3-flow smoke
-python scripts/e2e_smoke.py
+- RPO 목표: 24시간 이내
+- RTO 목표: 2시간 이내
+- 월 1회 복구 리허설 수행
 
-# Backtest/Risk validation report
-pwsh -File scripts/validate_backtest_risk.ps1
+## 8. 보안 운영
 
-# Public URL verification report
-pwsh -File scripts/verify_public_service.ps1 -PublicAppUrl "https://your-domain.com"
-```
+- `.env`/시크릿 값 Git 커밋 금지
+- 운영 시크릿 정기 로테이션
+- 기본 개발용 시크릿 사용 금지
+- CORS를 실제 도메인으로 제한
+- 에러 응답 스택트레이스 비노출 유지
 
-## 12. Security Operations
+## 9. 운영 증빙
 
-- `.env` 및 API 키는 Git 커밋 금지
-- 운영 비밀번호/토큰 주기적 로테이션
-- 2FA 활성화 사용자 계정 모니터링
-- Refresh Token 해시 저장 정책 유지
-
-## 13. Ownership
-
-- 코드 변경 담당: 개발팀
-- 배포/장애 대응 담당: 운영 담당자
-- 문서 정합성 책임: 릴리즈 담당자가 `PATCH_NOTES.md`와 함께 갱신
-
-## 14. Public Evidence Pack
-
-포트폴리오/대외 공유용 운영 증빙 기준 문서:
+운영/포트폴리오 증빙은 아래 문서 기준으로 수집:
 
 - `docs/PUBLIC_SERVICE_EVIDENCE.md`
+- `artifacts/reports/*`
+- `artifacts/screenshots/*`
+
+## 10. 문서 유지 정책
+
+- 운영 절차 변경 시 `OPERATIONS_MANUAL.md` 우선 수정
+- 점검 항목 변경 시 `OPERATIONS_CHECKLIST.md` 동시 수정
+- 알림 기준 변경 시 `ALERTING_TEMPLATES.md` 동시 수정
+- 릴리즈 시 `PATCH_NOTES.md`에 변경 기록 추가

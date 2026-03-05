@@ -2,6 +2,70 @@
 
 ---
 
+# v1.3.4 - 운영 추적/알림 자동화 보강 (DB_URL 정규화 + 에러 메트릭)
+
+**릴리즈 날짜**: 2026-03-05  
+**이전 버전**: v1.3.3  
+**현재 버전**: v1.3.4
+
+---
+
+## Backend 운영성 개선
+
+- `DB_URL` 자동 정규화 추가
+  - `postgresql://...`, `postgres://...` 입력 시 `jdbc:postgresql://...`로 자동 보정
+  - `backend/src/main/java/com/sw103302/backend/config/DbUrlEnvironmentPostProcessor.java`
+  - `backend/src/main/resources/META-INF/spring.factories` 등록
+- 운영 오류 추적 메트릭 추가
+  - `app_error_total{status,error_code}` 카운터 수집
+  - `backend/src/main/java/com/sw103302/backend/component/ErrorMetricsRecorder.java`
+  - `GlobalExceptionHandler`에서 에러 응답 생성 시 자동 기록
+- 운영 준비상태 로그/경고 추가
+  - 앱 시작 시 profiles/datasource/ai/sentry 상태 로그 출력
+  - prod에서 위험 설정(JWT 기본값/CORS placeholder/Sentry 미설정) 경고
+  - `backend/src/main/java/com/sw103302/backend/component/OperationalReadinessReporter.java`
+- Actuator info 강화
+  - `management.info.*` 활성화 및 `info.app.*` 메타데이터 추가
+
+## 운영 문서/체크리스트 확장
+
+- 알림 템플릿 신규 문서 추가: `docs/ALERTING_TEMPLATES.md`
+  - Render/Sentry 알림 룰 기준 및 심각도 매핑
+- 운영 문서 동기화:
+  - `docs/OPERATIONS_MANUAL.md`
+  - `docs/OPERATIONS_CHECKLIST.md`
+  - `docs/DEPLOY_RENDER.md`
+  - `docs/DOCS_INDEX.md`
+  - `README.md`, `.env.example`
+
+---
+
+# v1.3.3 - 실서비스 운영 체크리스트/매뉴얼 정비
+
+**릴리즈 날짜**: 2026-03-05  
+**이전 버전**: v1.3.2  
+**현재 버전**: v1.3.3
+
+---
+
+## 운영 문서 개선
+
+- 실행형 운영 체크리스트 신규 추가: `docs/OPERATIONS_CHECKLIST.md`
+  - 일일 점검, 주간 점검, 배포 전/후, 장애 대응, 롤백, DB/보안 점검 항목 정리
+- 운영 정본 문서 개편: `docs/OPERATIONS_MANUAL.md`
+  - Render 실서비스 기준 로그/오류/메트릭/Sentry 운영 절차 반영
+  - `requestId` 기반 장애 추적 절차와 DB URL 오류 대응 런북 추가
+- 문서 연결성 강화:
+  - `docs/DOCS_INDEX.md`에 운영 체크리스트 반영
+  - `README.md` 문서 목록에 운영 체크리스트 반영
+
+## 코드 변경 여부
+
+- 이번 릴리즈는 운영 문서 체계 강화가 중심이며, 필수 코드 수정은 포함하지 않음
+- 현재 코드 기준으로 운영 가능하며, 운영 과정에서 수집된 지표/에러 패턴에 따라 추가 하드닝을 진행
+
+---
+
 # v1.3.2 - Render PostgreSQL 16 배포 프로필 추가
 
 **릴리즈 날짜**: 2026-03-04  

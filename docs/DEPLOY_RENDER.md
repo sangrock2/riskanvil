@@ -54,6 +54,10 @@ SPRING_CACHE_TYPE=simple
 # REDIS_PASSWORD=<redis-password>
 ```
 
+참고:
+- `DB_URL`에 실수로 `postgresql://...` 또는 `postgres://...`를 넣어도 앱 시작 시 자동으로 `jdbc:postgresql://...`로 보정됩니다.
+- 운영 안정성을 위해 Dashboard에는 처음부터 `jdbc:postgresql://...` 형식으로 입력하는 것을 권장합니다.
+
 ## 3. Frontend 환경변수
 
 `frontend` Static Site에 설정합니다.

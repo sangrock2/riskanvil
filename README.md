@@ -78,6 +78,8 @@ python -m uvicorn main:app --reload  # http://localhost:8000
 - **[Engineering Handbook](docs/ENGINEERING_HANDBOOK.md)** - 아키텍처/기술스택/개발/테스트 기준
 - **[API Reference](docs/API.md)** - Backend API 엔드포인트 계약
 - **[Operations Manual](docs/OPERATIONS_MANUAL.md)** - 배포/운영/장애 대응/릴리즈 절차
+- **[Operations Checklist](docs/OPERATIONS_CHECKLIST.md)** - 실서비스 점검/배포/장애 대응 실행 체크리스트
+- **[Alerting Templates](docs/ALERTING_TEMPLATES.md)** - Render/Sentry 운영 알림 룰 템플릿
 - **[Patch Notes](docs/PATCH_NOTES.md)** - 버전별 변경 이력
 - **[Roadmap](docs/ROADMAP.md)** - 향후 확장 로드맵
 - **[Public Service Evidence](docs/PUBLIC_SERVICE_EVIDENCE.md)** - 공개 URL/모니터링 증빙 템플릿

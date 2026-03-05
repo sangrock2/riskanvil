@@ -1,0 +1,3 @@
+org.springframework.boot.env.EnvironmentPostProcessor=\
+com.sw103302.backend.config.DbUrlEnvironmentPostProcessor
+
