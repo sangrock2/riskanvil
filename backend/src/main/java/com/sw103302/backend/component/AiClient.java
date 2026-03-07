@@ -158,6 +158,28 @@ public class AiClient {
                 "news");
     }
 
+    @Cacheable(cacheNames = "ai_etf_info",
+            key = "'etf_info:' + #ticker + ':' + #market",
+            unless = "#result == null || #result.isBlank()"
+    )
+    public String etfInfo(String ticker, String market) {
+        return getText("/etf/info/" + ticker,
+                uri -> uri.queryParam("market", market),
+                timeoutDefault,
+                "etf_info");
+    }
+
+    @Cacheable(cacheNames = "ai_etf_holdings",
+            key = "'etf_holdings:' + #ticker + ':' + #market",
+            unless = "#result == null || #result.isBlank()"
+    )
+    public String etfHoldings(String ticker, String market) {
+        return getText("/etf/holdings/" + ticker,
+                uri -> uri.queryParam("market", market),
+                timeoutDefault,
+                "etf_holdings");
+    }
+
     /**
      * Generic POST endpoint for new features (screener, correlation, chatbot, etc.)
      */

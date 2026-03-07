@@ -45,6 +45,8 @@ public class CacheConfig {
         perCache.put("ai_fundamentals", base.entryTtl(Duration.ofHours(6)));
         perCache.put("ai_news", base.entryTtl(Duration.ofMinutes(10)));
         perCache.put("ai_symbol_search", base.entryTtl(Duration.ofHours(24)));
+        perCache.put("ai_etf_info", base.entryTtl(Duration.ofHours(1)));
+        perCache.put("ai_etf_holdings", base.entryTtl(Duration.ofMinutes(30)));
 
         // (선택) AI insights/report도 Redis에서 짧게 캐시 (다중 사용자/스케일아웃 대비)
         perCache.put("ai_insights", base.entryTtl(Duration.ofMinutes(10)));
@@ -67,7 +69,7 @@ public class CacheConfig {
         // Fallback to simple in-memory cache when Redis is not available
         return new ConcurrentMapCacheManager(
                 "ai_quote", "ai_prices", "ai_ohlc", "ai_fundamentals", "ai_news", "ai_symbol_search",
-                "ai_insights", "ai_report", "prices", "price"
+                "ai_insights", "ai_report", "ai_etf_info", "ai_etf_holdings", "prices", "price"
         );
     }
 }

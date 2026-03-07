@@ -12,7 +12,7 @@ export default function TickerSearch({ market, onPick }) {
         const t = setTimeout(async () => {
             try {
                 setErr("");
-                const list = await apiFetch(`/api/market/search?q=${encodeURIComponent(q)}&market=${market}`);
+                const list = await apiFetch(`/api/market/search?keywords=${encodeURIComponent(q)}&market=${market}`);
                 setItems(Array.isArray(list) ? list : []);
             } catch (e) {
                 setErr(e.message);

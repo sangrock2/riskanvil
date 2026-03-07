@@ -235,9 +235,44 @@ async def _fetch_insight_inputs(ticker: str, market: str, days: int, news_limit:
     )
     q, p, f, n, obv_result, market_env_result = results
 
-    for required_result in (q, p, f):
-        if isinstance(required_result, Exception):
-            raise required_result
+    if isinstance(q, Exception):
+        logger.warning("Quote unavailable for %s: %s", ticker, q)
+        q = {
+            "ticker": ticker,
+            "market": market,
+            "price": None,
+            "change": None,
+            "changePercent": None,
+            "latestTradingDay": None,
+            "degraded": True,
+        }
+
+    if isinstance(p, Exception):
+        logger.warning("Prices unavailable for %s: %s", ticker, p)
+        p = {
+            "ticker": ticker,
+            "market": market,
+            "points": [],
+            "degraded": True,
+        }
+
+    if isinstance(f, Exception):
+        logger.warning("Fundamentals unavailable for %s: %s", ticker, f)
+        f = {
+            "ticker": ticker,
+            "market": market,
+            "sector": None,
+            "industry": None,
+            "pe": None,
+            "ps": None,
+            "pb": None,
+            "roe": None,
+            "roa": None,
+            "operatingMargin": None,
+            "profitMargin": None,
+            "revYoY": None,
+            "degraded": True,
+        }
 
     news_data = n
     if isinstance(n, Exception):

@@ -24,7 +24,8 @@ public class UserSettingsService {
     @Transactional(readOnly = true)
     public UserSettingsResponse get() {
         User user = currentUser();
-        UserSettings settings = getOrCreateSettings(user);
+        UserSettings settings = settingsRepository.findByUser_Id(user.getId())
+            .orElseGet(() -> new UserSettings(user));
         return toResponse(settings);
     }
 
@@ -63,6 +64,9 @@ public class UserSettingsService {
 
     private User currentUser() {
         String email = SecurityUtil.currentEmail();
+        if (email == null || email.isBlank()) {
+            throw new IllegalStateException("unauthenticated");
+        }
         return userRepository.findByEmail(email)
             .orElseThrow(() -> new IllegalStateException("User not found"));
     }
