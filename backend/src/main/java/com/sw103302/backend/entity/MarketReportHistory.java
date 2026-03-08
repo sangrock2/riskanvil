@@ -22,7 +22,7 @@ public class MarketReportHistory {
     private MarketCache cache;
 
     @Lob
-    @Column(name = "report_text", columnDefinition = "LONGTEXT", nullable = false)
+    @Column(name = "report_text", nullable = false)
     private String reportText;
 
     @Column(name = "created_at", nullable = false)

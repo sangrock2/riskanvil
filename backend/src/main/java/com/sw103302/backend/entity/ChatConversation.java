@@ -25,7 +25,8 @@ public class ChatConversation {
     @Column(length = 50)
     private String model = "opus";
 
-    @Column(name = "context_json", columnDefinition = "LONGTEXT")
+    @Lob
+    @Column(name = "context_json")
     private String contextJson;
 
     @Column(name = "created_at", nullable = false)

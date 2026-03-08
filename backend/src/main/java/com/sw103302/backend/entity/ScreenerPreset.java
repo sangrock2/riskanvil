@@ -23,7 +23,8 @@ public class ScreenerPreset {
     @Column(length = 500)
     private String description;
 
-    @Column(name = "filters_json", nullable = false, columnDefinition = "LONGTEXT")
+    @Lob
+    @Column(name = "filters_json", nullable = false)
     private String filtersJson;
 
     @Column(name = "is_public", nullable = false)

@@ -28,10 +28,10 @@ public class BacktestRun {
     @Column(name="strategy", nullable=false, length=30)
     private String strategy;
 
-    @Lob @Column(name = "request_json", columnDefinition = "LONGTEXT", nullable = false)
+    @Lob @Column(name = "request_json", nullable = false)
     private String requestJson;
 
-    @Lob @Column(name = "response_json", columnDefinition = "LONGTEXT", nullable = false)
+    @Lob @Column(name = "response_json", nullable = false)
     private String responseJson;
 
     @Column(name="total_return")
