@@ -37,15 +37,13 @@ public class MarketCache {
     @Column(name = "news_limit", nullable = false)
     private int newsLimit;
 
-    @Lob
-    @Column(name = "insights_json")
+    @Column(name = "insights_json", columnDefinition = "TEXT")
     private String insightsJson;
 
     @Column(name = "insights_updated_at")
     private LocalDateTime insightsUpdatedAt;
 
-    @Lob
-    @Column(name = "report_text")
+    @Column(name = "report_text", columnDefinition = "TEXT")
     private String reportText;
 
     @Column(name = "report_updated_at")

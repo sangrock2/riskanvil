@@ -21,8 +21,7 @@ public class MarketReportHistory {
     @JoinColumn(name = "cache_id")
     private MarketCache cache;
 
-    @Lob
-    @Column(name = "report_text", nullable = false)
+    @Column(name = "report_text", nullable = false, columnDefinition = "TEXT")
     private String reportText;
 
     @Column(name = "created_at", nullable = false)
