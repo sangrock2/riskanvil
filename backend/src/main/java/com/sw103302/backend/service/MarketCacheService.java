@@ -14,6 +14,8 @@ import com.sw103302.backend.repository.MarketCacheRepository;
 import com.sw103302.backend.repository.MarketReportHistoryRepository;
 import com.sw103302.backend.repository.UserRepository;
 import com.sw103302.backend.util.SecurityUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ import java.util.Objects;
 
 @Service
 public class MarketCacheService {
+    private static final Logger log = LoggerFactory.getLogger(MarketCacheService.class);
     private final AiClient aiClient;
     private final ObjectMapper om;
     private final UserRepository userRepository;
@@ -82,14 +85,19 @@ public class MarketCacheService {
 
         try {
             if (!refresh) {
-                MarketCache cache = marketCacheRepository
-                        .findByUser_IdAndTickerAndMarketAndTestModeAndDaysAndNewsLimit(user.getId(), ticker, market, test, days, newsLimit)
-                        .orElse(null);
+                try {
+                    MarketCache cache = marketCacheRepository
+                            .findByUser_IdAndTickerAndMarketAndTestModeAndDaysAndNewsLimit(user.getId(), ticker, market, test, days, newsLimit)
+                            .orElse(null);
 
-                if (cache != null && cache.getInsightsJson() != null && !cache.getInsightsJson().isBlank()) {
-                    cached = true;
-                    String out = withCacheMeta(cache.getInsightsJson(), true, cache.getInsightsUpdatedAt(), cache.getReportUpdatedAt());
-                    return quantAnalysisService.attachQuant(out);
+                    if (cache != null && cache.getInsightsJson() != null && !cache.getInsightsJson().isBlank()) {
+                        cached = true;
+                        String out = withCacheMeta(cache.getInsightsJson(), true, cache.getInsightsUpdatedAt(), cache.getReportUpdatedAt());
+                        return quantAnalysisService.attachQuant(out);
+                    }
+                } catch (Exception cacheReadEx) {
+                    log.warn("Insights cache read failed. Fallback to AI fetch. requestId={} ticker={} market={} test={} days={} newsLimit={} reason={}",
+                            requestId, ticker, market, test, days, newsLimit, cacheReadEx.toString());
                 }
             }
 
@@ -104,19 +112,30 @@ public class MarketCacheService {
 
                 String raw = aiClient.insights(sanitized, test);
 
-                MarketCache saved = tx.execute(status -> {
-                    MarketCache cache = marketCacheRepository
-                            .findByUser_IdAndTickerAndMarketAndTestModeAndDaysAndNewsLimit(user.getId(), ticker, market, test, days, newsLimit)
-                            .orElse(null);
+                LocalDateTime insightsUpdatedAt = null;
+                LocalDateTime reportUpdatedAt = null;
+                try {
+                    MarketCache saved = tx.execute(status -> {
+                        MarketCache cache = marketCacheRepository
+                                .findByUser_IdAndTickerAndMarketAndTestModeAndDaysAndNewsLimit(user.getId(), ticker, market, test, days, newsLimit)
+                                .orElse(null);
 
-                    if (cache == null) cache = new MarketCache(user, ticker, market, test, days, newsLimit);
+                        if (cache == null) cache = new MarketCache(user, ticker, market, test, days, newsLimit);
 
-                    cache.setInsightsJson(raw);
-                    cache.setInsightsUpdatedAt(LocalDateTime.now());
-                    return marketCacheRepository.save(cache);
-                });
+                        cache.setInsightsJson(raw);
+                        cache.setInsightsUpdatedAt(LocalDateTime.now());
+                        return marketCacheRepository.save(cache);
+                    });
+                    if (saved != null) {
+                        insightsUpdatedAt = saved.getInsightsUpdatedAt();
+                        reportUpdatedAt = saved.getReportUpdatedAt();
+                    }
+                } catch (Exception cacheWriteEx) {
+                    log.warn("Insights cache write failed. Returning non-cached response. requestId={} ticker={} market={} test={} days={} newsLimit={} reason={}",
+                            requestId, ticker, market, test, days, newsLimit, cacheWriteEx.toString());
+                }
 
-                String out = withCacheMeta(raw, false, saved.getInsightsUpdatedAt(), saved.getReportUpdatedAt());
+                String out = withCacheMeta(raw, false, insightsUpdatedAt, reportUpdatedAt);
                 return quantAnalysisService.attachQuant(out);
             });
         } catch (Exception e) {
@@ -221,40 +240,45 @@ public class MarketCacheService {
 
         try {
             if (!refresh) {
-                MarketCache cache = marketCacheRepository
-                        .findByUser_IdAndTickerAndMarketAndTestModeAndDaysAndNewsLimit(user.getId(), ticker, market, test, days, newsLimit)
-                        .orElse(null);
+                try {
+                    MarketCache cache = marketCacheRepository
+                            .findByUser_IdAndTickerAndMarketAndTestModeAndDaysAndNewsLimit(user.getId(), ticker, market, test, days, newsLimit)
+                            .orElse(null);
 
-                if (cache != null && cache.getReportText() != null && !cache.getReportText().isBlank()) {
-                    cached = true;
+                    if (cache != null && cache.getReportText() != null && !cache.getReportText().isBlank()) {
+                        cached = true;
 
-                    String fixed = normalizeReportText(cache.getReportText());
+                        String fixed = normalizeReportText(cache.getReportText());
 
-                    // 자동 교정 저장(짧은 TX)
-                    if (!Objects.equals(fixed, cache.getReportText())) {
-                        tx.execute(status -> {
-                            MarketCache managed = marketCacheRepository
-                                    .findById(cache.getId())
-                                    .orElseThrow();
-                            managed.setReportText(fixed);
-                            if (managed.getReportUpdatedAt() == null) managed.setReportUpdatedAt(LocalDateTime.now());
-                            marketCacheRepository.save(managed);
-                            return null;
-                        });
+                        // 자동 교정 저장(짧은 TX)
+                        if (!Objects.equals(fixed, cache.getReportText())) {
+                            tx.execute(status -> {
+                                MarketCache managed = marketCacheRepository
+                                        .findById(cache.getId())
+                                        .orElseThrow();
+                                managed.setReportText(fixed);
+                                if (managed.getReportUpdatedAt() == null) managed.setReportUpdatedAt(LocalDateTime.now());
+                                marketCacheRepository.save(managed);
+                                return null;
+                            });
+                        }
+
+                        ObjectNode out = om.createObjectNode();
+                        out.put("ticker", ticker);
+                        out.put("market", market);
+                        out.put("report", fixed);
+
+                        ObjectNode meta = out.putObject("_cache");
+                        meta.put("cached", true);
+
+                        if (cache.getInsightsUpdatedAt() != null) meta.put("insightsUpdatedAt", cache.getInsightsUpdatedAt().toString());
+                        if (cache.getReportUpdatedAt() != null) meta.put("reportUpdatedAt", cache.getReportUpdatedAt().toString());
+
+                        return write(out);
                     }
-
-                    ObjectNode out = om.createObjectNode();
-                    out.put("ticker", ticker);
-                    out.put("market", market);
-                    out.put("report", fixed);
-
-                    ObjectNode meta = out.putObject("_cache");
-                    meta.put("cached", true);
-
-                    if (cache.getInsightsUpdatedAt() != null) meta.put("insightsUpdatedAt", cache.getInsightsUpdatedAt().toString());
-                    if (cache.getReportUpdatedAt() != null) meta.put("reportUpdatedAt", cache.getReportUpdatedAt().toString());
-
-                    return write(out);
+                } catch (Exception cacheReadEx) {
+                    log.warn("Report cache read failed. Fallback to AI fetch. requestId={} ticker={} market={} test={} days={} newsLimit={} reason={}",
+                            requestId, ticker, market, test, days, newsLimit, cacheReadEx.toString());
                 }
             }
 
@@ -270,27 +294,38 @@ public class MarketCacheService {
                 String raw = aiClient.report(sanitized, test, web);
                 String reportText = normalizeReportText(raw);
 
-                MarketCache saved = tx.execute(status -> {
-                    MarketCache cache = marketCacheRepository
-                            .findByUser_IdAndTickerAndMarketAndTestModeAndDaysAndNewsLimit(user.getId(), ticker, market, test, days, newsLimit)
-                            .orElse(null);
+                LocalDateTime insightsUpdatedAt = null;
+                LocalDateTime reportUpdatedAt = null;
+                try {
+                    MarketCache saved = tx.execute(status -> {
+                        MarketCache cache = marketCacheRepository
+                                .findByUser_IdAndTickerAndMarketAndTestModeAndDaysAndNewsLimit(user.getId(), ticker, market, test, days, newsLimit)
+                                .orElse(null);
 
-                    if (cache == null) cache = new MarketCache(user, ticker, market, test, days, newsLimit);
+                        if (cache == null) cache = new MarketCache(user, ticker, market, test, days, newsLimit);
 
-                    String prev = cache.getReportText();
-                    String prevFixed = (prev == null ? null : normalizeReportText(prev));
+                        String prev = cache.getReportText();
+                        String prevFixed = (prev == null ? null : normalizeReportText(prev));
 
-                    if (prevFixed != null && !prevFixed.isBlank() && reportText != null && !reportText.isBlank()  && !prevFixed.equals(reportText)) {
-                        marketReportHistoryRepository.save(new MarketReportHistory(cache, prevFixed));
+                        if (prevFixed != null && !prevFixed.isBlank() && reportText != null && !reportText.isBlank()  && !prevFixed.equals(reportText)) {
+                            marketReportHistoryRepository.save(new MarketReportHistory(cache, prevFixed));
+                        }
+
+                        cache.setReportText(reportText);
+                        cache.setReportUpdatedAt(LocalDateTime.now());
+
+                        return marketCacheRepository.save(cache);
+                    });
+                    if (saved != null) {
+                        insightsUpdatedAt = saved.getInsightsUpdatedAt();
+                        reportUpdatedAt = saved.getReportUpdatedAt();
                     }
+                } catch (Exception cacheWriteEx) {
+                    log.warn("Report cache write failed. Returning non-cached response. requestId={} ticker={} market={} test={} days={} newsLimit={} web={} reason={}",
+                            requestId, ticker, market, test, days, newsLimit, web, cacheWriteEx.toString());
+                }
 
-                    cache.setReportText(reportText);
-                    cache.setReportUpdatedAt(LocalDateTime.now());
-
-                    return marketCacheRepository.save(cache);
-                });
-
-                String out = withCacheMeta(raw, false, saved.getInsightsUpdatedAt(), saved.getReportUpdatedAt());
+                String out = withCacheMeta(raw, false, insightsUpdatedAt, reportUpdatedAt);
                 return quantAnalysisService.attachQuant(out);
             });
         } catch (Exception e) {

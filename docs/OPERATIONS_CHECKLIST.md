@@ -1,99 +1,424 @@
-# Operations Checklist
+# Operations Checklist (초보 운영자 상세판)
 
-이 문서는 실서비스 운영 시 바로 체크하는 실행용 체크리스트입니다.  
-상세 절차는 [OPERATIONS_MANUAL.md](./OPERATIONS_MANUAL.md)를 기준으로 합니다.
+이 문서는 "처음 서비스를 운영하는 사람"을 기준으로 작성된 실행형 체크리스트입니다.  
+한 줄씩 그대로 따라 하면 배포/점검/장애 대응까지 수행할 수 있게 구성했습니다.
 
-## 0. 운영 기준값 (최초 1회)
+관련 문서:
+- 운영 정책/배경 설명: [OPERATIONS_MANUAL.md](./OPERATIONS_MANUAL.md)
+- 배포값/환경변수 기준: [DEPLOY_RENDER.md](./DEPLOY_RENDER.md)
+- 알림 템플릿: [ALERTING_TEMPLATES.md](./ALERTING_TEMPLATES.md)
 
-- [ ] Backend Health URL 확인: `https://<backend-domain>/actuator/health`
-- [ ] AI Health URL 확인: `https://<ai-domain>/health`
-- [ ] Render 알림 채널 설정(배포 실패, 헬스체크 실패, 재시작 반복)
-- [ ] Sentry 프로젝트 3개 연결(Frontend/Backend/AI)
-- [ ] `docs/ALERTING_TEMPLATES.md` 기준으로 알림 룰 생성/검증
-- [ ] Backend `JWT_SECRET`(32바이트 이상) 설정
-- [ ] Backend `DB_URL` 형식 확인: `jdbc:postgresql://<host>:5432/<db_name>`
-- [ ] Backend `APP_CORS_ALLOWED_ORIGIN_PATTERNS`를 실제 Frontend URL로 설정
-- [ ] `requestId` 기반 장애 추적 규칙 팀 공지
+---
 
-## 1. 일일 점검 (영업일 시작/종료 시)
+## 0. 오늘 점검 기록 (항상 먼저 작성)
 
-- [ ] Render Dashboard에서 Backend/AI 서비스 상태 `Live` 확인
-- [ ] 최근 24시간 배포 실패/재시작 이력 확인
-- [ ] Backend `/actuator/health` 상태 `UP` 확인
-- [ ] AI `/health` 상태 `ok` 확인
-- [ ] Sentry 신규 이슈/재오픈 이슈 확인
-- [ ] `app_error_total` 메트릭 급증(error_code/status) 여부 확인
-- [ ] Backend 5xx 급증 여부 확인(Logs 또는 Metrics)
-- [ ] 사용자 핵심 플로우 스모크 점검(로그인 -> 분석 -> 포트폴리오)
+- [ ] 환경: `prod` / `staging`
+- [ ] 점검자:
+- [ ] 점검 시작 시각 (KST):
+- [ ] 대상 커밋:
+- [ ] Render 배포 ID(있으면):
+- [ ] 점검 결과: `PASS / FAIL`
+- [ ] FAIL 항목 이슈 링크:
 
-## 2. 주간 점검
+---
 
-- [ ] 상위 에러 5개 원인 분류 및 재발 방지 액션 등록
-- [ ] 평균 응답시간(p95), 에러율, 타임아웃 비율 추이 점검
-- [ ] DB 연결 수/슬로우 쿼리/스토리지 사용량 확인
-- [ ] 만료 예정 비밀값(API Key, 토큰) 확인
-- [ ] 불필요 로그(민감정보 포함 가능성) 샘플 리뷰
+## 1. 처음 1회 세팅 체크리스트 (서비스 시작 시 1번만)
 
-## 3. 배포 전 체크리스트
+### 1.1 Render 서비스 구성 확인
 
-- [ ] 배포 커밋/브랜치 확인
-- [ ] 환경변수 diff 확인(누락/오타/값 형식)
-- [ ] DB 마이그레이션 영향 검토(Flyway/JPA 설정 포함)
-- [ ] 헬스체크 경로 유효성 확인
-- [ ] 롤백 대상 버전(직전 정상 배포) 확인
-- [ ] 변경사항을 `docs/PATCH_NOTES.md`에 기록
-- [ ] 알림 규칙 변경 시 `docs/ALERTING_TEMPLATES.md` 동기화
+- [ ] Backend 서비스 존재 (`riskanvil-backend`, Web Service)
+- [ ] AI 서비스 존재 (`riskanvil-ai`, Private Service)
+- [ ] Frontend 서비스 존재 (Static Site)
+- [ ] PostgreSQL 서비스 존재 (Managed)
 
-## 4. 배포 후 체크리스트 (15분 내)
+확인 위치:
+1. Render Dashboard 접속
+2. 프로젝트(또는 Workspace)에서 서비스 카드 4개 확인
 
-- [ ] 배포 로그에서 `Started` 및 포트 바인딩 확인
-- [ ] Backend `/actuator/health` 확인
-- [ ] AI `/health` 확인
-- [ ] Frontend에서 API 호출 200/4xx/5xx 비율 확인
-- [ ] 로그인/회원가입/분석/포트폴리오 최소 1회 실행
-- [ ] Sentry 신규 치명 오류 발생 여부 확인
+### 1.2 Backend 환경변수 확인
 
-## 5. 장애 대응 체크리스트
+확인 위치:
+1. Render -> `riskanvil-backend`
+2. `Environment` 탭
 
-### 5.1 공통
+필수값:
+- [ ] `SPRING_PROFILES_ACTIVE=prod,postgres`
+- [ ] `JWT_SECRET` 설정 (32바이트 이상)
+- [ ] `DB_URL` 설정 (반드시 `jdbc:postgresql://...`)
+- [ ] `DB_USERNAME` 설정
+- [ ] `DB_PASSWORD` 설정
+- [ ] `APP_CORS_ALLOWED_ORIGIN_PATTERNS`에 실제 프론트 URL 입력
+- [ ] `AI_BASE_URL` 설정 (예: `https://riskanvil-ai.onrender.com`)
 
-- [ ] 장애 심각도 분류(P1/P2/P3)
-- [ ] 최초 인지 시각/증상/영향 범위 기록
-- [ ] 최근 배포/환경변수 변경 여부 확인
-- [ ] 사용자 에러 응답의 `requestId` 확보
-- [ ] 동일 `requestId`로 Backend -> AI 로그 순서 추적
+운영 안정값(권장):
+- [ ] `SPRING_CACHE_TYPE=simple`
+- [ ] `MANAGEMENT_HEALTH_REDIS_ENABLED=false`
 
-### 5.2 DB 연결 오류
+주의:
+- `DB_URL`에 `postgresql://...` 형식(=jdbc 없음)을 넣지 않습니다.
+- DB 이름은 Render Postgres의 실제 DB 이름과 정확히 일치해야 합니다.
 
-- [ ] `DB_URL`가 `jdbc:postgresql://...` 형식인지 확인
-- [ ] DB 이름(`/<db_name>`)이 실제 존재하는지 확인
-- [ ] `DB_USERNAME`, `DB_PASSWORD` 재검증
-- [ ] Render PostgreSQL 인스턴스 상태 및 연결 정보 재확인
+### 1.3 Frontend 환경변수 확인
 
-### 5.3 AI 분석 오류(HTTP 500)
+확인 위치:
+1. Render -> Frontend Static Site
+2. `Environment` 탭
 
-- [ ] Backend 로그에서 AI 호출 실패 지점 확인
-- [ ] AI 서비스 로그에서 동일 시각 예외 확인
-- [ ] 외부 데이터/API 한도 초과 여부 확인
-- [ ] 임시 완화: 캐시 응답/재시도 정책 사용 여부 점검
+- [ ] `VITE_API_BASE_URL=https://riskanvil-backend.onrender.com`
+- [ ] (선택) `VITE_WS_URL=https://riskanvil-backend.onrender.com`
 
-## 6. 롤백 체크리스트
+### 1.4 AI 환경변수 확인
 
-- [ ] Render `Manual Deploy`에서 직전 정상 배포 선택
-- [ ] 롤백 완료 후 헬스체크 2종(Backend/AI) 재확인
-- [ ] 핵심 사용자 플로우 재점검
-- [ ] 장애 타임라인과 롤백 시점 기록
+확인 위치:
+1. Render -> `riskanvil-ai`
+2. `Environment` 탭
 
-## 7. DB 운영 체크리스트
+- [ ] `DATA_PROVIDER` 확인 (`yfinance` 또는 `alpha_vantage`)
+- [ ] `ALPHAVANTAGE_API_KEY` 입력 (alpha_vantage 쓸 때)
+- [ ] `OPENAI_API_KEY` 입력 (OpenAI 기능 사용할 때)
 
-- [ ] 월 1회 백업 복구 리허설 수행
-- [ ] 테이블 증감/인덱스 상태 점검
-- [ ] 보관 정책에 맞게 오래된 데이터 정리 계획 점검
-- [ ] `SELECT current_database();`로 연결 DB 재확인
+### 1.5 Sentry 연결 (Frontend/Backend/AI)
 
-## 8. 보안 운영 체크리스트
+- [ ] Frontend Sentry 프로젝트 생성 및 DSN 입력 (`VITE_SENTRY_DSN` 사용 시)
+- [ ] Backend Sentry 프로젝트 생성 및 DSN 입력 (`SENTRY_DSN`)
+- [ ] AI Sentry 프로젝트 생성 및 DSN 입력 (`SENTRY_DSN`)
 
-- [ ] 운영 비밀값 정기 로테이션
-- [ ] 기본/개발용 시크릿 사용 여부 점검
-- [ ] 관리자 계정 최소 권한 원칙 준수
-- [ ] 에러 응답에 내부 스택/비밀정보 노출 없는지 점검
+검증:
+1. 각 서비스 재배포
+2. Sentry 프로젝트의 Issues 탭에 이벤트 수신되는지 확인
+
+---
+
+## 2. 배포 전 체크리스트 (릴리즈마다)
+
+- [ ] GitHub `main` 브랜치에 배포 커밋 푸시 완료
+- [ ] Render Backend/AI/Frontend 대상 브랜치가 `main`인지 확인
+- [ ] 환경변수 오타/누락 재확인
+- [ ] `DB_URL`, `AI_BASE_URL`, `CORS` 재확인
+- [ ] 롤백 기준 확인 (직전 정상 커밋/배포 ID 기록)
+- [ ] `docs/PATCH_NOTES.md` 업데이트
+- [ ] 부하 테스트 계획값 확정 (`scripts/load_test_heavy.py` stage/목표치)
+
+---
+
+## 3. 배포 실행 순서 (권장)
+
+1. AI 배포
+2. Backend 배포
+3. Frontend 배포
+4. Backend CORS 최종 재확인 후 필요 시 재배포
+
+Render에서 배포 방법:
+1. 서비스 선택
+2. `Manual Deploy` 클릭
+3. `Deploy latest commit` 선택
+4. Logs 탭에서 시작 로그 확인
+
+---
+
+## 4. 배포 직후 15분 점검 (반드시 수행)
+
+### 4.1 헬스체크
+
+- [ ] `https://riskanvil-ai.onrender.com/health` -> `{"status":"ok"}`
+- [ ] `https://riskanvil-backend.onrender.com/actuator/health` -> `"status":"UP"`
+
+### 4.2 인증/설정 API
+
+- [ ] 회원 로그인 성공 (`/api/auth/login`)
+- [ ] `GET /api/settings` 성공 (500 없어야 함)
+- [ ] `PUT /api/settings` 저장 후 재조회 시 반영 확인
+
+### 4.3 핵심 분석 API
+
+- [ ] `POST /api/market/insights?test=false&refresh=false` 성공
+- [ ] `POST /api/market/report?test=false&refresh=false&web=true` 성공
+
+### 4.4 프론트 핵심 플로우
+
+- [ ] 로그인
+- [ ] 분석 페이지 진입
+- [ ] 인사이트 로드 버튼 동작
+- [ ] 포트폴리오 조회
+- [ ] 워치리스트 조회
+
+### 4.5 단기/고부하 점검 (릴리즈 중요도 높을 때 필수)
+
+- [ ] `load_test_short.py` 1회 실행
+- [ ] `load_test_heavy.py` 1회 실행 (stage 기반)
+- [ ] 리포트 파일 저장 확인 (`artifacts/reports/*.json`)
+- [ ] `errorRate`, `p95`, `rps` 임계치 PASS 확인
+
+---
+
+## 5. PowerShell 스모크 테스트 명령어 (복붙용)
+
+```powershell
+$BACKEND = "https://riskanvil-backend.onrender.com"
+$AI = "https://riskanvil-ai.onrender.com"
+
+# 1) Health
+Invoke-RestMethod "$AI/health"
+Invoke-RestMethod "$BACKEND/actuator/health"
+
+# 2) Login (실계정 사용)
+$loginBody = @{
+  email = "test@example.com"
+  password = "password1234"
+} | ConvertTo-Json
+
+$login = Invoke-RestMethod -Method Post `
+  -Uri "$BACKEND/api/auth/login" `
+  -ContentType "application/json" `
+  -Body $loginBody
+
+$token = $login.accessToken
+$headers = @{ Authorization = "Bearer $token" }
+
+# 3) Settings
+Invoke-RestMethod -Method Get -Uri "$BACKEND/api/settings" -Headers $headers
+
+# 4) Insights
+$insightBody = @{
+  ticker = "AAPL"
+  market = "US"
+  days = 90
+  newsLimit = 20
+} | ConvertTo-Json
+
+Invoke-RestMethod -Method Post `
+  -Uri "$BACKEND/api/market/insights?test=false&refresh=false" `
+  -ContentType "application/json" `
+  -Headers $headers `
+  -Body $insightBody
+
+```
+정상 기준:
+- 2xx 응답
+- 500 없음
+- 응답에 `requestId`가 있고 로그 추적 가능
+---
+
+## 6. 일일 점검 (10~15분)
+
+- [ ] Render 서비스 상태 모두 `Live`
+- [ ] Backend/AI Health 정상
+- [ ] 전일 대비 5xx 급증 없음
+- [ ] Sentry 신규 치명 이슈 없음
+- [ ] 핵심 API 1회 스모크 성공 (`/api/market/insights`)
+- [ ] 최근 재배포/재시작 반복 없음
+- [ ] DB 용량/연결 상태 이상 없음
+
+실패 시:
+1. 즉시 장애 등급 분류(P1/P2/P3)
+2. 원인/영향 기록
+3. 필요 시 롤백
+
+---
+
+## 7. 주간 점검 (30~60분)
+
+- [ ] 상위 오류 Top 5 원인 정리
+- [ ] 느린 API(p95/p99) 점검
+- [ ] DB 무결성 샘플 점검
+- [ ] 사용하지 않는 환경변수/시크릿 정리
+- [ ] 알림 임계값 노이즈 조정
+- [ ] 운영 문서 최신화
+
+---
+
+## 8. 월간 DR(재해복구) 점검
+
+- [ ] 백업 존재 확인 (최근 백업 시각 기록)
+- [ ] 복구 리허설 실행
+- [ ] 핵심 기능 재검증
+- [ ] 복구 결과 리포트 저장
+
+권장 스크립트:
+
+```powershell
+$env:SYN_BASE_URL="https://riskanvil-backend.onrender.com"
+$env:SYN_AI_HEALTH_URL="https://riskanvil-ai.onrender.com/health"
+$env:SYN_DURATION_MINUTES="60"
+python scripts/synthetic_monitor.py
+
+$env:LOAD_BASE_URL="https://riskanvil-backend.onrender.com"
+$env:LOAD_VUS="6"
+$env:LOAD_ITERATIONS="8"
+python scripts/load_test_short.py
+
+$env:LOAD_BASE_URL="https://riskanvil-backend.onrender.com"
+$env:LOAD_HEAVY_STAGES="20:120,40:180,60:240"
+$env:LOAD_HEAVY_MAX_VUS="80"
+$env:LOAD_HEAVY_WEIGHTS="quote:30,analysis_history:15,portfolio:15,insights_test:30,insights_refresh:10"
+$env:LOAD_HEAVY_MAX_ERROR_RATE="0.08"
+$env:LOAD_HEAVY_MAX_P95_MS="9000"
+$env:LOAD_HEAVY_MIN_RPS="0"
+python scripts/load_test_heavy.py
+```
+
+고부하 테스트 합격 기준(기본):
+- [ ] `errorRate <= LOAD_HEAVY_MAX_ERROR_RATE`
+- [ ] `p95ms <= LOAD_HEAVY_MAX_P95_MS`
+- [ ] `rps >= LOAD_HEAVY_MIN_RPS` (0보다 크게 설정한 경우)
+- [ ] `sampleFailures` 주요 원인이 5xx/timeout으로 폭증하지 않음
+
+---
+
+## 9. 장애 유형별 즉시 대응표
+
+### 9.1 `insights` 500 발생
+
+증상:
+- 프론트: `/api/market/insights` 500
+- 응답 본문에 `requestId`
+
+조치:
+1. 프론트 에러 응답에서 `requestId` 확보
+2. Backend 로그에서 같은 `requestId` 검색
+3. `Caused by` 첫 블록 원인 확인
+4. AI 로그 동시간대 확인
+5. 재현 여부 확인 후 코드 수정 또는 롤백
+
+### 9.2 `cannot execute INSERT in a read-only transaction`
+
+원인:
+- read-only 트랜잭션에서 저장(save) 실행
+
+조치:
+1. 예외 스택의 서비스/라인 확인
+2. GET API에서 write 발생 여부 확인
+3. read/write 트랜잭션 분리 후 재배포
+
+### 9.3 `database "... does not exist"`
+
+원인:
+- DB_URL의 DB명 오입력
+
+조치:
+1. Render Postgres 실제 DB명 확인
+2. Backend `DB_URL` 교정
+3. 재배포 후 health 재검증
+
+### 9.4 `Driver ... does not accept jdbcUrl`
+
+원인:
+- `DB_URL`이 `postgresql://...`처럼 jdbc prefix 누락
+
+조치:
+1. `DB_URL`을 `jdbc:postgresql://...`로 수정
+2. 재배포
+
+### 9.5 `YFRateLimitError: Too Many Requests`
+
+원인:
+- yfinance 호출량 초과
+
+조치:
+1. 요청 간격 늘리기 (`refresh=true` 남발 금지)
+2. 합성 모니터 간격 상향
+3. 필요 시 `DATA_PROVIDER=alpha_vantage` + API Key 설정
+
+### 9.6 `Redis health check failed`
+
+원인:
+- Redis 미연결 상태
+
+조치:
+1. Redis를 실제로 안 쓰면 `SPRING_CACHE_TYPE=simple`
+2. `MANAGEMENT_HEALTH_REDIS_ENABLED=false`
+3. 재배포
+
+---
+
+## 10. DB 데이터 점검 절차 (수동)
+
+확인 항목:
+- [ ] `users` 생성 증가 확인
+- [ ] `market_cache` 최근 업데이트 확인
+- [ ] `api_usage_log` 로그가 쌓이는지 확인
+
+샘플 쿼리:
+
+```sql
+select current_database();
+select now();
+select count(*) as users_count from users;
+select count(*) as market_cache_count from market_cache;
+select count(*) as usage_24h
+from api_usage_log
+where created_at > now() - interval '1 day';
+```
+
+---
+
+## 11. Sentry 연결 확인 체크리스트 (상세)
+
+### 11.1 프로젝트 생성
+
+- [ ] Frontend 프로젝트 생성 (JavaScript/React)
+- [ ] Backend 프로젝트 생성 (Java/Spring)
+- [ ] AI 프로젝트 생성 (Python/FastAPI)
+
+### 11.2 DSN 주입
+
+- [ ] Frontend: `VITE_SENTRY_DSN`
+- [ ] Backend: `SENTRY_DSN`
+- [ ] AI: `SENTRY_DSN`
+
+### 11.3 동작 확인
+
+- [ ] 각 서비스 재배포
+- [ ] Sentry Issues 탭에서 이벤트 수신 확인
+- [ ] Environment가 `prod`로 표시되는지 확인
+
+---
+
+## 12. 운영 로그 기록 템플릿 (복붙용)
+
+```text
+[운영점검]
+- 일시(KST):
+- 점검자:
+- 환경:
+- 커밋:
+
+[결과]
+- Health: PASS/FAIL
+- Auth: PASS/FAIL
+- Settings: PASS/FAIL
+- Insights: PASS/FAIL
+- Portfolio: PASS/FAIL
+
+[장애]
+- requestId:
+- 증상:
+- 원인:
+- 조치:
+- 재발방지:
+```
+
+---
+
+## 13. 최종 승인 기준 (GO / NO-GO)
+
+GO 조건:
+- [ ] Health 정상
+- [ ] Auth/Settings/Insights/Portfolio 핵심 플로우 PASS
+- [ ] 치명도 높은 신규 Sentry 이슈 없음
+- [ ] 5xx 급증 없음
+
+NO-GO 조건:
+- [ ] 핵심 API 1개라도 FAIL
+- [ ] DB 연결/쓰기 장애 존재
+- [ ] 배포 후 재시작 반복
+
+---
+
+## 14. 이번 프로젝트에서 가장 중요한 5개 확인 포인트
+
+- [ ] `GET /api/settings` 가 500 없이 동작하는지
+- [ ] `POST /api/market/insights` 가 2xx인지
+- [ ] Backend `DB_URL`이 정확한 JDBC 형식인지
+- [ ] AI rate limit 징후(`YFRateLimitError`)가 없는지
+- [ ] 장애 시 `requestId`로 로그 추적이 가능한지
