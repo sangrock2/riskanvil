@@ -103,9 +103,10 @@ export default function ReportGenerator({
       const selectedSections = Object.entries(sections)
         .filter(([, v]) => v)
         .map(([k]) => k);
+      let generatedText = "";
 
       const { close, done } = ssePost(
-        `/api/market/report/stream?test=false&web=true`,
+        `/api/market/report/stream?test=false&web=true&refresh=true`,
         {
           ticker,
           market,
@@ -115,15 +116,22 @@ export default function ReportGenerator({
           template,
         },
         {
-          onChunk: (chunk) => {
-            setReportText((prev) => prev + chunk);
-          },
-          onDone: () => {
-            setLoading(false);
+          onMessage: ({ event, data }) => {
+            if (event === "done") {
+              close();
+              return;
+            }
+            if (event === "open" || event === "ping" || event === "heartbeat") {
+              return;
+            }
+            if (event !== "delta" && event !== "message") {
+              return;
+            }
+            generatedText += data;
+            setReportText(generatedText);
           },
           onError: (err) => {
             setError(err.message || t("report.failedToGenerate"));
-            setLoading(false);
           },
         }
       );
@@ -132,13 +140,14 @@ export default function ReportGenerator({
       await done;
 
       if (onReportGenerated) {
-        onReportGenerated(reportText);
+        onReportGenerated(generatedText);
       }
     } catch (e) {
       setError(e.message || t("report.failedToGenerate"));
+    } finally {
       setLoading(false);
     }
-  }, [ticker, market, sections, template, onReportGenerated, reportText, t]);
+  }, [ticker, market, sections, template, onReportGenerated, t]);
 
   const exportToPDF = useCallback(async () => {
     if (!ticker) return;

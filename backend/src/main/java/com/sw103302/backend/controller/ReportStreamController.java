@@ -99,12 +99,37 @@ public class ReportStreamController {
     }
 
     private String extractReportText(String json) {
+        if (json == null) return "";
+
+        String trimmed = json.trim();
+        if (trimmed.isEmpty()) return "";
+
         try {
-            JsonNode n = om.readTree(json);
-            JsonNode r = n.get("report");
-            if (r != null && r.isTextual()) return r.asText("");
-        } catch (Exception ignored) {}
-        // 혹시 JSON이 아니라면 그대로 텍스트로
-        return json == null ? "" : json;
+            JsonNode n = om.readTree(trimmed);
+
+            // JSON 문자열("{...}") 형태면 한 번 더 풀어서 처리
+            if (n.isTextual()) {
+                String inner = n.asText("");
+                if (!inner.isBlank()) return extractReportText(inner);
+            }
+
+            if (n.isObject()) {
+                JsonNode text = n.get("text");
+                if (text != null && text.isTextual()) return text.asText("");
+
+                JsonNode report = n.get("report");
+                if (report != null && report.isTextual()) return report.asText("");
+
+                JsonNode content = n.get("content");
+                if (content != null && content.isTextual()) return content.asText("");
+
+                JsonNode raw = n.get("raw");
+                if (raw != null && raw.isTextual()) return raw.asText("");
+            }
+        } catch (Exception ignored) {
+        }
+
+        // JSON 파싱 실패 또는 매칭 키 없음: 텍스트로 간주
+        return trimmed;
     }
 }

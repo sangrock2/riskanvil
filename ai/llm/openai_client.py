@@ -60,7 +60,8 @@ async def report_korean(prompt: str, use_web: bool = True) -> Optional[str]:
     payload: Dict[str, Any] = {
         "model": "gpt-4.1-mini",
         "input": prompt,
-        "max_output_tokens": 1400,
+        "max_output_tokens": 2200,
+        "temperature": 0.3,
     }
 
     if use_web:

@@ -198,7 +198,7 @@ export default function InsightDetail() {
 
         
         try {
-            const { close, done } = ssePost(`/api/market/report/stream?test=${test}&web=true`, {
+            const { close, done } = ssePost(`/api/market/report/stream?test=${test}&web=true&refresh=true`, {
                 ticker,
                 market,
                 days: 90,
@@ -224,7 +224,16 @@ export default function InsightDetail() {
                         return;
                     }
 
-                    // delta or message: 본문 누적
+                    // 연결 확인/하트비트 이벤트는 본문에서 제외
+                    if (event === "open" || event === "ping" || event === "heartbeat") {
+                        return;
+                    }
+
+                    // 본문 이벤트만 누적
+                    if (event !== "delta" && event !== "message") {
+                        return;
+                    }
+
                     bufRef.current += data;
 
                     // 매 chunk마다 setState 하면 렌더가 너무 잦아져서

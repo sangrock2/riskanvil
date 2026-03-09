@@ -706,39 +706,58 @@ async def report(req: ReportRequest, test: bool = Query(False), web: bool = Quer
     sections_text = "\n\n".join(selected_sections)
     compact_context = _build_compact_report_context(ins)
 
-    prompt = f"""당신은 전문 주식 애널리스트입니다. 아래 데이터를 바탕으로 투자 리서치 보고서를 작성해주세요.
+    prompt = f"""당신은 한국어 주식 리서치 보고서를 작성하는 시니어 애널리스트다.
+아래 입력 데이터만 근거로, 읽기 쉬운 마크다운 보고서를 작성하라.
 
-## 보고서 작성 가이드라인
+## 길이/분량
 - {template_guidelines.get(template, template_guidelines['detailed'])}
-- 전문적이지만 이해하기 쉬운 문체
-- 구체적인 숫자와 근거 제시
-- 투자 권유가 아닌 분석 정보 제공 명시
 
-## 작성할 섹션
+## 출력 규칙 (반드시 준수)
+- 출력은 **마크다운 본문만** 작성한다. JSON, 코드블록(```), 시스템 설명은 금지.
+- 헤더/목록/표를 활용해 가독성을 높인다.
+- 문장은 짧고 명확하게 쓴다. 같은 표현 반복 금지.
+- 숫자는 입력 데이터에 있는 값만 사용한다. 없는 값은 추정하지 말고 `데이터 없음`으로 표시.
+- 데이터가 부족하면 그 한계를 리스크 섹션에 명확히 적는다.
+- 과장/확정 표현(예: 반드시 상승) 금지.
+- 투자 권유가 아닌 정보 제공 목적임을 마지막에 1문장으로 명시한다.
 
+## 보고서 형식 (권장 구조, 섹션 제목은 유지)
+1. `## 한눈에 보기`
+2. `## 가격/추세 요약`
+3. `## 펀더멘털 점검`
+4. `## 기술적 신호`
+5. `## 최근 이슈와 뉴스`
+6. `## 리스크와 반증 포인트`
+7. `## 시나리오별 관찰 포인트`
+8. `## 투자 체크리스트`
+
+## 섹션별 요구사항 (반드시 반영)
 {sections_text}
 
 ---
 ## 입력 데이터
 
-**티커**: {ticker}
-**섹터**: {fund.get('sector', 'N/A')}
-**산업**: {fund.get('industry', 'N/A')}
+티커: {ticker}
+시장: {req.market}
+섹터: {fund.get('sector', 'N/A')}
+산업: {fund.get('industry', 'N/A')}
 
-**가격 정보**:
+가격 정보:
 - 현재가: ${ins.get('quote', {}).get('price', 'N/A')}
-- 변동: {ins.get('quote', {}).get('changePercent', 'N/A')}
+- 변동률: {ins.get('quote', {}).get('changePercent', 'N/A')}
 
-**분석 근거**:
+추천/스코어 근거:
 {json.dumps(rec.get('reasons', []), ensure_ascii=False, indent=2)}
 
-**뉴스 헤드라인**:
+뉴스 헤드라인:
 {json.dumps(news_data.get('headlines', [])[:5], ensure_ascii=False, indent=2)}
 
-**핵심 데이터 요약 (참고용)**:
+핵심 데이터(JSON):
 {json.dumps(compact_context, ensure_ascii=False, indent=2)}
 
-추가로 웹에서 최근 정보가 필요하면 찾아서 반영하되, 출처 링크를 남겨라.
+추가 규칙:
+- 웹 검색 결과를 사용했다면 문서 마지막에 `## 참고 출처` 섹션을 만들고 URL을 최대 3개만 적어라.
+- 웹 검색 결과를 쓰지 않았거나 유효한 출처가 없으면 `참고 출처 없음`이라고 적어라.
 {rag_context}
 """
 
