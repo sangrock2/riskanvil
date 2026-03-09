@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/http";
 import { pushRecentTicker, getRecentTickers, getFavorites, toggleFavorite, isFavorite } from "../api/userLists";
 import LineChartCanvas from "../components/LineChartCanvas";
@@ -108,6 +108,7 @@ function num(x, d = 2) {
 export default function Analyze(){
     const { t } = useTranslation();
     const location = useLocation();
+    const navigate = useNavigate();
     const handledQRef = useRef("");
 
     const [ticker, setTicker] = useState("AAPL");
@@ -274,7 +275,7 @@ export default function Analyze(){
         refreshLists();
 
         const url = `/insight-detail?ticker=${encodeURIComponent(t)}&market=${encodeURIComponent(market)}&test=${testMode}&template=${encodeURIComponent(reportTemplate)}`; // ✅ 템플릿 전달
-        window.open(url, "_blank");
+        navigate(url);
     }
 
     useEffect(() => {
