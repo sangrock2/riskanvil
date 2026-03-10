@@ -37,7 +37,16 @@ class EfficientFrontierResponse(BaseModel):
 
 
 def _fetch_returns(tickers: list[str], start: Optional[str], end: Optional[str]) -> pd.DataFrame:
-    raw = yf.download(tickers, start=start, end=end, auto_adjust=True, progress=False)
+    # start/end 미지정 시 yfinance 기본값(약 1개월)로 내려가서 데이터 부족이 자주 발생한다.
+    # 효율적 프론티어 안정성을 위해 기본 3년 구간을 사용한다.
+    if start or end:
+        raw = yf.download(tickers, start=start, end=end, auto_adjust=True, progress=False)
+    else:
+        raw = yf.download(tickers, period="3y", auto_adjust=True, progress=False)
+
+    if raw is None or raw.empty:
+        # start/end 지정 호출이 비었으면 안전하게 period 기반으로 1회 재시도
+        raw = yf.download(tickers, period="3y", auto_adjust=True, progress=False)
     if raw is None or raw.empty:
         raise HTTPException(400, "가격 데이터를 가져올 수 없습니다.")
 
@@ -50,8 +59,9 @@ def _fetch_returns(tickers: list[str], start: Optional[str], end: Optional[str])
     close = close.dropna(how="all")
     returns = close.pct_change().dropna()
 
-    if returns.shape[0] < 60:
-        raise HTTPException(400, f"수익률 계산에 필요한 데이터가 부족합니다 (최소 60거래일 필요, 현재 {returns.shape[0]}일).")
+    min_required = 15
+    if returns.shape[0] < min_required:
+        raise HTTPException(400, f"수익률 계산에 필요한 데이터가 부족합니다 (최소 {min_required}거래일 필요, 현재 {returns.shape[0]}일).")
 
     return returns
 

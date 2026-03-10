@@ -16,7 +16,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 router = APIRouter(prefix="/similarity", tags=["Similar Stocks"])
 logger = logging.getLogger("app")
 
-_WORKERS = 15
+_WORKERS = 8
+_CANDIDATE_LIMIT = 80
+_SP500_CACHE: list[str] | None = None
 
 # 펀더멘탈 비교에 사용할 지표 (순서 고정)
 _FEATURE_KEYS = [
@@ -66,11 +68,31 @@ class SimilarStock(BaseModel):
 
 
 def _get_info(ticker: str) -> Optional[dict]:
+    t = yf.Ticker(ticker)
     try:
-        return yf.Ticker(ticker).info
+        info = t.info
+        if info:
+            return info
     except Exception as e:
         logger.debug("Info fetch failed for %s: %s", ticker, e)
-        return None
+
+    # info 엔드포인트 레이트리밋 시 최소 price 필드로 폴백
+    try:
+        fi = t.fast_info
+        last_price = getattr(fi, "last_price", None)
+        if last_price:
+            return {"shortName": ticker, "regularMarketPrice": float(last_price)}
+    except Exception:
+        pass
+
+    try:
+        hist = t.history(period="1mo")
+        if hist is not None and not hist.empty and "Close" in hist.columns:
+            return {"shortName": ticker, "regularMarketPrice": float(hist["Close"].iloc[-1])}
+    except Exception:
+        pass
+
+    return None
 
 
 def _to_feature_vector(info: dict) -> np.ndarray:
@@ -91,11 +113,16 @@ def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def _get_sp500_tickers() -> list[str]:
+    global _SP500_CACHE
+    if _SP500_CACHE is not None:
+        return _SP500_CACHE
+
     try:
         tables = pd.read_html("https://en.wikipedia.org/wiki/List_of_S%26P_500_companies")
-        return tables[0]["Symbol"].tolist()[:150]
+        _SP500_CACHE = tables[0]["Symbol"].tolist()[:150]
     except Exception:
-        return _SP500_FALLBACK
+        _SP500_CACHE = _SP500_FALLBACK
+    return _SP500_CACHE
 
 
 @router.post("/find", response_model=list[SimilarStock])
@@ -106,14 +133,15 @@ def find_similar_stocks(req: SimilarStocksRequest):
 
     # 기준 종목 정보 조회
     base_info = _get_info(ticker)
-    if not base_info or not base_info.get("regularMarketPrice") and not base_info.get("currentPrice"):
-        raise HTTPException(404, f"종목 정보를 찾을 수 없습니다: {ticker}")
+    if not base_info:
+        logger.warning("Similarity base info unavailable: %s", ticker)
+        return []
 
     base_vec = _to_feature_vector(base_info)
     base_sector = base_info.get("sector")
 
     # 비교 대상 종목 풀
-    candidates = [t for t in _get_sp500_tickers() if t != ticker]
+    candidates = [t for t in _get_sp500_tickers() if t != ticker][:max(_CANDIDATE_LIMIT, top_n * 10)]
 
     # 병렬 조회
     info_map: dict[str, dict] = {}
@@ -124,6 +152,10 @@ def find_similar_stocks(req: SimilarStocksRequest):
             result = future.result()
             if result:
                 info_map[t] = result
+
+    if not info_map:
+        logger.warning("Similarity info map empty for base=%s", ticker)
+        return []
 
     # 유사도 계산
     similarities: list[tuple[float, str, dict]] = []

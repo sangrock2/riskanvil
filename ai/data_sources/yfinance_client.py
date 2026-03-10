@@ -6,6 +6,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 
+import httpx
 import yfinance as yf
 import pandas as pd
 
@@ -14,6 +15,22 @@ from analysis.technicals import _to_float
 from config import POS_WORDS, NEG_WORDS
 
 logger = logging.getLogger("app")
+
+_SEARCH_FALLBACK_SYMBOLS = [
+    {"symbol": "AAPL", "name": "Apple Inc.", "region": "United States"},
+    {"symbol": "MSFT", "name": "Microsoft Corporation", "region": "United States"},
+    {"symbol": "GOOGL", "name": "Alphabet Inc.", "region": "United States"},
+    {"symbol": "AMZN", "name": "Amazon.com Inc.", "region": "United States"},
+    {"symbol": "NVDA", "name": "NVIDIA Corporation", "region": "United States"},
+    {"symbol": "TSLA", "name": "Tesla Inc.", "region": "United States"},
+    {"symbol": "META", "name": "Meta Platforms Inc.", "region": "United States"},
+    {"symbol": "SPY", "name": "SPDR S&P 500 ETF Trust", "region": "United States"},
+    {"symbol": "QQQ", "name": "Invesco QQQ Trust", "region": "United States"},
+    {"symbol": "005930.KS", "name": "Samsung Electronics Co., Ltd.", "region": "South Korea"},
+    {"symbol": "000660.KS", "name": "SK hynix Inc.", "region": "South Korea"},
+    {"symbol": "035420.KS", "name": "NAVER Corporation", "region": "South Korea"},
+    {"symbol": "005380.KS", "name": "Hyundai Motor Company", "region": "South Korea"},
+]
 
 
 def _run_sync(func, *args, **kwargs):
@@ -115,6 +132,105 @@ def _headline_sentiment(title: str | None) -> dict | None:
         score = max(-1.0, -0.3 - (neg_hits - pos_hits) * 0.2)
         return {"label": "negative", "score": score}
     return {"label": "neutral", "score": 0.0}
+
+
+def _is_market_match(symbol: str, exchange: str, market: str) -> bool:
+    mk = (market or "US").upper()
+    sym = (symbol or "").upper()
+    ex = (exchange or "").upper()
+    if mk == "KR":
+        return sym.endswith(".KS") or sym.endswith(".KQ") or "KOREA" in ex or "KOSPI" in ex or "KOSDAQ" in ex
+    if mk == "US":
+        return not sym.endswith(".KS") and not sym.endswith(".KQ")
+    return True
+
+
+async def search_symbols(keywords: str, market: str = "US", limit: int = 10) -> list[dict]:
+    """
+    Alpha Vantage 종목검색 실패 시 대체용 Yahoo/정적 폴백 검색.
+    반환 스키마는 alpha_client.symbol_search와 맞춘다.
+    """
+    q = (keywords or "").strip()
+    if not q:
+        return []
+
+    limit = max(1, min(int(limit or 10), 20))
+    ck = f"yf:symbol_search:{q.lower()}:{(market or 'US').upper()}:{limit}"
+    cached = cache_get(ck)
+    if cached is not None:
+        return cached
+
+    items: list[dict] = []
+    seen: set[str] = set()
+
+    # 1) Yahoo search endpoint
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            resp = await client.get(
+                "https://query2.finance.yahoo.com/v1/finance/search",
+                params={"q": q, "quotesCount": 25, "newsCount": 0},
+            )
+            if resp.status_code == 200:
+                payload = resp.json()
+                quotes = payload.get("quotes") or []
+                for row in quotes:
+                    symbol = str(row.get("symbol") or "").strip().upper()
+                    if not symbol or symbol in seen:
+                        continue
+
+                    exchange = str(
+                        row.get("exchange")
+                        or row.get("exchangeDisplay")
+                        or row.get("fullExchangeName")
+                        or ""
+                    )
+                    if not _is_market_match(symbol, exchange, market):
+                        continue
+
+                    name = row.get("shortname") or row.get("longname") or row.get("name") or symbol
+                    item = {
+                        "symbol": symbol,
+                        "name": name,
+                        "type": row.get("quoteType") or "Equity",
+                        "region": "United States" if (market or "US").upper() == "US" else "South Korea",
+                        "currency": row.get("currency"),
+                        "matchScore": 1.0,
+                    }
+                    items.append(item)
+                    seen.add(symbol)
+                    if len(items) >= limit:
+                        break
+    except Exception as e:
+        logger.warning("Yahoo symbol search fallback failed for q=%s market=%s: %s", q, market, e)
+
+    # 2) 정적 폴백
+    if not items:
+        ql = q.lower()
+        for row in _SEARCH_FALLBACK_SYMBOLS:
+            symbol = row["symbol"].upper()
+            name = row["name"]
+            if not _is_market_match(symbol, "", market):
+                continue
+            if ql not in symbol.lower() and ql not in name.lower():
+                continue
+            if symbol in seen:
+                continue
+            items.append(
+                {
+                    "symbol": symbol,
+                    "name": name,
+                    "type": "Equity",
+                    "region": row["region"],
+                    "currency": "USD" if (market or "US").upper() == "US" else "KRW",
+                    "matchScore": 0.5,
+                }
+            )
+            seen.add(symbol)
+            if len(items) >= limit:
+                break
+
+    cache_set(ck, items[:limit], ttl_sec=300)
+    return items[:limit]
 
 
 # ── 가격 데이터 ──

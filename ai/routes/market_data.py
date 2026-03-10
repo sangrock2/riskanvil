@@ -18,8 +18,24 @@ router = APIRouter()
 
 @router.get("/symbol_search")
 async def symbol_search(keywords: str = Query(..., min_length=1), market: str = "US", test: bool = False):
-    """Alpha Vantage SYMBOL_SEARCH (대체 불가)"""
-    return await alpha_client.symbol_search(keywords, market, test)
+    """
+    종목 검색.
+    1) Alpha Vantage 우선
+    2) 실패/키 미설정 시 Yahoo 검색 폴백
+    """
+    try:
+        items = await alpha_client.symbol_search(keywords, market, test)
+        if items:
+            return items
+        logger.warning("Alpha symbol search returned empty. fallback to yfinance. q=%s market=%s", keywords, market)
+    except Exception as e:
+        logger.warning("Alpha symbol search failed. fallback to yfinance. q=%s market=%s reason=%s", keywords, market, e)
+
+    try:
+        return await yfinance_client.search_symbols(keywords, market, limit=10)
+    except Exception as e:
+        logger.warning("yfinance symbol search fallback failed. q=%s market=%s reason=%s", keywords, market, e)
+        return []
 
 
 # ── 가격 데이터 ──

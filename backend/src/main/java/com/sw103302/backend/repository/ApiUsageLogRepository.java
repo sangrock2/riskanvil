@@ -41,7 +41,7 @@ public interface ApiUsageLogRepository extends JpaRepository<ApiUsageLog, Long> 
 
     @Query("""
     select new com.sw103302.backend.dto.UsageDailyAgg(
-         cast(function('date_format', u.createdAt, '%Y-%m-%d') as string),
+         cast(function('date', u.createdAt) as string),
          count(u),
          coalesce(sum(case when u.cached = true then 1 else 0 end), 0L),
          coalesce(sum(case when u.refresh = true then 1 else 0 end), 0L),
@@ -56,8 +56,8 @@ public interface ApiUsageLogRepository extends JpaRepository<ApiUsageLog, Long> 
        and u.testMode = :testMode
        and u.createdAt >= :from
        and u.createdAt < :to
-     group by cast(function('date_format', u.createdAt, '%Y-%m-%d') as string)
-     order by cast(function('date_format', u.createdAt, '%Y-%m-%d') as string) asc
+     group by function('date', u.createdAt)
+     order by function('date', u.createdAt) asc
 """)
     List<UsageDailyAgg> aggregateDaily(
             @Param("userId") Long userId,
