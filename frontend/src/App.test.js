@@ -4,5 +4,5 @@ import App from "./App";
 test("renders landing page for unauthenticated user", async () => {
   localStorage.removeItem("accessToken");
   render(<App />);
-  expect(await screen.findByText(/Stock-AI/i)).toBeInTheDocument();
+  expect(await screen.findByRole("link", { name: /login/i })).toBeInTheDocument();
 });

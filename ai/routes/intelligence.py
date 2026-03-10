@@ -22,6 +22,7 @@ from analysis.scoring import (
 )
 from analysis.technicals import compute_technicals_from_points
 from routes.market_data import prices, quote, fundamentals, news, obv, market_env
+from data_sources import yfinance_client
 from llm import ollama_client, openai_client
 
 logger = logging.getLogger("app")
@@ -191,6 +192,29 @@ def _format_market_env(market_env_data: dict | None) -> str:
     if vol:
         parts.append(f"S&P500 변동성 {vol*100:.1f}%")
     return ", ".join(parts) if parts else "데이터 없음"
+
+
+def _format_external_news_context(external_news: dict | None, max_items: int = 8) -> str:
+    """외부 수집 뉴스(yfinance)를 리포트 프롬프트용 텍스트로 정리한다."""
+    if not external_news:
+        return "- 외부 뉴스 수집 결과 없음"
+
+    lines = []
+    for item in (external_news.get("items") or [])[:max_items]:
+        title = (item or {}).get("title") or "제목 없음"
+        source = (item or {}).get("source") or "source unknown"
+        published = (item or {}).get("publishedAt") or "date unknown"
+        url = (item or {}).get("url") or "URL 없음"
+        sentiment = (item or {}).get("sentiment") or {}
+        label = sentiment.get("label")
+        sentiment_text = f"sentiment={label}" if label else "sentiment=unknown"
+        lines.append(f"- [{published}] {title} | {source} | {sentiment_text} | {url}")
+
+    if not lines:
+        for h in (external_news.get("headlines") or [])[:max_items]:
+            lines.append(f"- {h}")
+
+    return "\n".join(lines) if lines else "- 외부 뉴스 항목 없음"
 
 
 def _report_path(ticker: str, market: str) -> Path:
@@ -648,10 +672,21 @@ async def report(req: ReportRequest, test: bool = Query(False), web: bool = Quer
     tech = ins.get("technicals") or {}
     rec = ins.get("recommendation") or {}
     news_data = ins.get("news") or {}
+    external_news_data = None
+    try:
+        # Alpha 키/레이트리밋과 무관하게, 외부 공개 뉴스 컨텍스트를 항상 추가 수집한다.
+        external_news_data = await yfinance_client.get_news_sentiment(
+            ticker=ticker,
+            market=req.market,
+            limit=max(12, req.newsLimit),
+        )
+    except Exception as e:
+        logger.warning("External yfinance news unavailable for %s: %s", ticker, e)
 
     profitability_summary = _build_profitability_summary(fund)
     technical_summary = _build_technical_summary(tech, obv_data)
     valuation_summary = _build_valuation_summary(fund)
+    external_news_text = _format_external_news_context(external_news_data)
 
     # RAG: search for related past articles
     rag_context = ""
@@ -720,6 +755,8 @@ async def report(req: ReportRequest, test: bool = Query(False), web: bool = Quer
 - 데이터가 부족하면 그 한계를 리스크 섹션에 명확히 적는다.
 - 과장/확정 표현(예: 반드시 상승) 금지.
 - 투자 권유가 아닌 정보 제공 목적임을 마지막에 1문장으로 명시한다.
+- 내부 입력 데이터와 별도로, **최신 외부 근거**(뉴스/거시/산업/경쟁사/규제 이슈)를 반드시 함께 반영한다.
+- 사용자가 놓치기 쉬운 관점(반증 시나리오, 이벤트 리스크, 수급/밸류 트랩 등)을 최소 3개 제시한다.
 
 ## 보고서 형식 (권장 구조, 섹션 제목은 유지)
 1. `## 한눈에 보기`
@@ -752,12 +789,20 @@ async def report(req: ReportRequest, test: bool = Query(False), web: bool = Quer
 뉴스 헤드라인:
 {json.dumps(news_data.get('headlines', [])[:5], ensure_ascii=False, indent=2)}
 
+외부 수집 뉴스(자동):
+- source: {(external_news_data or {}).get("source", "none")}
+- positiveRatio: {(external_news_data or {}).get("positiveRatio")}
+{external_news_text}
+
 핵심 데이터(JSON):
 {json.dumps(compact_context, ensure_ascii=False, indent=2)}
 
 추가 규칙:
-- 웹 검색 결과를 사용했다면 문서 마지막에 `## 참고 출처` 섹션을 만들고 URL을 최대 3개만 적어라.
-- 웹 검색 결과를 쓰지 않았거나 유효한 출처가 없으면 `참고 출처 없음`이라고 적어라.
+- 웹 검색 도구를 사용해 최신 외부 근거를 반드시 수집하고, 본문에서 내부 데이터와 교차검증하라.
+- 외부 근거는 오래된 일반론이 아닌 최신 이벤트 중심으로 작성하라.
+- 외부 근거와 내부 데이터가 충돌하면 `충돌/해석` 항목을 만들어 차이를 설명하라.
+- 문서 마지막에 `## 참고 출처` 섹션을 만들고 URL을 2~5개 제시하라(가능하면 발행일 포함).
+- 외부 검색이 실패하면 `## 참고 출처`에 실패 사유를 적고, 본문에 불확실성을 명시하라.
 {rag_context}
 """
 

@@ -188,11 +188,20 @@ async def fundamentals(ticker: str, market: str = "US", test: bool = False):
 @router.get("/news")
 async def news(ticker: str, market: str = "US", limit: int = 20, test: bool = False):
     """뉴스 감성 분석"""
-    result = await alpha_client.get_news_sentiment(ticker, market, limit, test)
-    # summary 필드 호환성
-    if "summary" not in result:
-        result["summary"] = ""
-    return result
+    try:
+        result = await alpha_client.get_news_sentiment(ticker, market, limit, test)
+        if "summary" not in result:
+            result["summary"] = ""
+        result.setdefault("source", "alpha_vantage")
+        return result
+    except Exception as e:
+        logger.warning("Alpha news unavailable for %s. Falling back to yfinance news. reason=%s", ticker, e)
+
+    # Alpha Vantage API 키 미설정/레이트리밋 시에도 분석이 멈추지 않도록 폴백 제공
+    fallback = await yfinance_client.get_news_sentiment(ticker, market, limit)
+    if "summary" not in fallback:
+        fallback["summary"] = ""
+    return fallback
 
 
 # ── OBV ──

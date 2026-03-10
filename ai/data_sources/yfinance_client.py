@@ -11,6 +11,7 @@ import pandas as pd
 
 from cache import cache_get, cache_set
 from analysis.technicals import _to_float
+from config import POS_WORDS, NEG_WORDS
 
 logger = logging.getLogger("app")
 
@@ -34,6 +35,86 @@ def _safe_get(info: dict, key: str, default=None):
     if val is None or val == "":
         return default
     return val
+
+
+def _normalize_news_item(raw: dict) -> dict:
+    """yfinance 뉴스 아이템의 스키마 차이를 평탄화한다."""
+    if not isinstance(raw, dict):
+        return {}
+
+    # 최신 yfinance는 content 내부에 대부분의 필드가 들어있다.
+    content = raw.get("content")
+    if isinstance(content, dict):
+        item = dict(content)
+        if "providerPublishTime" not in item and raw.get("providerPublishTime") is not None:
+            item["providerPublishTime"] = raw.get("providerPublishTime")
+        if "publisher" not in item and raw.get("publisher") is not None:
+            item["publisher"] = raw.get("publisher")
+        return item
+    return raw
+
+
+def _extract_news_url(item: dict) -> str | None:
+    """뉴스 아이템에서 URL을 우선순위대로 추출한다."""
+    if not isinstance(item, dict):
+        return None
+
+    direct = item.get("link") or item.get("url")
+    if isinstance(direct, str) and direct.strip():
+        return direct.strip()
+
+    canonical = item.get("canonicalUrl")
+    if isinstance(canonical, dict):
+        u = canonical.get("url")
+        if isinstance(u, str) and u.strip():
+            return u.strip()
+
+    clickthrough = item.get("clickThroughUrl")
+    if isinstance(clickthrough, dict):
+        u = clickthrough.get("url")
+        if isinstance(u, str) and u.strip():
+            return u.strip()
+
+    return None
+
+
+def _extract_news_published_at(item: dict) -> str | None:
+    """뉴스 아이템 발행 시각을 ISO8601 문자열로 통일한다."""
+    if not isinstance(item, dict):
+        return None
+
+    pub_date = item.get("pubDate")
+    if isinstance(pub_date, str) and pub_date.strip():
+        return pub_date.strip()
+
+    ts = item.get("providerPublishTime")
+    try:
+        if ts is not None:
+            ts_int = int(ts)
+            return datetime.utcfromtimestamp(ts_int).isoformat() + "Z"
+    except Exception:
+        return None
+    return None
+
+
+def _headline_sentiment(title: str | None) -> dict | None:
+    """헤드라인 기반의 단순 센티먼트 추정."""
+    if not title:
+        return None
+
+    low = str(title).lower()
+    pos_hits = sum(1 for w in POS_WORDS if w in low)
+    neg_hits = sum(1 for w in NEG_WORDS if w in low)
+
+    if pos_hits == 0 and neg_hits == 0:
+        return {"label": "neutral", "score": 0.0}
+    if pos_hits > neg_hits:
+        score = min(1.0, 0.3 + (pos_hits - neg_hits) * 0.2)
+        return {"label": "positive", "score": score}
+    if neg_hits > pos_hits:
+        score = max(-1.0, -0.3 - (neg_hits - pos_hits) * 0.2)
+        return {"label": "negative", "score": score}
+    return {"label": "neutral", "score": 0.0}
 
 
 # ── 가격 데이터 ──
@@ -340,6 +421,88 @@ async def get_fundamentals(ticker: str, market: str = "US") -> dict:
 
     result = await _run_sync(_fetch)
     cache_set(ck, result, ttl_sec=3600)
+    return result
+
+
+async def get_news_sentiment(ticker: str, market: str = "US", limit: int = 20) -> dict:
+    """
+    yfinance 뉴스 기반 대체 센티먼트.
+    Alpha Vantage 실패/레이트리밋 시 폴백으로 사용한다.
+    """
+    safe_limit = max(1, min(limit, 50))
+    ck = f"yf:news:{ticker}:{market}:{safe_limit}"
+    cached = cache_get(ck)
+    if cached is not None:
+        return cached
+
+    yf_ticker = _yf_ticker_suffix(ticker, market)
+
+    def _fetch():
+        t = yf.Ticker(yf_ticker)
+        try:
+            raw = t.news
+            if raw is None:
+                raw = []
+        except Exception:
+            raw = []
+        if not raw:
+            try:
+                # 일부 버전에서는 get_news()만 동작
+                raw = t.get_news()
+            except Exception:
+                raw = []
+        return raw or []
+
+    raw_items = await _run_sync(_fetch)
+
+    if not raw_items:
+        result = {
+            "ticker": ticker,
+            "market": market,
+            "positiveRatio": None,
+            "headlines": [],
+            "items": [],
+            "source": "yfinance news",
+        }
+        cache_set(ck, result, ttl_sec=180)
+        return result
+
+    items = []
+    pos_count = 0
+    sentiment_count = 0
+
+    for raw in raw_items[:safe_limit]:
+        item = _normalize_news_item(raw)
+        title = item.get("title")
+        if not isinstance(title, str) or not title.strip():
+            continue
+
+        sentiment = _headline_sentiment(title)
+        if sentiment is not None:
+            sentiment_count += 1
+            if sentiment.get("label") == "positive":
+                pos_count += 1
+
+        items.append({
+            "title": title.strip(),
+            "url": _extract_news_url(item),
+            "source": item.get("provider") or item.get("publisher"),
+            "publishedAt": _extract_news_published_at(item),
+            "sentiment": sentiment,
+        })
+
+    headlines = [it["title"] for it in items[:10]]
+    positive_ratio = (pos_count / sentiment_count) if sentiment_count > 0 else None
+
+    result = {
+        "ticker": ticker,
+        "market": market,
+        "positiveRatio": positive_ratio,
+        "headlines": headlines,
+        "items": items[:10],
+        "source": "yfinance news",
+    }
+    cache_set(ck, result, ttl_sec=300)
     return result
 
 
