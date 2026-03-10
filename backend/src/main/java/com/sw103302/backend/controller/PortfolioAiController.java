@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,30 +41,36 @@ public class PortfolioAiController {
         this.objectMapper = objectMapper;
     }
 
+    private ResponseEntity<String> json(String body) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body);
+    }
+
     @PostMapping("/api/portfolio/efficient-frontier")
     @Operation(summary = "Efficient Frontier", description = "Calculate efficient frontier using scipy optimization")
-    public ResponseEntity<JsonNode> efficientFrontier(@RequestBody Map<String, Object> req) {
+    public ResponseEntity<String> efficientFrontier(@RequestBody Map<String, Object> req) {
         Map<String, Object> normalized = normalizeEfficientFrontierRequest(req);
         try {
             // 시뮬레이션 수가 많으면 시간이 오래 걸리므로 60초 타임아웃
             String json = aiClient.post("/portfolio/efficient-frontier", normalized, Duration.ofSeconds(60));
-            return ResponseEntity.ok(objectMapper.readTree(json));
+            return json(json);
         } catch (Exception e) {
             log.warn("Efficient frontier degraded fallback. reason={}", e.toString());
-            return ResponseEntity.ok(fallbackEfficientFrontier(normalized, e.getClass().getSimpleName()));
+            return json(fallbackEfficientFrontier(normalized, e.getClass().getSimpleName()).toString());
         }
     }
 
     @PostMapping("/api/similarity/find")
     @Operation(summary = "Find Similar Stocks", description = "Find similar stocks by fundamental cosine similarity")
-    public ResponseEntity<JsonNode> findSimilarStocks(@RequestBody Map<String, Object> req) {
+    public ResponseEntity<String> findSimilarStocks(@RequestBody Map<String, Object> req) {
         try {
             // 100~150개 종목 병렬 조회 → 최대 30초
             String json = aiClient.post("/similarity/find", req, Duration.ofSeconds(45));
-            return ResponseEntity.ok(objectMapper.readTree(json));
+            return json(json);
         } catch (Exception e) {
             log.warn("Similarity degraded fallback. reason={}", e.toString());
-            return ResponseEntity.ok(fallbackSimilarStocks(req, e.getClass().getSimpleName()));
+            return json(fallbackSimilarStocks(req, e.getClass().getSimpleName()).toString());
         }
     }
 
