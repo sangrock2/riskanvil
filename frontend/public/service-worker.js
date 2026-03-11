@@ -10,12 +10,30 @@ const STATIC_ASSETS = [
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      console.log('[SW] Caching static assets');
-      return cache.addAll(STATIC_ASSETS);
-    })
-  );
+  event.waitUntil((async () => {
+    const cache = await caches.open(STATIC_CACHE);
+    console.log('[SW] Caching static assets');
+
+    // Cache each asset independently so one failure does not break SW install.
+    await Promise.allSettled(
+      STATIC_ASSETS.map(async (assetPath) => {
+        const response = await fetch(assetPath, { cache: 'no-cache' });
+        if (response.ok) {
+          await cache.put(assetPath, response.clone());
+        }
+      })
+    );
+
+    // Ensure app shell fallback exists.
+    const cachedIndex = await cache.match('/index.html');
+    if (!cachedIndex) {
+      const indexResponse = await fetch('/index.html', { cache: 'no-cache' });
+      if (indexResponse.ok) {
+        await cache.put('/index.html', indexResponse.clone());
+        await cache.put('/', indexResponse.clone());
+      }
+    }
+  })());
   self.skipWaiting();
 });
 
@@ -85,15 +103,35 @@ async function handleNavigationRequest(request) {
   const cache = await caches.open(STATIC_CACHE);
   try {
     const networkResponse = await fetch(request);
-    if (!networkResponse.ok) {
-      throw new Error(`Navigation request failed: ${networkResponse.status}`);
+    if (networkResponse.ok) {
+      // Keep app shell fresh for offline/degraded fallback
+      if (isHtmlResponse(networkResponse)) {
+        cache.put('/index.html', networkResponse.clone());
+      }
+      return networkResponse;
     }
 
-    // Keep app shell fresh for offline/degraded fallback
-    if (isHtmlResponse(networkResponse)) {
-      cache.put('/index.html', networkResponse.clone());
+    // If route response is not OK (e.g. 404/5xx), prefer cached app shell.
+    const cachedIndex = await cache.match('/index.html');
+    if (cachedIndex) {
+      return cachedIndex;
     }
-    return networkResponse;
+
+    const cachedRoot = await cache.match('/');
+    if (cachedRoot) {
+      return cachedRoot;
+    }
+
+    // Last network fallback to root URL.
+    try {
+      const rootResponse = await fetch('/', { cache: 'no-store' });
+      if (rootResponse.ok) {
+        return rootResponse;
+      }
+      return networkResponse;
+    } catch (fallbackError) {
+      // Fall through to final plain-text response.
+    }
   } catch (error) {
     const cachedIndex = await cache.match('/index.html');
     if (cachedIndex) {
@@ -103,6 +141,15 @@ async function handleNavigationRequest(request) {
     const cachedRoot = await cache.match('/');
     if (cachedRoot) {
       return cachedRoot;
+    }
+
+    try {
+      const rootResponse = await fetch('/', { cache: 'no-store' });
+      if (rootResponse.ok) {
+        return rootResponse;
+      }
+    } catch (fallbackError) {
+      // ignore
     }
 
     return new Response('Service temporarily unavailable', {
