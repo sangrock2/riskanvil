@@ -21,6 +21,7 @@ import {
 import { ConfidenceDetails } from "../components/InsightConfidence";
 import ETFInfo from "../components/ETFInfo";
 import styles from "../css/InsightDetail.module.css";
+import { toDisplayText, toHttpUrl } from "../utils/formatters";
 
 function pct(x) {
     if (x === null || x === undefined || Number.isNaN(Number(x))) return "N/A";
@@ -49,6 +50,17 @@ function sentimentClass(styles, s) {
     if (label === "positive") return `${styles.badge} ${styles.badgePos}`;
     if (label === "negative") return `${styles.badge} ${styles.badgeNeg}`;
     return `${styles.badge} ${styles.badgeNeu}`;
+}
+
+function toPreText(value) {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string") return value;
+
+    try {
+        return JSON.stringify(value, null, 2);
+    } catch {
+        return String(value);
+    }
 }
 
 export default function InsightDetail() {
@@ -399,7 +411,7 @@ export default function InsightDetail() {
                     <div className={styles.kvRow}>
                         <div className={styles.kv}>
                             <div className={styles.k}>Action</div>
-                            <div className={styles.v}><b>{rec?.action ?? "N/A"}</b></div>
+                            <div className={styles.v}><b>{toDisplayText(rec?.action, "N/A")}</b></div>
                         </div>
 
                         <div className={styles.kv}>
@@ -418,12 +430,12 @@ export default function InsightDetail() {
                         </div>
                     </div>
 
-                    <div className={styles.blockText}>{rec?.text}</div>
+                    <div className={styles.blockText}>{toDisplayText(rec?.text, "")}</div>
 
                     {Array.isArray(rec?.reasons) && rec.reasons.length > 0 && (
                         <ul className={styles.list}>
                             {rec.reasons.map((r, idx) => (
-                                <li key={idx}>{r}</li>
+                                <li key={idx}>{toDisplayText(r, "N/A")}</li>
                             ))}
                         </ul>
                     )}
@@ -445,7 +457,7 @@ export default function InsightDetail() {
                         <div className={styles.kvRow}>
                             <div className={styles.kv}>
                                 <div className={styles.k}>Label</div>
-                                <div className={styles.v}><b>{valuation.label}</b></div>
+                                <div className={styles.v}><b>{toDisplayText(valuation.label, "N/A")}</b></div>
                             </div>
 
                             <div className={styles.kv}>
@@ -475,7 +487,7 @@ export default function InsightDetail() {
 
                         {(valuation.rationales || []).length > 0 && (
                             <ul className={`${styles.list} ${styles.infoText}`}>
-                                {valuation.rationales.map((x, i) => <li key={i}>{x}</li>)}
+                                {valuation.rationales.map((x, i) => <li key={i}>{toDisplayText(x, "N/A")}</li>)}
                             </ul>
                         )}
                         </>
@@ -503,11 +515,11 @@ export default function InsightDetail() {
                                 <tbody>
                                     {rec.breakdown.map((b, i) => (
                                         <tr key={i}>
-                                            <td><b>{b.metric}</b></td>
-                                            <td>{b.valueType === "pct" ? pct(b.value) : b.valueType === "number" ? num(b.value) : (b.value ?? "—")}</td>
-                                            <td><b>{b.points ?? "—"}</b></td>
-                                            <td>{b.weight ?? "—"}</td>
-                                            <td className={styles.small}>{b.evidence || b.rule || ""}</td>
+                                            <td><b>{toDisplayText(b.metric, "metric")}</b></td>
+                                            <td>{b.valueType === "pct" ? pct(b.value) : b.valueType === "number" ? num(b.value) : toDisplayText(b.value, "—")}</td>
+                                            <td><b>{toDisplayText(b.points, "—")}</b></td>
+                                            <td>{toDisplayText(b.weight, "—")}</td>
+                                            <td className={styles.small}>{toDisplayText(b.evidence || b.rule, "")}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -640,7 +652,7 @@ export default function InsightDetail() {
                     <div className={styles.card}>
                         <div className={styles.h3}>Fundamentals</div>
                         <div className={styles.small}>
-                            sector: {fund?.sector ?? "N/A"} / industry: {fund?.industry ?? "N/A"}
+                            sector: {toDisplayText(fund?.sector, "N/A")} / industry: {toDisplayText(fund?.industry, "N/A")}
                         </div>
 
                         <div className={styles.kvCol}>
@@ -659,7 +671,7 @@ export default function InsightDetail() {
 
                             {fund?.revYoYMeta?.source ? (
                                 <div className={styles.small}>
-                                    source: {fund.revYoYMeta.source}
+                                    source: {toDisplayText(fund.revYoYMeta.source, "N/A")}
                                 </div>
                             ) : null}
 
@@ -679,8 +691,8 @@ export default function InsightDetail() {
                         {Array.isArray(news?.items) && news.items.length > 0 ? (
                             <ul className={styles.newsList}>
                                 {news.items.map((it, idx) => {
-                                    const title = it?.title || "untitled";
-                                    const url = it?.url;
+                                    const title = toDisplayText(it?.title, "untitled");
+                                    const url = toHttpUrl(it?.url) || toHttpUrl(it?.source?.url);
 
                                     // url이 없으면 검색 링크 fallback
                                     const searchUrl = market === "KR"
@@ -690,7 +702,7 @@ export default function InsightDetail() {
                                     const href = url || searchUrl;
 
                                     const d = fmtDate(it?.publishedAt);
-                                    const src = it?.source;
+                                    const src = toDisplayText(it?.source, "");
 
                                     return (
                                         <li key={idx} className={styles.newsItem}>
@@ -718,7 +730,7 @@ export default function InsightDetail() {
                         ) : Array.isArray(news?.headlines) && news.headlines.length > 0 ? (
                             <ul className={styles.newsList}>
                                 {news.headlines.map((h, idx) => (
-                                    <li key={idx}>{h}</li>
+                                    <li key={idx}>{toDisplayText(h, "untitled")}</li>
                                 ))}
                             </ul>
                         ) : null}
@@ -760,12 +772,13 @@ export default function InsightDetail() {
                                 ) : (
                                     (reportHistory.items || []).map((it) => {
                                         const active = selectedHistId === it.id;
-                                        const preview = (it.report || "").slice(0, 80).replace(/\n/g, " ");
+                                        const reportTextPreview = toPreText(it.report);
+                                        const preview = reportTextPreview.slice(0, 80).replace(/\n/g, " ");
 
                                         return (
                                             <button key={it.id} className={`${styles.historyItem} ${active ? styles.historyItemActive : ""}`} onClick={() => setSelectedHistId(it.id)} title={it.createdAt} >
                                                 <div className={styles.historyMeta}>{it.createdAt}</div>
-                                                <div className={styles.historyPreview}>{preview}{(it.report || "").length > 80 ? "…" : ""}</div>
+                                                <div className={styles.historyPreview}>{preview}{reportTextPreview.length > 80 ? "…" : ""}</div>
                                             </button>
                                         );
                                     })
@@ -783,7 +796,7 @@ export default function InsightDetail() {
                                         return (
                                             <>
                                             <div className={styles.historyBodyTitle}>Selected</div>
-                                            <pre className={styles.reportPre}>{selected.report}</pre>
+                                            <pre className={styles.reportPre}>{toPreText(selected.report)}</pre>
                                             </>
                                         );
                                     }
@@ -792,12 +805,12 @@ export default function InsightDetail() {
                                     <div className={styles.compareCols}>
                                         <div className={styles.compareCol}>
                                             <div className={styles.historyBodyTitle}>Current</div>
-                                            <pre className={styles.reportPre}>{reportHistory.current?.report || ""}</pre>
+                                            <pre className={styles.reportPre}>{toPreText(reportHistory.current?.report)}</pre>
                                         </div>
 
                                         <div className={styles.compareCol}>
                                             <div className={styles.historyBodyTitle}>Selected</div>
-                                            <pre className={styles.reportPre}>{selected.report}</pre>
+                                            <pre className={styles.reportPre}>{toPreText(selected.report)}</pre>
                                         </div>
                                     </div>
                                     );

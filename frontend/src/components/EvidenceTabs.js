@@ -1,5 +1,6 @@
 import React, { useMemo, useState, memo, useCallback } from "react";
 import styles from "../css/EvidenceTabs.module.css";
+import { toDisplayText, toHttpUrl } from "../utils/formatters";
 
 function sentimentClass(label) {
     const s = String(label || "").toLowerCase();
@@ -177,13 +178,13 @@ const EvidenceTabs = memo(function EvidenceTabs({ insights, report }) {
             const sClass = sentimentClass(it?.sentimentLabel);
 
             return {
-                title: it?.title ?? "",
-                source: it?.source ?? "",
+                title: toDisplayText(it?.title, ""),
+                source: toDisplayText(it?.source, ""),
                 publishedAt: publishedAt ?? "",
                 sentimentKr: sentimentLabelKr(it?.sentimentLabel),
                 sentimentLabel: it?.sentimentLabel ?? "",
                 sentimentClass: sClass,
-                url: it?.url ?? "",
+                url: toHttpUrl(it?.url),
             };
         });
 
@@ -207,7 +208,7 @@ const EvidenceTabs = memo(function EvidenceTabs({ insights, report }) {
             latestRevenue: revMeta?.latestRevenue ?? "",
             compareQuarter: revMeta?.compareQuarter ?? "",
             compareRevenue: revMeta?.compareRevenue ?? "",
-            source: revMeta?.source ?? "",
+            source: toDisplayText(revMeta?.source, ""),
         };
 
         const headers = [
@@ -336,14 +337,15 @@ const EvidenceTabs = memo(function EvidenceTabs({ insights, report }) {
                             const c = sentimentClass(it?.sentimentLabel);
                             const publishedAt = it?.publishedAt || it?.timePublished; // 둘 다 대응
                             const timeText = it?.publishedAt ? String(it.publishedAt) : parseAlphaTimePublished(publishedAt);
+                            const safeUrl = toHttpUrl(it?.url);
 
                             return (
-                                <a key={`${it?.url || idx}`} className={styles.newsCard} href={it?.url || "#"} target="_blank" rel="noreferrer">
-                                    <div className={styles.newsTitle}>{it?.title || "(no title)"}</div>
+                                <a key={`${safeUrl || idx}`} className={styles.newsCard} href={safeUrl || "#"} target="_blank" rel="noreferrer">
+                                    <div className={styles.newsTitle}>{toDisplayText(it?.title, "(no title)")}</div>
 
                                     <div className={styles.metaRow}>
                                         <span className={styles.meta}>
-                                            <b>Source</b>: {it?.source || "N/A"}
+                                            <b>Source</b>: {toDisplayText(it?.source, "N/A")}
                                         </span>
                                         
                                         <span className={styles.meta}>
@@ -406,7 +408,7 @@ const EvidenceTabs = memo(function EvidenceTabs({ insights, report }) {
                             </div>
 
                             <div className={styles.metaLine}>
-                                <b>Source</b>: {revMeta.source || "N/A"}
+                                <b>Source</b>: {toDisplayText(revMeta.source, "N/A")}
                             </div>
                         </div>
                     )}

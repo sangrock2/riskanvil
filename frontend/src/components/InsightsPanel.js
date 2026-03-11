@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import LineChartCanvas from "./LineChartCanvas";
-import { pct, num } from "../utils/formatters";
+import { pct, num, toDisplayText, toHttpUrl } from "../utils/formatters";
 import s from "../css/InsightDetail.module.css";
 
 // 신뢰도 등급 클래스
@@ -285,7 +285,7 @@ const InsightsPanel = memo(function InsightsPanel({ insights, market = "US" }) {
 
                 <div className={getRecommendationClass(rec?.score)}>
                     <div className={s.recommendationAction}>
-                        {rec?.actionKr ?? rec?.action ?? "N/A"}
+                        {toDisplayText(rec?.actionKr ?? rec?.action, "N/A")}
                     </div>
                     <div className={s.recommendationScore}>
                         점수: <b>{rec?.score ?? "N/A"}</b>/100
@@ -299,14 +299,14 @@ const InsightsPanel = memo(function InsightsPanel({ insights, market = "US" }) {
                     </div>
                 </div>
 
-                <div className={s.recommendationText}>{rec?.text ?? ""}</div>
+                <div className={s.recommendationText}>{toDisplayText(rec?.text, "")}</div>
 
                 {Array.isArray(rec?.reasons) && rec.reasons.length > 0 ? (
                     <div className={s.insightsSection}>
                         <div className={s.sectionSubtitle}>분석 근거:</div>
                         <ul className={s.reasonsList}>
                             {rec.reasons.map((r, idx) => (
-                                <li key={idx}>{r}</li>
+                                <li key={idx}>{toDisplayText(r, "N/A")}</li>
                             ))}
                         </ul>
                     </div>
@@ -433,8 +433,8 @@ const InsightsPanel = memo(function InsightsPanel({ insights, market = "US" }) {
                 {Array.isArray(news?.items) && news.items.length > 0 ? (
                     <ul className={s.newsList}>
                         {news.items.map((it, idx) => {
-                            const title = it?.title || "untitled";
-                            const url = it?.url;
+                            const title = toDisplayText(it?.title, "untitled");
+                            const url = toHttpUrl(it?.url) || toHttpUrl(it?.source?.url);
                             const sentiment = it?.sentiment;
 
                             const searchUrl =
@@ -458,7 +458,7 @@ const InsightsPanel = memo(function InsightsPanel({ insights, market = "US" }) {
                                     </div>
                                     {it?.source && (
                                         <div className={s.newsMeta}>
-                                            <span>{it.source}</span>
+                                            <span>{toDisplayText(it.source, "N/A")}</span>
                                         </div>
                                     )}
                                 </li>
@@ -467,7 +467,7 @@ const InsightsPanel = memo(function InsightsPanel({ insights, market = "US" }) {
                     </ul>
                 ) : Array.isArray(news?.headlines) && news.headlines.length > 0 ? (
                     <ul className={s.list}>
-                        {news.headlines.map((h, idx) => <li key={idx}>{h}</li>)}
+                        {news.headlines.map((h, idx) => <li key={idx}>{toDisplayText(h, "untitled")}</li>)}
                     </ul>
                 ) : (
                     <div className={s.metaText}>N/A</div>

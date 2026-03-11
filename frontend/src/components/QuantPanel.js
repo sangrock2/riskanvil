@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { pct, num } from "../utils/formatters";
+import { pct, num, toDisplayText } from "../utils/formatters";
 import styles from "../css/QuantPanel.module.css";
 
 function actionMeta(action) {
@@ -57,7 +57,7 @@ export default function QuantPanel({ quant }) {
                 {Array.isArray(sig?.reasons) && sig.reasons.length > 0 ? (
                     <ul className={styles.reasons}>
                         {sig.reasons.map((r, i) => (
-                        <li key={i}>{r}</li>
+                        <li key={i}>{toDisplayText(r, "N/A")}</li>
                         ))}
                     </ul>
                 ) : (

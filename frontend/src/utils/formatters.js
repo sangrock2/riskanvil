@@ -129,3 +129,66 @@ export function ymd() {
   const dd = String(d.getDate()).padStart(2, "0");
   return `${y}${m}${dd}`;
 }
+
+/**
+ * Converts unknown API values into render-safe text.
+ * Prevents React #31 when backend returns object-shaped fields.
+ * @param {unknown} value
+ * @param {string} fallback
+ * @returns {string}
+ */
+export function toDisplayText(value, fallback = "") {
+  if (value === null || value === undefined) return fallback;
+
+  if (typeof value === "string") {
+    const s = value.trim();
+    return s || fallback;
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    const joined = value
+      .map((v) => toDisplayText(v, ""))
+      .filter(Boolean)
+      .join(", ");
+    return joined || fallback;
+  }
+
+  if (typeof value === "object") {
+    const obj = /** @type {Record<string, unknown>} */ (value);
+    const candidates = [
+      obj.displayName,
+      obj.name,
+      obj.title,
+      obj.text,
+      obj.label,
+      obj.symbol,
+      obj.url,
+    ];
+
+    for (const c of candidates) {
+      const s = toDisplayText(c, "");
+      if (s) return s;
+    }
+
+    return fallback;
+  }
+
+  return fallback;
+}
+
+/**
+ * Returns http/https URL only. Otherwise empty string.
+ * @param {unknown} value
+ * @returns {string}
+ */
+export function toHttpUrl(value) {
+  if (typeof value !== "string") return "";
+  const s = value.trim();
+  if (!s) return "";
+  if (s.startsWith("http://") || s.startsWith("https://")) return s;
+  return "";
+}
