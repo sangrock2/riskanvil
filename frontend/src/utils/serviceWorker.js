@@ -7,6 +7,9 @@ export function register() {
         .register('/service-worker.js')
         .then((registration) => {
           console.log('[SW] Registration successful:', registration.scope);
+          registration.update().catch(() => {
+            // Ignore transient update check failures.
+          });
 
           // Check for updates
           registration.addEventListener('updatefound', () => {
