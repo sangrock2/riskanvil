@@ -1,4 +1,3 @@
-const CACHE_NAME = 'stock-ai-v1';
 const STATIC_CACHE = 'stock-ai-static-v1';
 const API_CACHE = 'stock-ai-api-v1';
 
@@ -7,14 +6,6 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-];
-
-// API patterns to cache
-const API_CACHE_PATTERNS = [
-  '/api/market/quote',
-  '/api/market/prices',
-  '/api/market/insights',
-  '/api/watchlist',
 ];
 
 // Install event - cache static assets
@@ -53,6 +44,7 @@ self.addEventListener('fetch', (event) => {
 
   // Handle API requests
   if (url.pathname.startsWith('/api/')) {
+    // Security: do not persist authenticated API responses in Service Worker cache.
     event.respondWith(handleApiRequest(event.request));
     return;
   }
@@ -61,52 +53,9 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(handleStaticRequest(event.request));
 });
 
-// Handle API requests with cache-first strategy for reads
+// Handle API requests as pass-through (no SW persistence)
 async function handleApiRequest(request) {
-  const url = new URL(request.url);
-
-  // Check if this API should be cached
-  const shouldCache = API_CACHE_PATTERNS.some((pattern) =>
-    url.pathname.includes(pattern)
-  );
-
-  if (!shouldCache) {
-    return fetch(request);
-  }
-
-  try {
-    // Try network first
-    const networkResponse = await fetch(request);
-
-    if (networkResponse.ok) {
-      // Clone and cache the response
-      const cache = await caches.open(API_CACHE);
-      const cacheKey = getCacheKey(request);
-      cache.put(cacheKey, networkResponse.clone());
-    }
-
-    return networkResponse;
-  } catch (error) {
-    // Network failed, try cache
-    const cache = await caches.open(API_CACHE);
-    const cacheKey = getCacheKey(request);
-    const cachedResponse = await cache.match(cacheKey);
-
-    if (cachedResponse) {
-      console.log('[SW] Serving API from cache:', url.pathname);
-      // Add header to indicate cached response
-      const headers = new Headers(cachedResponse.headers);
-      headers.set('X-From-Cache', 'true');
-      return new Response(cachedResponse.body, {
-        status: cachedResponse.status,
-        statusText: cachedResponse.statusText,
-        headers,
-      });
-    }
-
-    // No cache available
-    throw error;
-  }
+  return fetch(request);
 }
 
 // Handle static requests with cache-first strategy
@@ -152,26 +101,11 @@ async function fetchAndCache(request, cache) {
   }
 }
 
-// Generate cache key for API requests
-function getCacheKey(request) {
-  const url = new URL(request.url);
-  // Include search params in cache key
-  return new Request(url.pathname + url.search);
-}
-
 // Listen for messages from main thread
 self.addEventListener('message', (event) => {
   if (event.data.type === 'CLEAR_CACHE') {
     caches.keys().then((names) => {
       Promise.all(names.map((name) => caches.delete(name)));
-    });
-  }
-
-  if (event.data.type === 'CACHE_INSIGHTS') {
-    const { ticker, market, data } = event.data;
-    caches.open(API_CACHE).then((cache) => {
-      const key = `/api/market/insights?ticker=${ticker}&market=${market}`;
-      cache.put(key, new Response(JSON.stringify(data)));
     });
   }
 });
@@ -184,13 +118,5 @@ self.addEventListener('periodicsync', (event) => {
 });
 
 async function updateWatchlistCache() {
-  try {
-    const response = await fetch('/api/watchlist');
-    if (response.ok) {
-      const cache = await caches.open(API_CACHE);
-      cache.put('/api/watchlist', response);
-    }
-  } catch (error) {
-    console.log('[SW] Background sync failed:', error);
-  }
+  // Security hardening: do not background-cache authenticated watchlist data.
 }

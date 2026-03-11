@@ -93,11 +93,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(WebClientResponseException.class)
     public org.springframework.http.ResponseEntity<ApiErrorResponse> handleWebClient(WebClientResponseException e, HttpServletRequest req) {
-        // 정책 선택:
-        // - 디버그 편의: body를 message로 내려줌(정보 노출 가능성)
-        // - 운영 안전: 고정 메시지만 내려줌
         String body = e.getResponseBodyAsString();
-        String msg = (body == null || body.isBlank()) ? "AI server error" : body;
+        String msg = sanitizeAiMessage(e);
 
         int status = e.getStatusCode().value();
         HttpStatus hs;
@@ -107,6 +104,8 @@ public class GlobalExceptionHandler {
             hs = HttpStatus.BAD_GATEWAY;
         }
 
+        log.warn("AI upstream error. status={} path={} requestId={} body={}",
+                status, req.getRequestURI(), requestId(req), trimForLog(body));
         return build(hs, ErrorCode.AI_HTTP_ERROR, msg, req, null);
     }
 
@@ -182,5 +181,24 @@ public class GlobalExceptionHandler {
             cur = next;
         }
         return null;
+    }
+
+    private String sanitizeAiMessage(WebClientResponseException e) {
+        int status = e.getStatusCode().value();
+        if (status == 429) {
+            return "AI provider rate limit exceeded";
+        }
+        if (status >= 400 && status <= 499) {
+            return "AI request failed";
+        }
+        return "AI server error";
+    }
+
+    private String trimForLog(String body) {
+        if (body == null) {
+            return "";
+        }
+        String trimmed = body.strip();
+        return trimmed.length() <= 300 ? trimmed : trimmed.substring(0, 300);
     }
 }

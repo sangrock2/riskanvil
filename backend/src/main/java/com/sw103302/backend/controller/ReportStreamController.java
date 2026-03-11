@@ -13,6 +13,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
@@ -27,6 +29,7 @@ import java.util.concurrent.Executor;
 @RequestMapping("/api/market")
 @Tag(name = "Report Streaming", description = "Server-Sent Events for real-time report generation")
 public class ReportStreamController {
+    private static final Logger log = LoggerFactory.getLogger(ReportStreamController.class);
     private final UserRepository userRepository;
     private final MarketCacheService marketCacheService;
     private final Executor sseExecutor;
@@ -88,8 +91,10 @@ public class ReportStreamController {
                 emitter.send(SseEmitter.event().name("done").data("ok"));
                 emitter.complete();
             } catch (Exception e) {
+                log.warn("SSE report stream failed. userId={} ticker={} market={}",
+                        user.getId(), req.ticker(), req.market(), e);
                 try {
-                    emitter.send(SseEmitter.event().name("error").data(e.getMessage() == null ? "internal_error" : e.getMessage()));
+                    emitter.send(SseEmitter.event().name("error").data("internal_error"));
                 } catch (Exception ignore) {}
                 emitter.completeWithError(e);
             }

@@ -7,6 +7,7 @@ RAG (검색 증강 생성) 라우터
 """
 import logging
 from typing import Optional
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
@@ -16,6 +17,7 @@ from rag import store, crawler
 
 logger = logging.getLogger("app")
 router = APIRouter(prefix="/rag", tags=["rag"])
+MAX_ARTICLES_PER_REQUEST = 50
 
 
 class IndexRequest(BaseModel):
@@ -53,6 +55,14 @@ async def index_articles(req: IndexRequest):
     articles = req.articles
     if not articles:
         raise HTTPException(400, "No articles provided")
+    if len(articles) > MAX_ARTICLES_PER_REQUEST:
+        raise HTTPException(400, f"Too many articles (max {MAX_ARTICLES_PER_REQUEST})")
+
+    for article in articles:
+        url = (article.get("url") or "").strip()
+        parsed = urlparse(url)
+        if not url or parsed.scheme not in {"http", "https"}:
+            raise HTTPException(400, "All articles must have a valid http/https url")
 
     # Optionally crawl URLs for full content
     if req.crawl:

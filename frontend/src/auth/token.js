@@ -53,6 +53,7 @@ export function clearRefreshToken() {
  * @param {string} refreshToken - The refresh token
  */
 export function setTokens(accessToken, refreshToken) {
+  clearServiceWorkerCache();
   setToken(accessToken);
   if (refreshToken) {
     setRefreshToken(refreshToken);
@@ -70,6 +71,7 @@ export function setTokens(accessToken, refreshToken) {
 export function clearAllTokens() {
   clearToken();
   clearRefreshToken();
+  clearServiceWorkerCache();
 
   // Dispatch event for multi-tab sync
   window.dispatchEvent(new CustomEvent('auth:logout'));
@@ -99,5 +101,15 @@ export function isAuthenticated() {
     return exp > now + 10; // 10 second skew
   } catch {
     return false;
+  }
+}
+
+function clearServiceWorkerCache() {
+  try {
+    if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: "CLEAR_CACHE" });
+    }
+  } catch {
+    // no-op
   }
 }

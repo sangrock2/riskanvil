@@ -69,6 +69,19 @@ python -m uvicorn main:app --reload  # http://localhost:8000
 - Frontend Static Site에는 `VITE_API_BASE_URL` 설정 필요
 - Backend Web Service에는 `SPRING_PROFILES_ACTIVE=prod,postgres`, `JWT_SECRET`, `DB_URL(PostgreSQL)`, `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 설정 필요
 
+### 운영 검증 스크립트
+
+```bash
+# 24시간 합성 모니터링
+python scripts/synthetic_monitor.py
+
+# 단기 부하 테스트
+python scripts/load_test_short.py
+
+# 월간 DR 리허설
+pwsh -File scripts/dr_rehearsal_run.ps1 -BackendBaseUrl "https://your-backend.onrender.com"
+```
+
 ## 문서
 
 ### 통합 문서 (정본)

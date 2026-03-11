@@ -45,14 +45,10 @@ export function clearCache() {
 
 // Cache specific insights data
 export function cacheInsights(ticker, market, data) {
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({
-      type: 'CACHE_INSIGHTS',
-      ticker,
-      market,
-      data,
-    });
-  }
+  // Security hardening: do not persist authenticated API payloads in SW cache.
+  void ticker;
+  void market;
+  void data;
 }
 
 // Check if service worker is active

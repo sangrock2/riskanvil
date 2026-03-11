@@ -17,7 +17,7 @@ class AuthRateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new AuthRateLimitFilter();
+        filter = new AuthRateLimitFilter(false, true);
     }
 
     @Test

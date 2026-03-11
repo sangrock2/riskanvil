@@ -98,6 +98,7 @@
 - [ ] 롤백 기준 확인 (직전 정상 커밋/배포 ID 기록)
 - [ ] `docs/PATCH_NOTES.md` 업데이트
 - [ ] 부하 테스트 계획값 확정 (`scripts/load_test_heavy.py` stage/목표치)
+- [ ] 고부하 인증 제어값 확인 (`AUTH_RELOGIN_EVERY=0`, 로그인 쿨다운/백오프/스태거)
 
 ---
 
@@ -148,6 +149,8 @@ Render에서 배포 방법:
 - [ ] `load_test_heavy.py` 1회 실행 (stage 기반)
 - [ ] 리포트 파일 저장 확인 (`artifacts/reports/*.json`)
 - [ ] `errorRate`, `p95`, `rps` 임계치 PASS 확인
+- [ ] `auth_login` 실패가 전체 실패 대부분인지 확인 (대부분이면 성능 판정 보류)
+- [ ] `summary.authRateLimited429` 값 확인 후 허용 범위 초과 시 재실행
 
 ---
 
@@ -254,6 +257,10 @@ $env:LOAD_HEAVY_WEIGHTS="quote:30,analysis_history:15,portfolio:15,insights_test
 $env:LOAD_HEAVY_MAX_ERROR_RATE="0.08"
 $env:LOAD_HEAVY_MAX_P95_MS="9000"
 $env:LOAD_HEAVY_MIN_RPS="0"
+$env:LOAD_HEAVY_AUTH_RELOGIN_EVERY="0"
+$env:LOAD_HEAVY_AUTH_LOGIN_COOLDOWN_SECONDS="10"
+$env:LOAD_HEAVY_AUTH_MAX_BACKOFF_SECONDS="60"
+$env:LOAD_HEAVY_AUTH_STARTUP_STAGGER_MS="800"
 python scripts/load_test_heavy.py
 ```
 
@@ -262,6 +269,9 @@ python scripts/load_test_heavy.py
 - [ ] `p95ms <= LOAD_HEAVY_MAX_P95_MS`
 - [ ] `rps >= LOAD_HEAVY_MIN_RPS` (0보다 크게 설정한 경우)
 - [ ] `sampleFailures` 주요 원인이 5xx/timeout으로 폭증하지 않음
+- [ ] `summary.authFailures`가 전체 실패의 과반이 아님
+- [ ] `summary.authRateLimited429`가 전체 요청의 5% 이하(권장)
+- [ ] `auth_login` 429가 지배적이면 인증제어값 조정 후 재실행
 
 ---
 
@@ -328,6 +338,18 @@ python scripts/load_test_heavy.py
 1. Redis를 실제로 안 쓰면 `SPRING_CACHE_TYPE=simple`
 2. `MANAGEMENT_HEALTH_REDIS_ENABLED=false`
 3. 재배포
+
+### 9.7 `load_test_heavy.py`에서 `auth_login 429` 대량 발생
+
+원인:
+- 인증 레이트리밋(`rule=auth`) 구간에서 로그인 시도가 동시 폭주
+
+조치:
+1. `LOAD_HEAVY_AUTH_RELOGIN_EVERY=0`으로 설정 (토큰 재사용)
+2. `LOAD_HEAVY_AUTH_LOGIN_COOLDOWN_SECONDS=10` 이상으로 상향
+3. `LOAD_HEAVY_AUTH_MAX_BACKOFF_SECONDS=60` 유지 또는 상향
+4. `LOAD_HEAVY_AUTH_STARTUP_STAGGER_MS=800` 이상으로 상향
+5. 리포트에서 `summary.authRateLimited429` 감소 확인 후 기준 판정
 
 ---
 

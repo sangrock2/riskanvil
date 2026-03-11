@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,6 +27,20 @@ import java.util.stream.Collectors;
 
 @Configuration
 public class SecurityConfig {
+    private final boolean exposeDocs;
+    private final boolean exposePrometheus;
+    private final boolean exposeActuatorInfo;
+
+    public SecurityConfig(
+            @Value("${app.security.expose-docs:false}") boolean exposeDocs,
+            @Value("${app.security.expose-prometheus:false}") boolean exposePrometheus,
+            @Value("${app.security.expose-actuator-info:false}") boolean exposeActuatorInfo
+    ) {
+        this.exposeDocs = exposeDocs;
+        this.exposePrometheus = exposePrometheus;
+        this.exposeActuatorInfo = exposeActuatorInfo;
+    }
+
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -76,10 +91,21 @@ public class SecurityConfig {
                 .securityMatcher(EndpointRequest.toAnyEndpoint())
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.disable()) // actuator는 보통 브라우저 CORS 필요 없음(원하면 enable 가능)
+                .headers(headers -> headers
+                        .referrerPolicy(rp -> rp.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                        .httpStrictTransportSecurity(Customizer.withDefaults())
+                )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(EndpointRequest.to("health", "prometheus", "info")).permitAll()
-                        .anyRequest().denyAll());
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(EndpointRequest.to("health")).permitAll();
+                    if (exposePrometheus) {
+                        auth.requestMatchers(EndpointRequest.to("prometheus")).permitAll();
+                    }
+                    if (exposeActuatorInfo) {
+                        auth.requestMatchers(EndpointRequest.to("info")).permitAll();
+                    }
+                    auth.anyRequest().denyAll();
+                });
 
         return http.build();
     }
@@ -94,14 +120,22 @@ public class SecurityConfig {
                 .securityMatcher(request -> !EndpointRequest.toAnyEndpoint().matches(request))
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll()
-                        .anyRequest().authenticated()
+                .headers(headers -> headers
+                        .referrerPolicy(rp -> rp.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                        .httpStrictTransportSecurity(Customizer.withDefaults())
                 )
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    auth.requestMatchers("/api/auth/**").permitAll();
+                    auth.requestMatchers("/ws/**").permitAll();
+                    if (exposeDocs) {
+                        auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs.yaml").permitAll();
+                    }
+                    auth.anyRequest().authenticated();
+                });
+
+        http
                 .addFilterBefore(requestIdFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(authRateLimitFilter, RequestIdFilter.class)
                 .addFilterAfter(jwtFilter, RequestIdFilter.class);

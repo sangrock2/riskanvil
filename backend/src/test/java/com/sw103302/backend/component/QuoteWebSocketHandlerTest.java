@@ -36,14 +36,14 @@ class QuoteWebSocketHandlerTest {
     @BeforeEach
     void setUp() {
         handler = new QuoteWebSocketHandler(eventPublisher, new ObjectMapper());
-        when(sessionA.getId()).thenReturn("session-a");
-        when(sessionB.getId()).thenReturn("session-b");
-        when(sessionA.isOpen()).thenReturn(true);
-        when(sessionB.isOpen()).thenReturn(true);
     }
 
     @Test
     void broadcastQuote_shouldSendOnlyToSubscribedSessions() throws Exception {
+        when(sessionA.getId()).thenReturn("session-a");
+        when(sessionB.getId()).thenReturn("session-b");
+        when(sessionA.isOpen()).thenReturn(true);
+
         handler.afterConnectionEstablished(sessionA);
         handler.afterConnectionEstablished(sessionB);
 
@@ -60,6 +60,9 @@ class QuoteWebSocketHandlerTest {
 
     @Test
     void connectionClose_shouldUnsubscribeOnlyWhenLastSubscriberLeaves() throws Exception {
+        when(sessionA.getId()).thenReturn("session-a");
+        when(sessionB.getId()).thenReturn("session-b");
+
         handler.afterConnectionEstablished(sessionA);
         handler.afterConnectionEstablished(sessionB);
 
@@ -80,6 +83,8 @@ class QuoteWebSocketHandlerTest {
 
     @Test
     void pingMessage_shouldReplyWithPong() throws Exception {
+        when(sessionA.getId()).thenReturn("session-a");
+
         handler.afterConnectionEstablished(sessionA);
 
         handler.handleTextMessage(sessionA, new TextMessage("{\"action\":\"ping\"}"));

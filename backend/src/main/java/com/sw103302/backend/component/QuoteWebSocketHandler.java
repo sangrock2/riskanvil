@@ -10,10 +10,12 @@ import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.regex.Pattern;
 
 /**
  * 실시간 시세 WebSocket 핸들러
@@ -24,6 +26,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class QuoteWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(QuoteWebSocketHandler.class);
+    private static final int MAX_SUBSCRIPTIONS_PER_SESSION = 30;
+    private static final int MAX_INBOUND_MESSAGE_CHARS = 512;
+    private static final Pattern TICKER_PATTERN = Pattern.compile("^[A-Z0-9._-]{1,15}$");
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -50,9 +55,15 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         try {
+            if (message.getPayloadLength() > MAX_INBOUND_MESSAGE_CHARS) {
+                sendError(session, "message_too_large");
+                return;
+            }
             JsonNode json = objectMapper.readTree(message.getPayload());
             String action = json.has("action") ? json.get("action").asText() : "";
-            String ticker = json.has("ticker") ? json.get("ticker").asText().toUpperCase() : "";
+            String ticker = json.has("ticker")
+                    ? json.get("ticker").asText().toUpperCase(Locale.ROOT).trim()
+                    : "";
 
             if ("ping".equals(action)) {
                 session.sendMessage(new TextMessage("{\"type\":\"pong\",\"ts\":" + System.currentTimeMillis() + "}"));
@@ -60,10 +71,18 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
             }
 
             if (ticker.isEmpty()) return;
+            if (!TICKER_PATTERN.matcher(ticker).matches()) {
+                sendError(session, "invalid_ticker");
+                return;
+            }
 
             Set<String> subs = sessionSubscriptions.computeIfAbsent(session.getId(), k -> ConcurrentHashMap.newKeySet());
 
             if ("subscribe".equals(action)) {
+                if (!subs.contains(ticker) && subs.size() >= MAX_SUBSCRIPTIONS_PER_SESSION) {
+                    sendError(session, "subscription_limit_exceeded");
+                    return;
+                }
                 boolean alreadySubscribedGlobally = isTickerSubscribedByAnySession(ticker);
                 boolean added = subs.add(ticker);
                 if (added && !alreadySubscribedGlobally) {
@@ -85,6 +104,7 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
             }
         } catch (Exception e) {
             log.warn("Failed to parse WebSocket message: {}", e.getMessage());
+            sendError(session, "invalid_message");
         }
     }
 
@@ -154,6 +174,16 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
         subscribers.remove(session);
         if (subscribers.isEmpty()) {
             tickerSubscribers.remove(ticker, subscribers);
+        }
+    }
+
+    private void sendError(WebSocketSession session, String code) {
+        if (!session.isOpen()) {
+            return;
+        }
+        try {
+            session.sendMessage(new TextMessage("{\"type\":\"error\",\"code\":\"" + code + "\"}"));
+        } catch (IOException ignored) {
         }
     }
 }

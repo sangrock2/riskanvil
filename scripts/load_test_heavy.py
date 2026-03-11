@@ -37,7 +37,10 @@ REGISTER_IF_MISSING = os.getenv("LOAD_REGISTER_IF_MISSING", "true").lower() == "
 # Example: "10:60,25:120,40:180"
 STAGES_RAW = os.getenv("LOAD_HEAVY_STAGES", "12:60,24:120,36:180")
 MAX_VUS = int(os.getenv("LOAD_HEAVY_MAX_VUS", "60"))
-AUTH_RELOGIN_EVERY = int(os.getenv("LOAD_HEAVY_AUTH_RELOGIN_EVERY", "80"))
+AUTH_RELOGIN_EVERY = int(os.getenv("LOAD_HEAVY_AUTH_RELOGIN_EVERY", "0"))
+AUTH_LOGIN_COOLDOWN_SECONDS = float(os.getenv("LOAD_HEAVY_AUTH_LOGIN_COOLDOWN_SECONDS", "10"))
+AUTH_MAX_BACKOFF_SECONDS = float(os.getenv("LOAD_HEAVY_AUTH_MAX_BACKOFF_SECONDS", "60"))
+AUTH_STARTUP_STAGGER_MS = int(os.getenv("LOAD_HEAVY_AUTH_STARTUP_STAGGER_MS", "400"))
 THINK_MIN_MS = int(os.getenv("LOAD_HEAVY_THINK_MIN_MS", "20"))
 THINK_MAX_MS = int(os.getenv("LOAD_HEAVY_THINK_MAX_MS", "120"))
 FAILURE_SAMPLE_LIMIT = int(os.getenv("LOAD_HEAVY_FAILURE_SAMPLE_LIMIT", "30"))
@@ -78,6 +81,14 @@ class RequestResult:
     latency_ms: int
     detail: str
     request_id: str | None
+
+
+class AuthLoginError(RuntimeError):
+    def __init__(self, status: int | None, detail: str, retry_after_seconds: float | None = None):
+        super().__init__(detail)
+        self.status = status
+        self.detail = detail
+        self.retry_after_seconds = retry_after_seconds
 
 
 def _log(msg: str) -> None:
@@ -172,8 +183,21 @@ def _request(
     return status, body, latency_ms, resp_headers
 
 
-def _ensure_auth_token(email: str, password: str) -> str:
-    if REGISTER_IF_MISSING:
+def _parse_retry_after_seconds(headers: dict[str, str]) -> float | None:
+    for k, v in headers.items():
+        if k.lower() != "retry-after":
+            continue
+        try:
+            seconds = float(v.strip())
+            if seconds >= 0:
+                return seconds
+        except Exception:  # noqa: BLE001
+            return None
+    return None
+
+
+def _ensure_auth_token(email: str, password: str, *, allow_register: bool) -> str:
+    if allow_register and REGISTER_IF_MISSING:
         try:
             _request(
                 "POST",
@@ -183,25 +207,33 @@ def _ensure_auth_token(email: str, password: str) -> str:
         except Exception:
             pass
 
-    status, body, _, _ = _request(
+    status, body, _, resp_headers = _request(
         "POST",
         "/api/auth/login",
         payload={"email": email, "password": password},
     )
     if status != 200:
-        raise RuntimeError(f"login failed ({status}): {body[:240]}")
+        retry_after = _parse_retry_after_seconds(resp_headers)
+        raise AuthLoginError(
+            status=status,
+            detail=f"login failed ({status}): {body[:240]}",
+            retry_after_seconds=retry_after,
+        )
 
     try:
         payload = json.loads(body)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(f"login response is not json: {body[:240]}") from exc
+        raise AuthLoginError(status=status, detail=f"login response is not json: {body[:240]}") from exc
 
     token = payload.get("accessToken")
     if token:
         return token
     if payload.get("requires2FA"):
-        raise RuntimeError("login requires2FA=true (synthetic account should not require 2FA)")
-    raise RuntimeError("login response missing accessToken")
+        raise AuthLoginError(
+            status=status,
+            detail="login requires2FA=true (synthetic account should not require 2FA)",
+        )
+    raise AuthLoginError(status=status, detail="login response missing accessToken")
 
 
 def _pick_endpoint(rng: random.Random, weights: dict[str, int]) -> str:
@@ -273,6 +305,13 @@ def main() -> int:
     _log(f"maxVus={MAX_VUS} httpTimeout={HTTP_TIMEOUT}s")
     _log(f"weights={weights}")
     _log(f"tickers={TICKERS}")
+    _log(
+        "authControl="
+        f"reloginEvery={AUTH_RELOGIN_EVERY}, "
+        f"cooldown={AUTH_LOGIN_COOLDOWN_SECONDS}s, "
+        f"maxBackoff={AUTH_MAX_BACKOFF_SECONDS}s, "
+        f"startupStaggerMs={AUTH_STARTUP_STAGGER_MS}"
+    )
 
     if not TICKERS:
         raise RuntimeError("LOAD_HEAVY_TICKERS produced empty ticker list")
@@ -297,11 +336,13 @@ def main() -> int:
     status_counts: dict[str, int] = defaultdict(int)
     sample_failures: list[dict[str, Any]] = []
     auth_failures = 0
+    auth_rate_limited = 0
+    global_auth_cooldown_until = 0.0
 
     started = time.perf_counter()
 
     def record_result(vu_id: int, res: RequestResult) -> None:
-        nonlocal summary_total, summary_failed, auth_failures
+        nonlocal summary_total, summary_failed, auth_failures, auth_rate_limited
         now_epoch_ms = int(time.time() * 1000)
         with state_lock:
             summary_total += 1
@@ -316,8 +357,10 @@ def main() -> int:
             else:
                 summary_failed += 1
                 endpoint_failed[res.endpoint] += 1
-                if "login failed" in res.detail or "requires2FA" in res.detail:
+                if res.endpoint == "auth_login":
                     auth_failures += 1
+                    if res.status == 429:
+                        auth_rate_limited += 1
                 if len(sample_failures) < FAILURE_SAMPLE_LIMIT:
                     sample_failures.append(
                         {
@@ -331,11 +374,18 @@ def main() -> int:
                     )
 
     def worker(vu_id: int) -> None:
-        nonlocal target_vus
+        nonlocal target_vus, global_auth_cooldown_until
         rng = random.Random((vu_id + 1) * 1000003)
         email = f"{EMAIL_PREFIX}_{run_id}_vu{vu_id}@example.com"
         token: str | None = None
         req_count = 0
+        did_register = False
+        next_auth_attempt_at = 0.0
+        auth_backoff_seconds = max(1.0, AUTH_LOGIN_COOLDOWN_SECONDS)
+
+        if AUTH_STARTUP_STAGGER_MS > 0:
+            # Spread first auth attempts to avoid synchronized login spikes.
+            time.sleep(rng.randint(0, AUTH_STARTUP_STAGGER_MS) / 1000.0)
 
         while not stop_event.is_set():
             with state_lock:
@@ -344,23 +394,67 @@ def main() -> int:
                 time.sleep(0.1)
                 continue
 
-            try:
-                if token is None or (AUTH_RELOGIN_EVERY > 0 and req_count % AUTH_RELOGIN_EVERY == 0):
-                    token = _ensure_auth_token(email, PASSWORD)
-            except Exception as exc:  # noqa: BLE001
-                record_result(
-                    vu_id,
-                    RequestResult(
-                        endpoint="auth_login",
-                        ok=False,
-                        status=None,
-                        latency_ms=0,
-                        detail=str(exc),
-                        request_id=None,
-                    ),
-                )
-                time.sleep(1.0)
-                continue
+            if token is None or (AUTH_RELOGIN_EVERY > 0 and req_count > 0 and req_count % AUTH_RELOGIN_EVERY == 0):
+                now = time.monotonic()
+                with state_lock:
+                    global_cooldown = global_auth_cooldown_until
+                wait_until = max(next_auth_attempt_at, global_cooldown)
+                if now < wait_until:
+                    time.sleep(min(wait_until - now, 0.5))
+                    continue
+
+                try:
+                    token = _ensure_auth_token(email, PASSWORD, allow_register=not did_register)
+                    did_register = True
+                    auth_backoff_seconds = max(1.0, AUTH_LOGIN_COOLDOWN_SECONDS)
+                except AuthLoginError as exc:
+                    did_register = True
+                    retry_after = exc.retry_after_seconds if exc.retry_after_seconds is not None else auth_backoff_seconds
+                    backoff = min(max(retry_after, AUTH_LOGIN_COOLDOWN_SECONDS), AUTH_MAX_BACKOFF_SECONDS)
+                    backoff += rng.randint(0, 250) / 1000.0
+                    next_auth_attempt_at = time.monotonic() + backoff
+
+                    if exc.status == 429:
+                        with state_lock:
+                            if next_auth_attempt_at > global_auth_cooldown_until:
+                                global_auth_cooldown_until = next_auth_attempt_at
+
+                    auth_backoff_seconds = min(
+                        AUTH_MAX_BACKOFF_SECONDS,
+                        max(AUTH_LOGIN_COOLDOWN_SECONDS, auth_backoff_seconds * 2),
+                    )
+                    record_result(
+                        vu_id,
+                        RequestResult(
+                            endpoint="auth_login",
+                            ok=False,
+                            status=exc.status,
+                            latency_ms=0,
+                            detail=exc.detail,
+                            request_id=None,
+                        ),
+                    )
+                    continue
+                except Exception as exc:  # noqa: BLE001
+                    backoff = min(max(AUTH_LOGIN_COOLDOWN_SECONDS, auth_backoff_seconds), AUTH_MAX_BACKOFF_SECONDS)
+                    backoff += rng.randint(0, 250) / 1000.0
+                    next_auth_attempt_at = time.monotonic() + backoff
+                    auth_backoff_seconds = min(
+                        AUTH_MAX_BACKOFF_SECONDS,
+                        max(AUTH_LOGIN_COOLDOWN_SECONDS, auth_backoff_seconds * 2),
+                    )
+                    record_result(
+                        vu_id,
+                        RequestResult(
+                            endpoint="auth_login",
+                            ok=False,
+                            status=None,
+                            latency_ms=0,
+                            detail=str(exc),
+                            request_id=None,
+                        ),
+                    )
+                    continue
 
             endpoint_key = _pick_endpoint(rng, weights)
             endpoint_name, method, path, headers, payload = _build_request(
@@ -391,6 +485,7 @@ def main() -> int:
                     )
                 elif status == 401:
                     token = None
+                    next_auth_attempt_at = time.monotonic()
                     record_result(
                         vu_id,
                         RequestResult(
@@ -477,6 +572,7 @@ def main() -> int:
         "p99ms": _percentile(summary_latencies, 99),
         "maxMs": max(summary_latencies) if summary_latencies else 0,
         "authFailures": auth_failures,
+        "authRateLimited429": auth_rate_limited,
     }
 
     endpoint_stats: dict[str, Any] = {}
@@ -516,6 +612,12 @@ def main() -> int:
         "effectiveMaxVus": worker_count,
         "weights": weights,
         "tickers": TICKERS,
+        "authControl": {
+            "reloginEvery": AUTH_RELOGIN_EVERY,
+            "loginCooldownSeconds": AUTH_LOGIN_COOLDOWN_SECONDS,
+            "maxBackoffSeconds": AUTH_MAX_BACKOFF_SECONDS,
+            "startupStaggerMs": AUTH_STARTUP_STAGGER_MS,
+        },
         "thresholds": thresholds,
         "summary": summary,
         "endpointStats": endpoint_stats,

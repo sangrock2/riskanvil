@@ -6,12 +6,15 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +34,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(AuthRateLimitFilter.class);
+    private final boolean enabled;
+    private final boolean trustXForwardedFor;
+    private final boolean trustXRealIp;
 
     private static final long WINDOW_MS = 60_000L; // 60초
     private static final List<RateLimitRule> RULES = List.of(
@@ -45,9 +51,24 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     // 규칙 + IP별 (요청 수, 윈도우 시작 시각) 추적
     private final ConcurrentHashMap<String, WindowCounter> counters = new ConcurrentHashMap<>();
 
+    @Autowired
+    public AuthRateLimitFilter(
+            @Value("${security.rate-limit.enabled:true}") boolean enabled,
+            @Value("${security.rate-limit.trust-x-forwarded-for:false}") boolean trustXForwardedFor,
+            @Value("${security.rate-limit.trust-x-real-ip:true}") boolean trustXRealIp
+    ) {
+        this.enabled = enabled;
+        this.trustXForwardedFor = trustXForwardedFor;
+        this.trustXRealIp = trustXRealIp;
+    }
+
+    AuthRateLimitFilter(boolean trustXForwardedFor, boolean trustXRealIp) {
+        this(true, trustXForwardedFor, trustXRealIp);
+    }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return resolveRule(request) == null;
+        return !enabled || resolveRule(request) == null;
     }
 
     @Override
@@ -93,15 +114,45 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     }
 
     private String resolveClientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
+        if (trustXRealIp) {
+            String realIp = normalizeIpHeader(request.getHeader("X-Real-IP"));
+            if (realIp != null) {
+                return realIp;
+            }
         }
-        String realIp = request.getHeader("X-Real-IP");
-        if (realIp != null && !realIp.isBlank()) {
-            return realIp.trim();
+
+        if (trustXForwardedFor) {
+            String forwarded = request.getHeader("X-Forwarded-For");
+            if (forwarded != null && !forwarded.isBlank()) {
+                String first = forwarded.split(",")[0].trim();
+                String normalized = normalizeIpHeader(first);
+                if (normalized != null) {
+                    return normalized;
+                }
+            }
         }
+
         return request.getRemoteAddr();
+    }
+
+    private String normalizeIpHeader(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+
+        String value = raw.trim();
+        if ("unknown".equalsIgnoreCase(value)) {
+            return null;
+        }
+        if (!(value.matches("^[0-9.]+$") || value.contains(":"))) {
+            return null;
+        }
+
+        try {
+            return InetAddress.getByName(value).getHostAddress();
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private static class WindowCounter {

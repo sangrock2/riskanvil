@@ -5,8 +5,11 @@ httpx + BeautifulSoup로 HTML 페이지에서 본문을 추출합니다.
 동시 요청을 Semaphore로 제한하여 서버 부하를 방지합니다.
 """
 import asyncio
+import ipaddress
 import logging
+import socket
 from typing import Optional
+from urllib.parse import urljoin, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -20,6 +23,8 @@ _HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; StockAI-RAG/1.0)",
     "Accept": "text/html,application/xhtml+xml",
 }
+_MAX_REDIRECTS = 3
+_BLOCKED_HOSTNAMES = {"localhost", "127.0.0.1", "::1"}
 
 
 def _get_client() -> httpx.AsyncClient:
@@ -27,10 +32,81 @@ def _get_client() -> httpx.AsyncClient:
     if _client is None or _client.is_closed:
         _client = httpx.AsyncClient(
             timeout=15.0,
-            follow_redirects=True,
+            follow_redirects=False,
             headers=_HEADERS,
         )
     return _client
+
+
+def _is_blocked_ip(ip_text: str) -> bool:
+    ip_obj = ipaddress.ip_address(ip_text)
+    return (
+        ip_obj.is_private
+        or ip_obj.is_loopback
+        or ip_obj.is_link_local
+        or ip_obj.is_multicast
+        or ip_obj.is_reserved
+        or ip_obj.is_unspecified
+    )
+
+
+def _validate_target_url(url: str) -> None:
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        raise ValueError("unsupported_url_scheme")
+    if parsed.username or parsed.password:
+        raise ValueError("url_credentials_not_allowed")
+
+    host = (parsed.hostname or "").strip().lower()
+    if not host:
+        raise ValueError("missing_url_host")
+    if host in _BLOCKED_HOSTNAMES or host.endswith(".local"):
+        raise ValueError("blocked_host")
+
+    # Direct IP literal check
+    try:
+        ip_literal = ipaddress.ip_address(host)
+        if _is_blocked_ip(str(ip_literal)):
+            raise ValueError("blocked_ip")
+        return
+    except ValueError:
+        # not an IP literal -> resolve DNS below
+        pass
+
+    # DNS resolution check (fail-closed)
+    try:
+        infos = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
+    except Exception as ex:
+        raise ValueError("dns_resolution_failed") from ex
+
+    if not infos:
+        raise ValueError("dns_resolution_empty")
+
+    for info in infos:
+        ip = info[4][0]
+        if _is_blocked_ip(ip):
+            raise ValueError("blocked_resolved_ip")
+
+
+async def _safe_get(url: str) -> httpx.Response:
+    current = url
+    client = _get_client()
+
+    for _ in range(_MAX_REDIRECTS + 1):
+        _validate_target_url(current)
+        resp = await client.get(current)
+
+        if 300 <= resp.status_code < 400:
+            location = resp.headers.get("Location")
+            if not location:
+                resp.raise_for_status()
+            current = urljoin(current, location)
+            continue
+
+        resp.raise_for_status()
+        return resp
+
+    raise ValueError("too_many_redirects")
 
 
 def _extract_body(html: str) -> str:
@@ -74,9 +150,7 @@ async def crawl_article(url: str) -> Optional[dict]:
     Returns {url, title, content} or None on failure.
     """
     try:
-        client = _get_client()
-        resp = await client.get(url)
-        resp.raise_for_status()
+        resp = await _safe_get(url)
 
         html = resp.text
         soup = BeautifulSoup(html, "html.parser")

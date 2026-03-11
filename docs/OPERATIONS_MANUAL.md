@@ -2,6 +2,7 @@
 
 이 문서는 Stock-AI 실서비스 운영(특히 Render 배포)을 위한 정본입니다.  
 실행용 점검 항목은 [OPERATIONS_CHECKLIST.md](./OPERATIONS_CHECKLIST.md)와 함께 사용합니다.
+운영 체크리스트는 `일일 빠른 점검`과 `릴리즈 전 전체 기능 검증 매트릭스`를 모두 포함합니다.
 
 ## 1. 운영 범위
 
@@ -94,7 +95,19 @@ DB_PASSWORD=your_db_password
 4. Sentry 신규 에러 확인
 5. 핵심 사용자 플로우 스모크 테스트
 
-### 4.2 배포 운영
+### 4.2 자동 검증 도구
+
+- 24시간 합성 모니터링:
+  - `python scripts/synthetic_monitor.py`
+  - 리포트: `artifacts/reports/synthetic-monitor-report.json`
+- 단기 부하 테스트:
+  - `python scripts/load_test_short.py`
+  - 리포트: `artifacts/reports/load-test-short-report.json`
+- 월간 DR 리허설:
+  - `pwsh -File scripts/dr_rehearsal_run.ps1 ...`
+  - 리포트: `artifacts/reports/dr-rehearsal/dr-rehearsal-summary.json`
+
+### 4.3 배포 운영
 
 1. 배포 전 체크리스트 수행
 2. Render 배포 시작
@@ -102,7 +115,7 @@ DB_PASSWORD=your_db_password
 4. 배포 후 체크리스트 수행
 5. 이상 징후 시 즉시 롤백
 
-### 4.3 롤백 기준
+### 4.4 롤백 기준
 
 - 로그인/분석/포트폴리오 핵심 기능 중 1개 이상 장애
 - 5xx 급증이 5분 이상 지속
