@@ -76,6 +76,53 @@ function num(x, d = 2) {
   return Number(x).toFixed(d);
 }
 
+function toDisplayText(value, fallback = "") {
+  if (value === null || value === undefined) return fallback;
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || fallback;
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    const joined = value.map((v) => toDisplayText(v, "")).filter(Boolean).join(", ");
+    return joined || fallback;
+  }
+
+  if (typeof value === "object") {
+    const candidates = [
+      value.displayName,
+      value.name,
+      value.title,
+      value.text,
+      value.label,
+      value.symbol,
+      value.url,
+    ];
+
+    for (const c of candidates) {
+      const s = toDisplayText(c, "");
+      if (s) return s;
+    }
+
+    return fallback;
+  }
+
+  return fallback;
+}
+
+function toHttpUrl(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) return trimmed;
+  return "";
+}
+
 /**
  * Stock analysis page with search, insights, and AI-powered recommendations
  *
@@ -549,8 +596,9 @@ export default function Analyze(){
                             {Array.isArray(news?.items) && news.items.length > 0 ? (
                                 <ul>
                                 {news.items.map((it, idx) => {
-                                    const title = it?.title || t('analyze.untitled');
-                                    const url = it?.url;
+                                    const title = toDisplayText(it?.title, t('analyze.untitled'));
+                                    const sourceLabel = toDisplayText(it?.source, "");
+                                    const url = toHttpUrl(it?.url) || toHttpUrl(it?.source?.url);
 
                                     // url이 없으면 검색 링크 fallback
                                     const searchUrl =
@@ -565,7 +613,7 @@ export default function Analyze(){
                                         <a href={href} target="_blank" rel="noreferrer noopener">
                                             {title}
                                         </a>
-                                        {it?.source ? <span className={styles.small}> {" "}({it.source})</span> : null}
+                                        {sourceLabel ? <span className={styles.small}> {" "}({sourceLabel})</span> : null}
                                     </li>
                                     );
                                 })}
@@ -573,7 +621,7 @@ export default function Analyze(){
                             ) : Array.isArray(news?.headlines) && news.headlines.length > 0 ? (
                                 <ul>
                                     {news.headlines.map((h, idx) => (
-                                        <li key={idx}>{h}</li>
+                                        <li key={idx}>{toDisplayText(h, t('analyze.untitled'))}</li>
                                     ))}
                                 </ul>
                             ) : null}
@@ -593,7 +641,7 @@ export default function Analyze(){
                             {Array.isArray(rec?.reasons) && rec.reasons.length > 0 && (
                                 <ul>
                                     {rec.reasons.map((r, idx) => (
-                                        <li key={idx}>{r}</li>
+                                        <li key={idx}>{toDisplayText(r, t('messages.noData'))}</li>
                                     ))}
                                 </ul>
                             )}
@@ -655,7 +703,7 @@ export default function Analyze(){
 
                                 {Array.isArray(decision.reasons) && decision.reasons.length > 0 && (
                                     <ul>
-                                        {decision.reasons.map((r, idx) => <li key={idx}>{r}</li>)}
+                                        {decision.reasons.map((r, idx) => <li key={idx}>{toDisplayText(r, t('messages.noData'))}</li>)}
                                     </ul>
                                 )}
                             </div>
