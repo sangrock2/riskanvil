@@ -3,6 +3,7 @@ import { getSettings, updateSettings, setupTotp, verifyTotp, disableTotp } from 
 import { useToast } from "../components/ui/Toast";
 import { useTranslation } from "../hooks/useTranslation";
 import { useLanguage } from "../context/LanguageContext";
+import { toUserErrorMessage } from "../utils/errorMessage";
 import { setTheme } from "../utils/theme";
 import styles from "../css/Settings.module.css";
 
@@ -78,7 +79,7 @@ export default function Settings() {
       const data = await getSettings();
       setSettings(data);
     } catch (e) {
-      toast.error(e.message || t("settings.failedToLoad"));
+      toast.error(toUserErrorMessage(e, t, "settings.failedToLoad"));
     } finally {
       setLoading(false);
     }
@@ -101,7 +102,7 @@ export default function Settings() {
 
       toast.success(t("settings.settingsUpdated"));
     } catch (e) {
-      toast.error(e.message || t("settings.failedToUpdate"));
+      toast.error(toUserErrorMessage(e, t, "settings.failedToUpdate"));
     }
   };
 
@@ -111,7 +112,7 @@ export default function Settings() {
       setTotpSetupData(data);
       setShowTotpSetup(true);
     } catch (e) {
-      toast.error(e.message || t("settings.failedToSetupTwoFactor"));
+      toast.error(toUserErrorMessage(e, t, "settings.failedToSetupTwoFactor", "twoFactorSetup"));
     }
   };
 
@@ -133,7 +134,7 @@ export default function Settings() {
         toast.error(t("settings.invalidCode"));
       }
     } catch (e) {
-      toast.error(e.message || t("settings.verificationFailed"));
+      toast.error(toUserErrorMessage(e, t, "settings.verificationFailed", "twoFactorVerify"));
     }
   };
 
@@ -151,7 +152,7 @@ export default function Settings() {
       setDisableCode("");
       loadSettings();
     } catch (e) {
-      toast.error(e.message || t("settings.failedToDisableTwoFactor"));
+      toast.error(toUserErrorMessage(e, t, "settings.failedToDisableTwoFactor", "twoFactorDisable"));
     }
   };
 

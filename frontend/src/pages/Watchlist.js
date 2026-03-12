@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../components/ui/Toast";
 import { SkeletonTable } from "../components/ui/Loading";
 import { validateNotes } from "../utils/validators";
+import { toUserErrorMessage } from "../utils/errorMessage";
 import { useRealtimeQuote } from "../hooks/useRealtimeQuote";
 import { useWatchlist, useWatchlistTags, useWatchlistMutations } from "../hooks/queries";
 import styles from "../css/Watchlist.module.css";
@@ -214,7 +215,7 @@ export default function Watchlist() {
     const mutations = useWatchlistMutations(testMode);
 
     // Show query error
-    const displayErr = err || (queryError?.message || "");
+    const displayErr = err || (queryError ? toUserErrorMessage(queryError, t, "watchlist.loadError") : "");
 
     async function add() {
         const trimmedTicker = ticker.trim();
@@ -227,8 +228,9 @@ export default function Watchlist() {
             setTicker("");
             toast.success(t('watchlist.addSuccess', { ticker: trimmedTicker }));
         } catch (e) {
-            setErr(e.message || String(e));
-            toast.error(e.message || t('watchlist.addError'));
+            const message = toUserErrorMessage(e, t, "watchlist.addError", "watchlistAdd");
+            setErr(message);
+            toast.error(message);
         }
     }
 
@@ -241,8 +243,9 @@ export default function Watchlist() {
             await mutations.removeItem.mutateAsync({ ticker: it.ticker, market: it.market });
             toast.success(t('watchlist.removeSuccess', { ticker: it.ticker }));
         } catch (e) {
-            setErr(e.message || String(e));
-            toast.error(e.message || t('watchlist.removeError'));
+            const message = toUserErrorMessage(e, t, "watchlist.removeError");
+            setErr(message);
+            toast.error(message);
         }
     }
 
@@ -255,8 +258,9 @@ export default function Watchlist() {
             await mutations.updateInsights.mutateAsync({ ticker: it.ticker, market: it.market });
             toast.success(t('watchlist.updateSuccess', { ticker: it.ticker }));
         } catch (e) {
-            setErr(e.message || String(e));
-            toast.error(e.message || t('watchlist.updateError'));
+            const message = toUserErrorMessage(e, t, "watchlist.updateError");
+            setErr(message);
+            toast.error(message);
         } finally {
             setUpdatingKey("");
         }
@@ -272,7 +276,7 @@ export default function Watchlist() {
             setNewTagColor("#3b82f6");
             toast.success(t('watchlist.tagCreateSuccess', { name }));
         } catch (e) {
-            toast.error(e.message || t('watchlist.tagCreateError'));
+            toast.error(toUserErrorMessage(e, t, "watchlist.tagCreateError"));
         }
     }
 
@@ -283,7 +287,7 @@ export default function Watchlist() {
             await mutations.deleteTag.mutateAsync(tagId);
             toast.success(t('watchlist.tagDeleteSuccess'));
         } catch (e) {
-            toast.error(e.message || t('watchlist.tagDeleteError'));
+            toast.error(toUserErrorMessage(e, t, "watchlist.tagDeleteError"));
         }
     }
 
@@ -293,7 +297,7 @@ export default function Watchlist() {
             setEditingItemTags(null);
             toast.success(t('watchlist.tagsUpdateSuccess'));
         } catch (e) {
-            toast.error(e.message || t('watchlist.tagsUpdateError'));
+            toast.error(toUserErrorMessage(e, t, "watchlist.tagsUpdateError"));
         }
     }
 
@@ -317,7 +321,7 @@ export default function Watchlist() {
             });
             toast.success(t('watchlist.notesUpdateSuccess'));
         } catch (e) {
-            toast.error(e.message || t('watchlist.notesUpdateError'));
+            toast.error(toUserErrorMessage(e, t, "watchlist.notesUpdateError"));
         }
     }
 

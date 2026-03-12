@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { setTokens } from "../auth/token";
 import { apiFetch } from "../api/http";
 import { validateEmail, validateRegisterForm } from "../utils/validators";
+import { errorMessageIncludes, toUserErrorMessage } from "../utils/errorMessage";
 import { useTranslation } from "../hooks/useTranslation";
 import styles from "../css/Register.module.css";
 
@@ -134,8 +135,8 @@ export default function Register() {
             setTokens(data.accessToken, data.refreshToken);
             nav("/dashboard");
         } catch (e2) {
-            setErr(e2.message);
-            if (typeof e2?.message === "string" && e2.message.toLowerCase().includes("email already exists")) {
+            setErr(toUserErrorMessage(e2, t, "auth.registerFailed", "register"));
+            if (errorMessageIncludes(e2, "email already exists", "already exists")) {
                 setEmailCheckStatus("taken");
                 setEmailCheckMessage(t("auth.emailTaken"));
             }

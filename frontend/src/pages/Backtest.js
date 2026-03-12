@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { apiFetch } from "../api/http";
 import { useBacktestHistory, useBacktestDetail, useBacktestMutation } from "../hooks/queries";
+import { toUserErrorMessage } from "../utils/errorMessage";
 import styles from "../css/Backtest.module.css";
 
 function drawEquity(canvas, curve, benchmarkCurve) {
@@ -138,7 +139,7 @@ export default function Backtest() {
             setRun(data);
             setPage(0);
         } catch (e) {
-            setErr(e.message);
+            setErr(toUserErrorMessage(e, t, "messages.errorLoadingData"));
         }
     };
 

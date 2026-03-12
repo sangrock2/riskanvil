@@ -93,6 +93,36 @@ async function parseResponseBody(res, responseType = "auto") {
   return res.text();
 }
 
+function tryParseJson(text) {
+  if (typeof text !== "string") {
+    return null;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+function buildApiError(res, rawText) {
+  const parsed = tryParseJson(rawText);
+  const requestId = res.headers.get("X-Request-Id") || parsed?.requestId || "";
+  const message =
+    (typeof parsed?.message === "string" && parsed.message.trim()) ||
+    (typeof rawText === "string" && rawText.trim()) ||
+    `HTTP ${res.status}`;
+
+  const error = new Error(message);
+  error.status = res.status;
+  error.code = typeof parsed?.error === "string" ? parsed.error : "";
+  error.requestId = requestId;
+  error.path = typeof parsed?.path === "string" ? parsed.path : "";
+  error.apiError = parsed;
+  error.details = parsed ?? rawText;
+  return error;
+}
+
 
 // Add subscriber to queue waiting for token refresh
 function subscribeTokenRefresh(resolve, reject) {
@@ -303,10 +333,7 @@ export async function apiFetch(path, options = {}) {
 
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        const rid = res.headers.get("X-Request-Id");
-        const suffix = rid ? `\nrequestId=${rid}` : "";
-        const error = new Error(text || `HTTP ${res.status}` + suffix);
-        error.status = res.status;
+        const error = buildApiError(res, text);
 
         // Don't retry client errors (4xx except 429)
         if (res.status >= 400 && res.status < 500 && res.status !== 429) {

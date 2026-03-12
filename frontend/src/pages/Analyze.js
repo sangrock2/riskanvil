@@ -4,6 +4,7 @@ import { apiFetch } from "../api/http";
 import { pushRecentTicker, getRecentTickers, getFavorites, toggleFavorite, isFavorite } from "../api/userLists";
 import LineChartCanvas from "../components/LineChartCanvas";
 import { useTranslation } from "../hooks/useTranslation";
+import { toUserErrorMessage } from "../utils/errorMessage";
 import styles from "../css/Analyze.module.css";
 
 /** price stats for "풀버전 detail" */
@@ -254,7 +255,7 @@ export default function Analyze(){
 
             await loadHistory();
         } catch (e) {
-            setErr(e.message);
+            setErr(toUserErrorMessage(e, t, "messages.errorLoadingData"));
         }
     };
 
@@ -265,7 +266,7 @@ export default function Analyze(){
             const d = await apiFetch(`/api/analysis/${id}`);
             setDetail(d);
         } catch (e) {
-            setErr(e.message);
+            setErr(toUserErrorMessage(e, t, "messages.errorLoadingData"));
         }
     };
 
@@ -302,7 +303,7 @@ export default function Analyze(){
                 pushRecentTicker(t);
                 refreshLists();
             } catch (e) {
-                setErr(e.message || String(e));
+                setErr(toUserErrorMessage(e, t, "messages.errorLoadingData"));
                 setInsights(null);
             } finally {
                 setLoadingInsights(false);

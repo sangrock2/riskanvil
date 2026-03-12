@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useToast } from "../components/ui/Toast";
 import { useTranslation } from "../hooks/useTranslation";
+import { toUserErrorMessage } from "../utils/errorMessage";
 import { usePortfolios, usePortfolioDetail, usePortfolioMutations } from "../hooks/queries";
 import { fetchDividendsForPosition } from "../api/dividend";
 import styles from "../css/Portfolio.module.css";
@@ -46,7 +47,7 @@ export default function Portfolio() {
       setShowCreateModal(false);
       setCreateForm({ name: "", description: "", targetReturn: "", riskProfile: "moderate" });
     } catch (e) {
-      toast.error(e.message || t("portfolio.failedToCreatePortfolio"));
+      toast.error(toUserErrorMessage(e, t, "portfolio.failedToCreatePortfolio", "portfolioCreate"));
     }
   };
 
@@ -58,7 +59,7 @@ export default function Portfolio() {
       toast.success(t("portfolio.portfolioDeleted"));
       setSelectedPortfolio(null);
     } catch (e) {
-      toast.error(e.message || t("portfolio.failedToDeletePortfolio"));
+      toast.error(toUserErrorMessage(e, t, "portfolio.failedToDeletePortfolio"));
     }
   };
 
@@ -89,7 +90,7 @@ export default function Portfolio() {
       setShowAddPositionModal(false);
       setPositionForm({ ticker: "", market: "US", quantity: "", entryPrice: "", entryDate: "", notes: "" });
     } catch (e) {
-      toast.error(e.message || t("portfolio.failedToAddPosition"));
+      toast.error(toUserErrorMessage(e, t, "portfolio.failedToAddPosition", "portfolioAddPosition"));
     }
   };
 
@@ -100,7 +101,7 @@ export default function Portfolio() {
       await mutations.removePos.mutateAsync({ portfolioId: selectedPortfolio, positionId });
       toast.success(t("portfolio.positionRemoved"));
     } catch (e) {
-      toast.error(e.message || t("portfolio.failedToRemovePosition"));
+      toast.error(toUserErrorMessage(e, t, "portfolio.failedToRemovePosition"));
     }
   };
 

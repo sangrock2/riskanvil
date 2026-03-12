@@ -81,6 +81,39 @@ describe("apiFetch auth refresh", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toBe("/api/auth/login");
   });
+
+  test("parses json error payload without exposing the whole raw body as the message", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      headers: new Headers({
+        "content-type": "application/json",
+        "X-Request-Id": "req-123",
+      }),
+      text: async () => JSON.stringify({
+        timestamp: "2026-03-12T18:57:59.832816031Z",
+        status: 400,
+        error: "illegal_state",
+        message: "already exists",
+        path: "/api/watchlist",
+        requestId: "req-123",
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiFetch("/api/watchlist", {
+      method: "POST",
+      body: JSON.stringify({ ticker: "AAPL", market: "US" }),
+      retry: 0,
+    })).rejects.toMatchObject({
+      message: "already exists",
+      status: 400,
+      code: "illegal_state",
+      requestId: "req-123",
+      path: "/api/watchlist",
+    });
+  });
 });
 
 describe("ProtectedRoute", () => {

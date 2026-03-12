@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../api/http";
 import { setTokens } from "../auth/token";
 import { validateLoginForm } from "../utils/validators";
+import { toUserErrorMessage } from "../utils/errorMessage";
 import { useTranslation } from "../hooks/useTranslation";
 import styles from "../css/Login.module.css";
 
@@ -78,7 +79,7 @@ export default function Login() {
             setTokens(data.accessToken, data.refreshToken);
             nav("/dashboard");
         } catch (e) {
-            setErr(e?.message || String(e));
+            setErr(toUserErrorMessage(e, t, "settings.verificationFailed", "twoFactorVerify"));
         } finally {
             setVerifying(false);
         }
@@ -98,7 +99,7 @@ export default function Login() {
             setSubmitting(true);
             await login();
         } catch (e2) {
-            setErr(e2?.message || String(e2));
+            setErr(toUserErrorMessage(e2, t, "auth.loginRequired", "login"));
         } finally {
             setSubmitting(false);
         }
