@@ -9,7 +9,7 @@ import * as serviceWorker from './utils/serviceWorker';
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN || import.meta.env.REACT_APP_SENTRY_DSN;
 
-// Sentry 에러 모니터링 (REACT_APP_SENTRY_DSN 환경변수가 설정된 경우에만 활성화)
+// Sentry 에러 모니터링 (VITE_SENTRY_DSN 환경변수가 설정된 경우에만 활성화)
 if (sentryDsn) {
   Sentry.init({
     dsn: sentryDsn,

@@ -1,4 +1,4 @@
-import { getToken, clearToken, getRefreshToken, setTokens, clearAllTokens } from "../auth/token";
+import { getToken, getRefreshToken, setTokens, clearAllTokens } from "../auth/token";
 import { wasRecentlyActive } from "../hooks/useActivityDetection";
 
 // Track if we're currently refreshing to avoid multiple simultaneous refresh attempts
@@ -46,7 +46,7 @@ function isAbsoluteHttpUrl(path) {
   return /^https?:\/\//i.test(path);
 }
 
-function resolveApiPath(path) {
+export function resolveApiPath(path) {
   const testedPath = withTestParam(path);
   if (!API_BASE_URL || isAbsoluteHttpUrl(testedPath)) {
     return testedPath;
@@ -95,21 +95,48 @@ async function parseResponseBody(res, responseType = "auto") {
 
 
 // Add subscriber to queue waiting for token refresh
-function subscribeTokenRefresh(cb) {
-  refreshSubscribers.push(cb);
+function subscribeTokenRefresh(resolve, reject) {
+  refreshSubscribers.push({ resolve, reject });
 }
 
 // Notify all subscribers when token is refreshed
 function onTokenRefreshed(newAccessToken) {
-  refreshSubscribers.forEach((cb) => cb(newAccessToken));
+  refreshSubscribers.forEach(({ resolve }) => resolve?.(newAccessToken));
   refreshSubscribers = [];
+}
+
+function onTokenRefreshFailed(error) {
+  refreshSubscribers.forEach(({ reject }) => reject?.(error));
+  refreshSubscribers = [];
+}
+
+function redirectToLogin(reason) {
+  if (typeof window !== "undefined" && window.location?.replace) {
+    window.location.replace(`/login?reason=${reason}`);
+  }
+}
+
+function normalizePathname(path) {
+  try {
+    return new URL(path, window.location.origin).pathname;
+  } catch {
+    return String(path || "");
+  }
+}
+
+function shouldUseAuth(path, fetchOptions) {
+  if (fetchOptions.auth === true) return true;
+  if (fetchOptions.auth === false) return false;
+
+  const pathname = normalizePathname(path);
+  return !pathname.startsWith("/api/auth/");
 }
 
 /**
  * refresh token으로 access token을 재발급한다.
  * 비활성 사용자/만료 사용자의 경우 토큰을 제거하고 로그인으로 이동한다.
  */
-async function refreshAccessToken() {
+async function refreshAccessToken({ redirectOnFail = true } = {}) {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
     throw new Error("No refresh token available");
@@ -119,8 +146,10 @@ async function refreshAccessToken() {
   // Only refresh tokens for active users as requested by the user
   if (!wasRecentlyActive(5 * 60 * 1000)) {
     // User inactive - don't refresh, redirect to login
-    clearAllTokens();
-    window.location.replace("/login?reason=inactive");
+    clearAllTokens("inactive");
+    if (redirectOnFail) {
+      redirectToLogin("inactive");
+    }
     throw new Error("User inactive - session expired");
   }
 
@@ -140,9 +169,54 @@ async function refreshAccessToken() {
     return data.accessToken;
   } catch (error) {
     // Refresh failed - clear tokens and redirect to login
-    clearAllTokens();
-    window.location.replace("/login?reason=expired");
+    clearAllTokens("expired");
+    if (redirectOnFail) {
+      redirectToLogin("expired");
+    }
     throw error;
+  }
+}
+
+async function refreshAccessTokenOnce(options = {}) {
+  if (isRefreshing) {
+    return new Promise((resolve, reject) => subscribeTokenRefresh(resolve, reject));
+  }
+
+  isRefreshing = true;
+  try {
+    const newAccessToken = await refreshAccessToken(options);
+    onTokenRefreshed(newAccessToken);
+    return newAccessToken;
+  } catch (error) {
+    onTokenRefreshFailed(error);
+    throw error;
+  } finally {
+    isRefreshing = false;
+  }
+}
+
+export async function ensureValidAccessToken({ redirectOnFail = true, forceRefresh = false } = {}) {
+  const token = getToken();
+
+  if (!forceRefresh && token && !isTokenExpired(token)) {
+    return token;
+  }
+
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    if (token) {
+      clearAllTokens("expired");
+      if (redirectOnFail) {
+        redirectToLogin("expired");
+      }
+    }
+    return null;
+  }
+
+  try {
+    return await refreshAccessTokenOnce({ redirectOnFail });
+  } catch {
+    return null;
   }
 }
 
@@ -177,16 +251,13 @@ function isRetryableError(error, status) {
 export async function apiFetch(path, options = {}) {
   const { retry = 3, retryDelay = null, responseType = "auto", ...fetchOptions } = options;
   let lastError = null;
+  const useAuth = shouldUseAuth(path, fetchOptions);
 
   for (let attempt = 0; attempt <= retry; attempt++) {
     try {
-      const token = getToken();
-
-      if (token && isTokenExpired(token)) {
-        clearToken();
-        window.location.replace("/login?reason=expired");
-        throw new Error("token_expired");
-      }
+      const token = useAuth
+        ? await ensureValidAccessToken({ redirectOnFail: true })
+        : null;
 
       const headers = { ...(fetchOptions.headers || {}) };
       const isFormData = fetchOptions.body instanceof FormData;
@@ -201,35 +272,16 @@ export async function apiFetch(path, options = {}) {
 
       const res = await fetch(finalPath, { ...fetchOptions, headers });
 
-      if (res.status === 401) {
+      if (res.status === 401 && useAuth) {
         // Token expired - try to refresh
-        if (isRefreshing) {
-          // Already refreshing - wait for it to complete
-          return new Promise((resolve, reject) => {
-            subscribeTokenRefresh((newToken) => {
-              // Retry original request with new token
-              fetchOptions.headers = {
-                ...fetchOptions.headers,
-                Authorization: `Bearer ${newToken}`,
-              };
-              fetch(finalPath, fetchOptions)
-                .then((newRes) => {
-                  if (!newRes.ok) {
-                    reject(new Error(`HTTP ${newRes.status}`));
-                  }
-                  parseResponseBody(newRes, responseType).then(resolve).catch(reject);
-                })
-                .catch(reject);
-            });
-          });
-        }
-
-        // Start refresh process
-        isRefreshing = true;
         try {
-          const newAccessToken = await refreshAccessToken();
-          isRefreshing = false;
-          onTokenRefreshed(newAccessToken);
+          const newAccessToken = await ensureValidAccessToken({
+            redirectOnFail: true,
+            forceRefresh: true,
+          });
+          if (!newAccessToken) {
+            throw new Error("Unable to refresh access token");
+          }
 
           // Retry original request with new token
           headers.Authorization = `Bearer ${newAccessToken}`;
@@ -241,8 +293,6 @@ export async function apiFetch(path, options = {}) {
 
           return parseResponseBody(newRes, responseType);
         } catch (refreshError) {
-          isRefreshing = false;
-          refreshSubscribers = [];
           throw refreshError;
         }
       }

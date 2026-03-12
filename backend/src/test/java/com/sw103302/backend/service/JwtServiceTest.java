@@ -5,6 +5,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.*;
@@ -17,10 +18,11 @@ class JwtServiceTest {
     void setUp() {
         jwtService = new JwtService();
         // Set required properties via reflection (simulating @Value injection)
+        ReflectionTestUtils.setField(jwtService, "environment", new MockEnvironment().withProperty("spring.profiles.active", "test"));
         ReflectionTestUtils.setField(jwtService, "secret", "test-secret-change-me-test-secret-change-me-123456");
         ReflectionTestUtils.setField(jwtService, "expMinutes", 60L);
         // Trigger @PostConstruct manually
-        ReflectionTestUtils.invokeMethod(jwtService, "init");
+        jwtService.init();
     }
 
     @Test
@@ -78,9 +80,10 @@ class JwtServiceTest {
     void parseClaims_withExpiredToken_shouldThrowExpiredJwtException() {
         // Create a service with very short expiration
         JwtService shortExpService = new JwtService();
+        ReflectionTestUtils.setField(shortExpService, "environment", new MockEnvironment().withProperty("spring.profiles.active", "test"));
         ReflectionTestUtils.setField(shortExpService, "secret", "test-secret-change-me-test-secret-change-me-123456");
         ReflectionTestUtils.setField(shortExpService, "expMinutes", 0L); // 0 minutes = expired immediately
-        ReflectionTestUtils.invokeMethod(shortExpService, "init");
+        shortExpService.init();
 
         String token = shortExpService.createAccessToken("user@example.com", "ROLE_USER");
 
@@ -103,5 +106,32 @@ class JwtServiceTest {
 
         assertThat(userClaims.get("role")).isEqualTo("ROLE_USER");
         assertThat(adminClaims.get("role")).isEqualTo("ROLE_ADMIN");
+    }
+
+    @Test
+    void init_withBlankSecret_shouldFailFast() {
+        JwtService blankSecretService = new JwtService();
+        ReflectionTestUtils.setField(blankSecretService, "environment", new MockEnvironment().withProperty("spring.profiles.active", "test"));
+        ReflectionTestUtils.setField(blankSecretService, "secret", "   ");
+        ReflectionTestUtils.setField(blankSecretService, "expMinutes", 60L);
+
+        assertThatThrownBy(blankSecretService::init)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("JWT secret is empty");
+    }
+
+    @Test
+    void init_withDefaultSecretInProdProfile_shouldFailFast() {
+        JwtService prodJwtService = new JwtService();
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("prod", "postgres");
+        ReflectionTestUtils.setField(prodJwtService, "environment", env);
+        ReflectionTestUtils.setField(prodJwtService, "secret",
+                "dev-only-change-in-production-use-strong-random-secret-minimum-32-bytes-required");
+        ReflectionTestUtils.setField(prodJwtService, "expMinutes", 60L);
+
+        assertThatThrownBy(prodJwtService::init)
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Default development JWT secret is not allowed");
     }
 }

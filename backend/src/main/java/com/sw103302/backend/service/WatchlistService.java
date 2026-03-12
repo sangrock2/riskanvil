@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -99,24 +100,27 @@ public class WatchlistService {
                         Collectors.mapping(WatchlistItem::getTicker, Collectors.toSet())
                 ));
 
-        Map<String, MarketCache> cacheMap = tickersByMarket.entrySet().stream()
-                .flatMap(entry -> {
-                    String market = entry.getKey();
-                    Set<String> tickers = entry.getValue();
-                    return marketCacheRepository.findByUser_IdAndTickerInAndMarketAndTestMode(
-                            user.getId(),
-                            tickers,
-                            market,
-                            test,
-                            DEFAULT_DAYS,
-                            DEFAULT_NEWS_LIMIT
-                    ).stream();
-                })
-                .collect(Collectors.toMap(
-                        c -> symbolKey(c.getTicker(), c.getMarket()),
-                        c -> c,
-                        (c1, c2) -> c1
-                ));
+        Map<String, MarketCache> cacheMap = new HashMap<>();
+        for (Map.Entry<String, Set<String>> entry : tickersByMarket.entrySet()) {
+            String market = entry.getKey();
+            Set<String> tickers = entry.getValue();
+
+            List<MarketCache> caches = marketCacheRepository.findByUser_IdAndTickerInAndMarketAndTestMode(
+                    user.getId(),
+                    tickers,
+                    market,
+                    test,
+                    DEFAULT_DAYS,
+                    DEFAULT_NEWS_LIMIT
+            );
+
+            for (MarketCache cache : caches) {
+                String cacheMarket = cache.getMarket() == null || cache.getMarket().isBlank()
+                        ? market
+                        : cache.getMarket();
+                cacheMap.putIfAbsent(symbolKey(cache.getTicker(), cacheMarket), cache);
+            }
+        }
 
         // 3. 조회된 데이터로 response 생성
         List<WatchlistItemResponse> out = new ArrayList<>();

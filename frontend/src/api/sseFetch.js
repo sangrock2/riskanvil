@@ -1,63 +1,5 @@
-import { getToken, clearToken } from "../auth/token.js";
-const API_BASE_URL = (
-    import.meta.env.VITE_API_BASE_URL ||
-    import.meta.env.REACT_APP_API_BASE_URL ||
-    ""
-).replace(/\/+$/, "");
-
-function isTestMode() {
-    try {
-        const qs = new URLSearchParams(window.location.search);
-        return qs.get("test") === "true";
-    } catch {
-        return false;
-    }
-}
-
-function withTestParam(path) {
-    if (!isTestMode()) return path;
-
-    const url = new URL(path, window.location.origin);
-    if (!url.searchParams.has("test")) url.searchParams.set("test", "true");
-
-    const isAbsolute = /^https?:\/\//i.test(path);
-    return isAbsolute ? url.toString() : url.pathname + url.search + url.hash;
-}
-
-function isAbsoluteHttpUrl(path) {
-    return /^https?:\/\//i.test(path);
-}
-
-function resolveApiPath(path) {
-    const testedPath = withTestParam(path);
-    if (!API_BASE_URL || isAbsoluteHttpUrl(testedPath)) {
-        return testedPath;
-    }
-    if (testedPath.startsWith("/")) {
-        return `${API_BASE_URL}${testedPath}`;
-    }
-    return `${API_BASE_URL}/${testedPath}`;
-}
-
-/* ---- 토큰 만료 선제 체크(선택) ---- */
-function decodeJwtPayload(token) {
-    try {
-        const [, payload] = token.split(".");
-        if (!payload) return null;
-        const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
-        return JSON.parse(decodeURIComponent(escape(json)));
-    } catch {
-        return null;
-    }
-}
-
-function isTokenExpired(token, skewSec = 10) {
-    const p = decodeJwtPayload(token);
-    const exp = p?.exp;
-    if (!exp) return false;
-    const now = Math.floor(Date.now() / 1000);
-    return exp <= now + skewSec;
-}
+import { clearAllTokens } from "../auth/token.js";
+import { ensureValidAccessToken, resolveApiPath } from "./http.js";
 
 /* ---- SSE 파서(text/event-stream) ---- */
 function createSseParser(onEvent) {
@@ -128,14 +70,6 @@ function createSseParser(onEvent) {
  */
 
 export function ssePost(path, body, opts = {}) {
-    const token = getToken();
-
-    if (token && isTokenExpired(token)) {
-        clearToken();
-        window.location.replace("/login?reason=expired");
-        throw new Error("token_expired");
-    }
-
     const finalPath = resolveApiPath(path);
 
     const controller = new AbortController();
@@ -155,22 +89,43 @@ export function ssePost(path, body, opts = {}) {
         payload = body == null ? null : JSON.stringify(body);
     }
 
-    if (token) headers.Authorization = `Bearer ${token}`;
-
     const done = (async () => {
         try {
-            const res = await fetch(finalPath, {
-                method: "POST",
-                headers,
-                body: payload,
-                signal: controller.signal,
-            });
+            const openStream = async (accessToken) => {
+                const requestHeaders = { ...headers };
+                if (accessToken) {
+                    requestHeaders.Authorization = `Bearer ${accessToken}`;
+                }
+                return fetch(finalPath, {
+                    method: "POST",
+                    headers: requestHeaders,
+                    body: payload,
+                    signal: controller.signal,
+                });
+            };
+
+            let token = await ensureValidAccessToken({ redirectOnFail: true });
+            let res = await openStream(token);
+
+            if (res.status === 401) {
+                token = await ensureValidAccessToken({
+                    redirectOnFail: true,
+                    forceRefresh: true,
+                });
+                if (token) {
+                    res = await openStream(token);
+                }
+            }
 
             opts.onOpen?.(res);
 
-            if (res.status === 401 || res.status === 403) {
-                clearToken();
+            if (res.status === 401) {
+                clearAllTokens("expired");
                 window.location.replace("/login?reason=expired");
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            if (res.status === 403) {
                 throw new Error(`HTTP ${res.status}`);
             }
 

@@ -151,11 +151,17 @@ class PortfolioServiceTest {
             .thenReturn(Optional.of(portfolio));
         when(positionRepository.findByPortfolio_IdAndTickerAndMarket(portfolioId, "AAPL", "US"))
             .thenReturn(Optional.empty());
+        when(positionRepository.save(any(PortfolioPosition.class))).thenAnswer(invocation -> {
+            PortfolioPosition saved = invocation.getArgument(0);
+            ReflectionTestUtils.setField(saved, "id", 10L);
+            return saved;
+        });
 
         // When
-        portfolioService.addPosition(portfolioId, request);
+        Long positionId = portfolioService.addPosition(portfolioId, request);
 
         // Then
+        assertThat(positionId).isEqualTo(10L);
         verify(positionRepository).save(any(PortfolioPosition.class));
     }
 

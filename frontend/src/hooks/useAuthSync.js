@@ -1,71 +1,41 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { getToken, clearAllTokens } from "../auth/token";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  getToken,
+  clearTokensLocally,
+  subscribeAuthSync,
+  syncTokens,
+} from "../auth/token";
 
 /**
  * Synchronize authentication state across multiple browser tabs
- * Listens to custom auth events and localStorage changes
+ * Uses BroadcastChannel/localStorage sync events to propagate login/logout
  */
 export function useAuthSync() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Handle login event from another tab
-    function handleLogin(event) {
-      const { accessToken, refreshToken } = event.detail || {};
-      if (accessToken && refreshToken) {
-        // Tokens were set in localStorage by the event dispatcher
-        // Just reload the page or navigate to dashboard if on login page
-        if (window.location.pathname === "/login" || window.location.pathname === "/register") {
-          navigate("/dashboard");
+    const unsubscribe = subscribeAuthSync((message) => {
+      if (message.type === "tokens" && message.accessToken && message.refreshToken) {
+        syncTokens(message.accessToken, message.refreshToken);
+        if (location.pathname === "/login" || location.pathname === "/register") {
+          navigate("/dashboard", { replace: true });
+        }
+        return;
+      }
+
+      if (message.type === "logout" && getToken()) {
+        clearTokensLocally();
+        if (location.pathname !== "/login" && location.pathname !== "/register") {
+          const reason = message.reason || "logout";
+          navigate(`/login?reason=${reason}`, { replace: true });
         }
       }
-    }
-
-    // Handle logout event from another tab
-    function handleLogout() {
-      // If currently logged in, redirect to login page
-      if (getToken()) {
-        clearAllTokens();
-        navigate("/login?reason=logout");
-      }
-    }
-
-    // Handle localStorage changes (cross-tab sync)
-    function handleStorageChange(event) {
-      // Access token removed in another tab
-      if (event.key === "accessToken" && !event.newValue) {
-        // Token was cleared - logout
-        if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
-          navigate("/login?reason=logout");
-        }
-      }
-
-      // Access token added in another tab
-      if (event.key === "accessToken" && event.newValue && !event.oldValue) {
-        // User logged in from another tab
-        if (window.location.pathname === "/login" || window.location.pathname === "/register") {
-          navigate("/dashboard");
-        }
-      }
-
-      // Refresh token updated (token refresh happened in another tab)
-      if (event.key === "refreshToken" && event.newValue) {
-        // Token was refreshed - no action needed, next API call will use new token
-      }
-    }
-
-    // Listen to custom auth events
-    window.addEventListener("auth:login", handleLogin);
-    window.addEventListener("auth:logout", handleLogout);
-
-    // Listen to localStorage changes (cross-tab)
-    window.addEventListener("storage", handleStorageChange);
+    });
 
     return () => {
-      window.removeEventListener("auth:login", handleLogin);
-      window.removeEventListener("auth:logout", handleLogout);
-      window.removeEventListener("storage", handleStorageChange);
+      unsubscribe();
     };
-  }, [navigate]);
+  }, [location.pathname, navigate]);
 }
