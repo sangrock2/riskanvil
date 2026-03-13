@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Core E2E smoke test for Stock-AI.
+"""Smoke E2E test for Stock-AI.
 
 Flows:
 1) Authentication (register/login)
-2) Analysis run
-3) Portfolio risk dashboard
+2) Settings round-trip
+3) Watchlist lifecycle
+4) Analysis run
+5) Portfolio lifecycle + risk dashboard
 """
 
 from __future__ import annotations
@@ -113,6 +115,13 @@ def _run_step(name: str, fn) -> StepResult:
         return StepResult(name=name, ok=False, duration_ms=elapsed, detail=str(exc))
 
 
+def _extract_message(payload: Any) -> str:
+    if isinstance(payload, dict):
+        value = payload.get("message") or payload.get("error")
+        return str(value or "")
+    return str(payload)
+
+
 def _write_report(steps: list[StepResult]) -> None:
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -158,6 +167,89 @@ def main() -> int:
         state["auth_headers"] = {"Authorization": f"Bearer {access_token}"}
         return f"user={email}"
 
+    def flow_settings_round_trip() -> str:
+        _, current = _request(
+            "GET",
+            "/api/settings",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+        if "theme" not in current:
+            raise RuntimeError("settings response missing theme")
+
+        _, updated = _request(
+            "PUT",
+            "/api/settings",
+            headers=state["auth_headers"],
+            payload={
+                "emailOnAlerts": False,
+                "dailySummaryEnabled": True,
+                "theme": "light",
+                "language": "en",
+                "defaultMarket": "KR",
+            },
+            expected_status=(200,),
+        )
+        if updated.get("theme") != "light" or updated.get("language") != "en":
+            raise RuntimeError(f"settings update did not persist expected values: {updated}")
+
+        _, fetched_again = _request(
+            "GET",
+            "/api/settings",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+        if fetched_again.get("defaultMarket") != "KR":
+            raise RuntimeError(f"settings fetch after update mismatch: {fetched_again}")
+
+        return "theme=light language=en defaultMarket=KR"
+
+    def flow_watchlist_lifecycle() -> str:
+        _request(
+            "POST",
+            "/api/watchlist",
+            headers=state["auth_headers"],
+            payload={"ticker": "AAPL", "market": "US"},
+            expected_status=(200,),
+        )
+
+        _, listed = _request(
+            "GET",
+            "/api/watchlist",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+        if not any(item.get("ticker") == "AAPL" and item.get("market") == "US" for item in listed):
+            raise RuntimeError(f"watchlist item not found after add: {listed}")
+
+        duplicate_status, duplicate_body = _request(
+            "POST",
+            "/api/watchlist",
+            headers=state["auth_headers"],
+            payload={"ticker": "AAPL", "market": "US"},
+            expected_status=(400,),
+        )
+        if duplicate_status != 400 or "already exists" not in _extract_message(duplicate_body).lower():
+            raise RuntimeError(f"duplicate watchlist add did not return expected error: {duplicate_body}")
+
+        _request(
+            "DELETE",
+            "/api/watchlist?ticker=AAPL&market=US",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+
+        _, listed_after_delete = _request(
+            "GET",
+            "/api/watchlist",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+        if any(item.get("ticker") == "AAPL" and item.get("market") == "US" for item in listed_after_delete):
+            raise RuntimeError(f"watchlist item still present after delete: {listed_after_delete}")
+
+        return "ticker=AAPL market=US"
+
     def flow_analysis() -> str:
         _, analysis = _request(
             "POST",
@@ -182,7 +274,7 @@ def main() -> int:
         )
         return f"runId={run_id}"
 
-    def flow_portfolio_risk() -> str:
+    def flow_portfolio_lifecycle() -> str:
         _, created = _request(
             "POST",
             "/api/portfolio",
@@ -199,7 +291,22 @@ def main() -> int:
         if portfolio_id is None:
             raise RuntimeError("create portfolio response missing id")
 
-        _request(
+        duplicate_status, duplicate_body = _request(
+            "POST",
+            "/api/portfolio",
+            headers=state["auth_headers"],
+            payload={
+                "name": f"E2E Portfolio {unique}",
+                "description": "Duplicate name check",
+                "targetReturn": 12.0,
+                "riskProfile": "moderate",
+            },
+            expected_status=(400,),
+        )
+        if duplicate_status != 400 or "already exists" not in _extract_message(duplicate_body).lower():
+            raise RuntimeError(f"duplicate portfolio create did not return expected error: {duplicate_body}")
+
+        _, added = _request(
             "POST",
             f"/api/portfolio/{portfolio_id}/position",
             headers=state["auth_headers"],
@@ -212,6 +319,37 @@ def main() -> int:
             },
             expected_status=(200,),
         )
+        position_id = added.get("positionId")
+        if position_id is None:
+            raise RuntimeError("add position response missing positionId")
+
+        duplicate_position_status, duplicate_position_body = _request(
+            "POST",
+            f"/api/portfolio/{portfolio_id}/position",
+            headers=state["auth_headers"],
+            payload={
+                "ticker": "AAPL",
+                "market": "US",
+                "quantity": 5,
+                "entryPrice": 170,
+                "notes": "e2e-duplicate-position",
+            },
+            expected_status=(400,),
+        )
+        if duplicate_position_status != 400 or "already exists" not in _extract_message(duplicate_position_body).lower():
+            raise RuntimeError(
+                f"duplicate portfolio position did not return expected error: {duplicate_position_body}"
+            )
+
+        _, detail = _request(
+            "GET",
+            f"/api/portfolio/{portfolio_id}",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+        if not detail.get("positions"):
+            raise RuntimeError(f"portfolio detail missing positions after add: {detail}")
+
         _request(
             "GET",
             f"/api/portfolio/{portfolio_id}/risk-dashboard?lookbackDays=252",
@@ -224,12 +362,65 @@ def main() -> int:
             headers=state["auth_headers"],
             expected_status=(200,),
         )
-        return f"portfolioId={portfolio_id}"
+
+        _request(
+            "DELETE",
+            f"/api/portfolio/{portfolio_id}/position/{position_id}",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+
+        _, detail_after_position_delete = _request(
+            "GET",
+            f"/api/portfolio/{portfolio_id}",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+        if detail_after_position_delete.get("positions"):
+            raise RuntimeError(
+                f"portfolio still has positions after delete: {detail_after_position_delete.get('positions')}"
+            )
+
+        _request(
+            "DELETE",
+            f"/api/portfolio/{portfolio_id}",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+
+        _, portfolios_after_delete = _request(
+            "GET",
+            "/api/portfolio",
+            headers=state["auth_headers"],
+            expected_status=(200,),
+        )
+        if any(item.get("id") == portfolio_id for item in portfolios_after_delete):
+            raise RuntimeError(f"portfolio still present after delete: {portfolios_after_delete}")
+
+        return f"portfolioId={portfolio_id} positionId={position_id}"
 
     steps.append(_run_step("auth_register_login", flow_auth))
     if steps[-1].ok:
+        steps.append(_run_step("settings_round_trip", flow_settings_round_trip))
+        steps.append(_run_step("watchlist_lifecycle", flow_watchlist_lifecycle))
         steps.append(_run_step("analysis_run_and_detail", flow_analysis))
     else:
+        steps.append(
+            StepResult(
+                name="settings_round_trip",
+                ok=False,
+                duration_ms=0,
+                detail="skipped due to auth failure",
+            )
+        )
+        steps.append(
+            StepResult(
+                name="watchlist_lifecycle",
+                ok=False,
+                duration_ms=0,
+                detail="skipped due to auth failure",
+            )
+        )
         steps.append(
             StepResult(
                 name="analysis_run_and_detail",
@@ -240,11 +431,11 @@ def main() -> int:
         )
 
     if steps[0].ok:
-        steps.append(_run_step("portfolio_risk_dashboard", flow_portfolio_risk))
+        steps.append(_run_step("portfolio_lifecycle_and_risk_dashboard", flow_portfolio_lifecycle))
     else:
         steps.append(
             StepResult(
-                name="portfolio_risk_dashboard",
+                name="portfolio_lifecycle_and_risk_dashboard",
                 ok=False,
                 duration_ms=0,
                 detail="skipped due to auth failure",

@@ -8,13 +8,26 @@ import { initTheme } from './utils/theme';
 import * as serviceWorker from './utils/serviceWorker';
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN || import.meta.env.REACT_APP_SENTRY_DSN;
+const sentryEnvironment =
+  import.meta.env.VITE_SENTRY_ENVIRONMENT ||
+  import.meta.env.MODE;
+const sentryRelease = import.meta.env.VITE_APP_VERSION || undefined;
+
+function parseSampleRate(raw, fallback) {
+  const value = Number(raw);
+  if (Number.isFinite(value) && value >= 0 && value <= 1) {
+    return value;
+  }
+  return fallback;
+}
 
 // Sentry 에러 모니터링 (VITE_SENTRY_DSN 환경변수가 설정된 경우에만 활성화)
 if (sentryDsn) {
   Sentry.init({
     dsn: sentryDsn,
-    environment: import.meta.env.MODE,
-    tracesSampleRate: 0.1,
+    environment: sentryEnvironment,
+    release: sentryRelease,
+    tracesSampleRate: parseSampleRate(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE, 0.1),
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0,
   });

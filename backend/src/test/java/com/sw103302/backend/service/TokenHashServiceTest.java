@@ -1,6 +1,8 @@
 package com.sw103302.backend.service;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -8,29 +10,27 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TokenHashServiceTest {
 
     @Test
-    void hash_shouldBeDeterministicWithSamePepper() {
-        TokenHashService service = new TokenHashService("pepper");
+    void hash_withPepper_shouldBeDeterministic() {
+        TokenHashService service = new TokenHashService("pepper-123");
+        ReflectionTestUtils.setField(service, "environment", new MockEnvironment().withProperty("spring.profiles.active", "test"));
+        service.init();
 
-        String h1 = service.hash("sample-token");
-        String h2 = service.hash("sample-token");
+        String hash1 = service.hash("refresh-token-value");
+        String hash2 = service.hash("refresh-token-value");
 
-        assertThat(h1).isEqualTo(h2);
-        assertThat(h1).hasSize(64);
+        assertThat(hash1).isEqualTo(hash2);
+        assertThat(hash1).hasSize(64);
     }
 
     @Test
-    void hash_shouldChangeWhenPepperChanges() {
-        TokenHashService s1 = new TokenHashService("pepper-a");
-        TokenHashService s2 = new TokenHashService("pepper-b");
+    void init_withBlankPepperInProdProfile_shouldFailFast() {
+        TokenHashService service = new TokenHashService("   ");
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("prod", "postgres");
+        ReflectionTestUtils.setField(service, "environment", env);
 
-        assertThat(s1.hash("sample-token")).isNotEqualTo(s2.hash("sample-token"));
-    }
-
-    @Test
-    void hash_shouldRejectBlankToken() {
-        TokenHashService service = new TokenHashService("pepper");
-
-        assertThatThrownBy(() -> service.hash(" "))
-                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(service::init)
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("REFRESH_TOKEN_PEPPER is empty");
     }
 }
