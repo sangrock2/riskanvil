@@ -6,6 +6,7 @@ import com.sw103302.backend.dto.*;
 import com.sw103302.backend.entity.Portfolio;
 import com.sw103302.backend.entity.PortfolioPosition;
 import com.sw103302.backend.entity.User;
+import com.sw103302.backend.repository.DividendRepository;
 import com.sw103302.backend.repository.PortfolioPositionRepository;
 import com.sw103302.backend.repository.PortfolioRepository;
 import com.sw103302.backend.repository.UserRepository;
@@ -34,17 +35,20 @@ import static com.sw103302.backend.util.PortfolioSymbolUtil.symbolKey;
 public class PortfolioService {
     private final PortfolioRepository portfolioRepository;
     private final PortfolioPositionRepository positionRepository;
+    private final DividendRepository dividendRepository;
     private final UserRepository userRepository;
     private final PriceService priceService;
     private final ObjectMapper objectMapper;
 
     public PortfolioService(PortfolioRepository portfolioRepository,
                             PortfolioPositionRepository positionRepository,
+                            DividendRepository dividendRepository,
                             UserRepository userRepository,
                             PriceService priceService,
                             ObjectMapper objectMapper) {
         this.portfolioRepository = portfolioRepository;
         this.positionRepository = positionRepository;
+        this.dividendRepository = dividendRepository;
         this.userRepository = userRepository;
         this.priceService = priceService;
         this.objectMapper = objectMapper;
@@ -138,6 +142,7 @@ public class PortfolioService {
         Portfolio portfolio = portfolioRepository.findByIdAndUser_Id(id, user.getId())
             .orElseThrow(() -> new IllegalArgumentException("Portfolio not found"));
 
+        dividendRepository.deleteByPortfolioPosition_Portfolio_Id(id);
         portfolioRepository.delete(portfolio);
     }
 
@@ -198,6 +203,7 @@ public class PortfolioService {
             throw new IllegalArgumentException("Position does not belong to this portfolio");
         }
 
+        dividendRepository.deleteByPortfolioPosition_Id(positionId);
         positionRepository.delete(position);
     }
 

@@ -5,6 +5,7 @@ import com.sw103302.backend.dto.*;
 import com.sw103302.backend.entity.Portfolio;
 import com.sw103302.backend.entity.PortfolioPosition;
 import com.sw103302.backend.entity.User;
+import com.sw103302.backend.repository.DividendRepository;
 import com.sw103302.backend.repository.PortfolioPositionRepository;
 import com.sw103302.backend.repository.PortfolioRepository;
 import com.sw103302.backend.repository.UserRepository;
@@ -40,6 +41,9 @@ class PortfolioServiceTest {
     private PortfolioPositionRepository positionRepository;
 
     @Mock
+    private DividendRepository dividendRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -54,6 +58,7 @@ class PortfolioServiceTest {
         portfolioService = new PortfolioService(
             portfolioRepository,
             positionRepository,
+            dividendRepository,
             userRepository,
             priceService,
             new ObjectMapper()
@@ -269,7 +274,35 @@ class PortfolioServiceTest {
         portfolioService.delete(portfolioId);
 
         // Then
+        verify(dividendRepository).deleteByPortfolioPosition_Portfolio_Id(portfolioId);
         verify(portfolioRepository).delete(portfolio);
+    }
+
+    @Test
+    void deletePosition_withValidPosition_shouldDelete() {
+        // Given
+        Long portfolioId = 1L;
+        Long positionId = 10L;
+
+        Portfolio portfolio = new Portfolio(testUser, "My Portfolio", null, null, null);
+        ReflectionTestUtils.setField(portfolio, "id", portfolioId);
+
+        PortfolioPosition position = new PortfolioPosition(
+            portfolio, "AAPL", "US", BigDecimal.ONE, new BigDecimal("150.00"), LocalDate.now(), null
+        );
+        ReflectionTestUtils.setField(position, "id", positionId);
+
+        securityUtilMock.when(SecurityUtil::currentEmail).thenReturn("user@example.com");
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(testUser));
+        when(positionRepository.findByIdAndPortfolio_User_Id(positionId, testUser.getId()))
+            .thenReturn(Optional.of(position));
+
+        // When
+        portfolioService.deletePosition(portfolioId, positionId);
+
+        // Then
+        verify(dividendRepository).deleteByPortfolioPosition_Id(positionId);
+        verify(positionRepository).delete(position);
     }
 
     @Test
