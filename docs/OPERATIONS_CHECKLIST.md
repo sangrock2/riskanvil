@@ -44,9 +44,13 @@
 필수값:
 - [ ] `SPRING_PROFILES_ACTIVE=prod,postgres`
 - [ ] `JWT_SECRET` 설정 (32바이트 이상)
+- [ ] `REFRESH_TOKEN_PEPPER` 설정
 - [ ] `DB_URL` 설정 (반드시 `jdbc:postgresql://...`)
 - [ ] `DB_USERNAME` 설정
 - [ ] `DB_PASSWORD` 설정
+- [ ] `FLYWAY_ENABLED=true`
+- [ ] `FLYWAY_BASELINE_VERSION=2`
+- [ ] `JPA_DDL_AUTO=validate`
 - [ ] `APP_CORS_ALLOWED_ORIGIN_PATTERNS`에 실제 프론트 URL 입력
 - [ ] `AI_BASE_URL` 설정 (예: `https://riskanvil-ai.onrender.com`)
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.sw103302.backend.component.AiCacheEvictor;
 import com.sw103302.backend.component.AiClient;
+import com.sw103302.backend.component.CacheMetricsRecorder;
 import com.sw103302.backend.component.InFlightDeduplicator;
 import com.sw103302.backend.dto.InsightRequest;
 import com.sw103302.backend.entity.MarketCache;
@@ -37,11 +38,12 @@ public class MarketCacheService {
     private final TransactionTemplate tx;
     private final InFlightDeduplicator dedup;
     private final AiCacheEvictor aiCacheEvictor;
+    private final CacheMetricsRecorder cacheMetricsRecorder;
 
     public MarketCacheService(
             AiClient aiClient, ObjectMapper om, UserRepository userRepository, MarketCacheRepository marketCacheRepository, UsageService usageService,
             MarketReportHistoryRepository marketReportHistoryRepository, QuantAnalysisService quantAnalysisService, TransactionTemplate tx,
-            InFlightDeduplicator dedup, AiCacheEvictor aiCacheEvictor
+            InFlightDeduplicator dedup, AiCacheEvictor aiCacheEvictor, CacheMetricsRecorder cacheMetricsRecorder
     ) {
         this.aiClient = aiClient;
         this.om = om;
@@ -53,6 +55,7 @@ public class MarketCacheService {
         this.tx = tx;
         this.dedup = dedup;
         this.aiCacheEvictor = aiCacheEvictor;
+        this.cacheMetricsRecorder = cacheMetricsRecorder;
     }
 
     public String getReport(InsightRequest req, boolean test, boolean refresh, boolean web) {
@@ -91,11 +94,14 @@ public class MarketCacheService {
                             .orElse(null);
 
                     if (cache != null && cache.getInsightsJson() != null && !cache.getInsightsJson().isBlank()) {
+                        cacheMetricsRecorder.record("market_insights_db", "lookup", "hit");
                         cached = true;
                         String out = withCacheMeta(cache.getInsightsJson(), true, cache.getInsightsUpdatedAt(), cache.getReportUpdatedAt());
                         return quantAnalysisService.attachQuant(out);
                     }
+                    cacheMetricsRecorder.record("market_insights_db", "lookup", "miss");
                 } catch (Exception cacheReadEx) {
+                    cacheMetricsRecorder.record("market_insights_db", "lookup", "error");
                     log.warn("Insights cache read failed. Fallback to AI fetch. requestId={} ticker={} market={} test={} days={} newsLimit={} reason={}",
                             requestId, ticker, market, test, days, newsLimit, cacheReadEx.toString());
                 }
@@ -130,7 +136,9 @@ public class MarketCacheService {
                         insightsUpdatedAt = saved.getInsightsUpdatedAt();
                         reportUpdatedAt = saved.getReportUpdatedAt();
                     }
+                    cacheMetricsRecorder.record("market_insights_db", "write", "success");
                 } catch (Exception cacheWriteEx) {
+                    cacheMetricsRecorder.record("market_insights_db", "write", "error");
                     log.warn("Insights cache write failed. Returning non-cached response. requestId={} ticker={} market={} test={} days={} newsLimit={} reason={}",
                             requestId, ticker, market, test, days, newsLimit, cacheWriteEx.toString());
                 }
@@ -246,6 +254,7 @@ public class MarketCacheService {
                             .orElse(null);
 
                     if (cache != null && cache.getReportText() != null && !cache.getReportText().isBlank()) {
+                        cacheMetricsRecorder.record("market_report_db", "lookup", "hit");
                         cached = true;
 
                         String fixed = normalizeReportText(cache.getReportText());
@@ -276,7 +285,9 @@ public class MarketCacheService {
 
                         return write(out);
                     }
+                    cacheMetricsRecorder.record("market_report_db", "lookup", "miss");
                 } catch (Exception cacheReadEx) {
+                    cacheMetricsRecorder.record("market_report_db", "lookup", "error");
                     log.warn("Report cache read failed. Fallback to AI fetch. requestId={} ticker={} market={} test={} days={} newsLimit={} reason={}",
                             requestId, ticker, market, test, days, newsLimit, cacheReadEx.toString());
                 }
@@ -320,7 +331,9 @@ public class MarketCacheService {
                         insightsUpdatedAt = saved.getInsightsUpdatedAt();
                         reportUpdatedAt = saved.getReportUpdatedAt();
                     }
+                    cacheMetricsRecorder.record("market_report_db", "write", "success");
                 } catch (Exception cacheWriteEx) {
+                    cacheMetricsRecorder.record("market_report_db", "write", "error");
                     log.warn("Report cache write failed. Returning non-cached response. requestId={} ticker={} market={} test={} days={} newsLimit={} web={} reason={}",
                             requestId, ticker, market, test, days, newsLimit, web, cacheWriteEx.toString());
                 }

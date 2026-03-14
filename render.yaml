@@ -38,7 +38,9 @@ services:
       - key: DB_DRIVER_CLASS_NAME
         value: org.postgresql.Driver
       - key: FLYWAY_ENABLED
-        value: "false"
+        value: "true"
+      - key: FLYWAY_BASELINE_VERSION
+        value: "2"
       - key: JPA_DDL_AUTO
         value: validate
       - key: JWT_EXP_MINUTES

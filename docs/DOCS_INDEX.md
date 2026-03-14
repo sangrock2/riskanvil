@@ -36,12 +36,20 @@
    - 실서비스 일일/배포/장애 대응 실행 체크리스트
 15. [ALERTING_TEMPLATES.md](./ALERTING_TEMPLATES.md)
    - Render/Sentry 운영 알림 규칙 템플릿
+16. [POSTGRES_FLYWAY_TRANSITION_PLAN.md](./POSTGRES_FLYWAY_TRANSITION_PLAN.md)
+   - Render Postgres baseline, cutover 방식, 운영 검증 기준
+17. [PERFORMANCE_AND_LOAD_BASELINE.md](./PERFORMANCE_AND_LOAD_BASELINE.md)
+   - 성능 기준선, SLI/SLO, 부하 테스트 게이트, 보고 주기
+18. [ARCHITECTURE_CASE_STUDY.md](./ARCHITECTURE_CASE_STUDY.md)
+   - 주요 설계 판단과 트레이드오프를 설명하는 요약 케이스 스터디
 
 ## 2. Audience Guide
 
 - 제품/기획/포트폴리오 설명: `PRODUCT_MANUAL.md`
-- 신규 개발자 온보딩: `ENGINEERING_HANDBOOK.md` + `API.md`
+- 신규 개발자 온보딩: `ENGINEERING_HANDBOOK.md` + `API.md` + `ARCHITECTURE_CASE_STUDY.md`
 - 운영/배포 담당자: `OPERATIONS_MANUAL.md` + `OPERATIONS_CHECKLIST.md` + `ALERTING_TEMPLATES.md`
+- DB 전략 정리: `POSTGRES_FLYWAY_TRANSITION_PLAN.md`
+- 성능/부하 기준 관리: `PERFORMANCE_AND_LOAD_BASELINE.md`
 - 릴리즈 변경 확인: `PATCH_NOTES.md`
 
 ## 3. Consolidation Map (레거시 문서 통합 맵)

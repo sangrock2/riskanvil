@@ -2,6 +2,57 @@
 
 ---
 
+# v1.3.7 - Postgres Flyway baseline 정식화 및 성능 계측 추가
+
+**릴리즈 날짜**: 2026-03-15  
+**이전 버전**: v1.3.6  
+**현재 버전**: v1.3.7
+
+---
+
+## Postgres + Flyway 운영 정렬
+
+- `db/migration-postgres/` 경로 추가
+  - `V1__baseline_schema.sql`: PostgreSQL baseline schema
+  - `V2__align_constraints_and_indexes.sql`: 운영 제약/인덱스/ON DELETE CASCADE 정렬
+- `application-postgres.properties`
+  - `FLYWAY_ENABLED=true` 기본화
+  - `FLYWAY_BASELINE_VERSION=2` 도입
+  - `JPA_DDL_AUTO=validate` 유지
+- `render.yaml`, `docker-compose.postgres.yml`, `.env.example`
+  - Postgres 운영 기본값을 Flyway enabled 기준으로 정리
+- Testcontainers 기반 `PostgresFlywayMigrationTest` 추가
+  - 빈 PostgreSQL 인스턴스에서 baseline 마이그레이션이 실제 적용되는지 검증
+
+## Backend 관측성 강화
+
+- 인증 플로우 메트릭 추가
+  - `auth_flow_total`
+  - `auth_flow_latency`
+  - `auth_flow_stage_latency`
+- 캐시 이벤트 메트릭 추가
+  - `app_cache_events_total`
+- 관련 테스트 추가:
+  - `AuthMetricsRecorderTest`
+  - `CacheMetricsRecorderTest`
+  - `AuthServiceTest` 메트릭 호출 검증
+
+## Frontend 운영 계측
+
+- `reportWebVitals.js` 개선
+  - 나쁜 Core Web Vitals만 Sentry로 전송
+  - `VITE_SENTRY_ENVIRONMENT`, `VITE_SENTRY_TRACES_SAMPLE_RATE`, `VITE_APP_VERSION` 연동
+- `reportWebVitals.test.js` 추가
+
+## 문서 동기화
+
+- `README.md`
+- `docs/DEPLOY_RENDER.md`
+- `docs/OPERATIONS_MANUAL.md`
+- `docs/OPERATIONS_CHECKLIST.md`
+- `docs/ENGINEERING_HANDBOOK.md`
+- `docs/POSTGRES_FLYWAY_TRANSITION_PLAN.md`
+
 # v1.3.6 - 신뢰성 검증 자동화 추가 (합성 모니터링/부하 테스트/DR 리허설)
 
 **릴리즈 날짜**: 2026-03-06  

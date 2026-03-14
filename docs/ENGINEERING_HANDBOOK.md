@@ -15,7 +15,7 @@ Stock-AI는 다음 3개 애플리케이션 계층으로 구성됩니다.
 - 사용자 브라우저 -> Nginx -> Frontend
 - Frontend -> Backend REST/WebSocket
 - Backend -> AI Service (HTTP)
-- Backend -> MySQL / Redis
+- Backend -> MySQL(local) or Postgres(Render) / Redis
 - Monitoring: Prometheus + Grafana
 
 ## 2. Technology Stack (Code-Verified)
@@ -34,7 +34,7 @@ Stock-AI는 다음 3개 애플리케이션 계층으로 구성됩니다.
 - Spring Boot `4.0.0`
 - Java Toolchain `21`
 - Spring Security + JWT (`jjwt 0.12.6`)
-- Spring Data JPA + Flyway + MySQL
+- Spring Data JPA + Flyway + MySQL(local) / Postgres(Render)
 - Redis Cache
 - Resilience4j (CircuitBreaker/Retry)
 - Spring WebSocket + SSE
@@ -156,7 +156,14 @@ stock-ai/
 
 ## 7. Data Model and Migration Strategy
 
-Flyway 마이그레이션 파일(`backend/src/main/resources/db/migration`)이 DB 스키마의 단일 진실 소스입니다.
+현재 상태는 다음처럼 정리된다.
+
+- 로컬 기본 개발 흐름은 여전히 MySQL 중심이지만, Postgres 전용 baseline 경로(`db/migration-postgres`)도 함께 관리한다.
+- Render Postgres 운영 환경은 Flyway를 기본 활성화하고 `JPA validate`로만 검증한다.
+- 신규 Postgres DB는 `V1__baseline_schema.sql` + `V2__align_constraints_and_indexes.sql`로 초기화된다.
+- 기존 운영 Postgres DB는 `baseline-on-migrate=true`, `baseline-version=2`로 첫 배포 시 schema history만 맞춘다.
+
+즉 지금은 "운영 Postgres에서도 Flyway 히스토리를 추적하는 상태"까지 올라왔고, 남은 일은 실제 운영 배포에서 첫 baseline 적용과 smoke verification이다. 상세 기준은 [POSTGRES_FLYWAY_TRANSITION_PLAN.md](./POSTGRES_FLYWAY_TRANSITION_PLAN.md)에 정리한다.
 
 주요 테이블 그룹:
 
@@ -184,6 +191,8 @@ Flyway 마이그레이션 파일(`backend/src/main/resources/db/migration`)이 D
 - Frontend Query 캐시(staleTime)로 API 부하 절감
 - SSE/WebSocket으로 실시간성 보강
 
+현재 계측 자산, 성능 목표치, 부하 테스트 게이트는 [PERFORMANCE_AND_LOAD_BASELINE.md](./PERFORMANCE_AND_LOAD_BASELINE.md)를 기준으로 관리한다.
+
 ## 10. Local Development Standard
 
 ### 10.1 Quick Start
@@ -193,6 +202,12 @@ docker compose up -d mysql redis
 cd backend && ./gradlew bootRun
 cd ai && uvicorn main:app --reload
 cd frontend && npm install && npm start
+```
+
+Postgres baseline/Flyway 경로를 검증할 때는 아래 스택을 사용한다.
+
+```bash
+docker compose -f docker-compose.postgres.yml up -d
 ```
 
 ### 10.2 Required Environment
@@ -225,6 +240,7 @@ pwsh -File scripts/smoke.ps1
 - API 계약 변경 시 `API.md` 동시 수정
 - 새 페이지 추가 시 `PRODUCT_MANUAL.md`의 화면/플로우 갱신
 - 마이그레이션은 롤백/재실행 안정성 고려 (idempotent 우선)
+- Render Postgres 관련 스키마 변경은 `POSTGRES_FLYWAY_TRANSITION_PLAN.md` 기준으로 검토
 - 장애 대응에 영향 있는 변경은 `OPERATIONS_MANUAL.md` 반영
 
 ## 13. OpenAPI and Typed Client Workflow

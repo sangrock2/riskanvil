@@ -34,8 +34,9 @@ DB_URL=jdbc:postgresql://<host>:5432/stock_ai
 DB_USERNAME=<db_user>
 DB_PASSWORD=<db_password>
 DB_DRIVER_CLASS_NAME=org.postgresql.Driver
-JPA_DDL_AUTO=update
-FLYWAY_ENABLED=false
+JPA_DDL_AUTO=validate
+FLYWAY_ENABLED=true
+FLYWAY_BASELINE_VERSION=2
 
 # AI 연결 (둘 중 하나)
 AI_BASE_URL=http://<ai-host>:8000
@@ -57,6 +58,7 @@ SPRING_CACHE_TYPE=simple
 참고:
 - `DB_URL`에 실수로 `postgresql://...` 또는 `postgres://...`를 넣어도 앱 시작 시 자동으로 `jdbc:postgresql://...`로 보정됩니다.
 - 운영 안정성을 위해 Dashboard에는 처음부터 `jdbc:postgresql://...` 형식으로 입력하는 것을 권장합니다.
+- 기존 운영 Postgres처럼 이미 테이블이 있는 DB는 첫 배포에서 Flyway가 `baseline version 2`만 기록하고 baseline DDL은 다시 실행하지 않습니다.
 
 ## 3. Frontend 환경변수
 
@@ -84,3 +86,4 @@ VITE_WS_URL=https://<your-backend>.onrender.com
 4. Backend가 Render 기본 `PORT` 환경변수를 우선 사용하도록 변경
 5. Backend AI/DB 주소를 `AI_SERVICE_HOSTPORT`, `DB_HOSTPORT`로도 주입 가능하게 변경
 6. Postgres 전용 `postgres` 프로필 추가 (`SPRING_PROFILES_ACTIVE=prod,postgres`)
+7. Postgres 전용 Flyway baseline(V1/V2) 추가 및 운영 기본값을 `FLYWAY_ENABLED=true`, `JPA_DDL_AUTO=validate`로 정렬

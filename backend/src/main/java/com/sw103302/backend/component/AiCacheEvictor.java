@@ -12,9 +12,11 @@ import org.springframework.stereotype.Component;
 public class AiCacheEvictor {
     private static final Logger log = LoggerFactory.getLogger(AiCacheEvictor.class);
     private final CacheManager cacheManager;
+    private final CacheMetricsRecorder cacheMetricsRecorder;
 
-    public AiCacheEvictor(CacheManager cacheManager) {
+    public AiCacheEvictor(CacheManager cacheManager, CacheMetricsRecorder cacheMetricsRecorder) {
         this.cacheManager = cacheManager;
+        this.cacheMetricsRecorder = cacheMetricsRecorder;
     }
 
     public void evictInsights(InsightRequest req, boolean test) {
@@ -30,9 +32,13 @@ public class AiCacheEvictor {
             Cache c = cacheManager.getCache(cacheName);
             if (c != null) {
                 c.evict(key);
+                cacheMetricsRecorder.record(cacheName, "evict", "success");
+            } else {
+                cacheMetricsRecorder.record(cacheName, "evict", "cache_missing");
             }
         } catch (RuntimeException e) {
             // Cache eviction failure must not break the API flow.
+            cacheMetricsRecorder.record(cacheName, "evict", "error");
             log.warn("Cache evict failed (cache={}, key={}): {}", cacheName, key, e.toString());
         }
     }

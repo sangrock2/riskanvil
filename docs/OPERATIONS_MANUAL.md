@@ -18,8 +18,12 @@
 
 - `SPRING_PROFILES_ACTIVE=prod,postgres`
 - `JWT_SECRET` (32바이트 이상 랜덤 문자열)
+- `REFRESH_TOKEN_PEPPER` (운영 필수)
 - `DB_URL` (반드시 JDBC 형식)
 - `DB_USERNAME`, `DB_PASSWORD`
+- `FLYWAY_ENABLED=true`
+- `FLYWAY_BASELINE_VERSION=2`
+- `JPA_DDL_AUTO=validate`
 - `APP_CORS_ALLOWED_ORIGIN_PATTERNS`
 - `AI_BASE_URL` 또는 `AI_SERVICE_HOSTPORT`
 - 선택: `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`
@@ -70,6 +74,8 @@ DB_PASSWORD=your_db_password
 - 최소 추적 지표:
   - HTTP 5xx 비율
   - 응답시간 p95/p99
+  - `auth_flow_latency`, `auth_flow_stage_latency`
+  - `app_cache_events_total`
   - AI 타임아웃 비율
   - DB 연결 실패 건수
   - `app_error_total`(error_code/status 기준 API 오류 카운트)

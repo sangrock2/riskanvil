@@ -40,6 +40,11 @@ stock-ai/
 docker-compose up -d
 ```
 
+### Docker (Postgres 검증용)
+```bash
+docker compose -f docker-compose.postgres.yml up -d
+```
+
 ### 개별 실행
 
 **Frontend**
@@ -55,6 +60,14 @@ cd backend
 ./gradlew bootRun  # http://localhost:8080
 ```
 
+Postgres baseline 검증을 하려면:
+
+```bash
+docker compose -f docker-compose.postgres.yml up -d postgres redis
+cd backend
+SPRING_PROFILES_ACTIVE=dev,postgres ./gradlew bootRun
+```
+
 **AI Service**
 ```bash
 cd ai
@@ -67,7 +80,7 @@ python -m uvicorn main:app --reload  # http://localhost:8000
 - Render 배포 가이드: **[docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md)**
 - Blueprint: 저장소 루트 `render.yaml` 사용
 - Frontend Static Site에는 `VITE_API_BASE_URL` 설정 필요
-- Backend Web Service에는 `SPRING_PROFILES_ACTIVE=prod,postgres`, `JWT_SECRET`, `DB_URL(PostgreSQL)`, `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 설정 필요
+- Backend Web Service에는 `SPRING_PROFILES_ACTIVE=prod,postgres`, `JWT_SECRET`, `REFRESH_TOKEN_PEPPER`, `DB_URL(PostgreSQL)`, `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 설정 필요
 
 ### 운영 검증 스크립트
 
@@ -93,6 +106,9 @@ pwsh -File scripts/dr_rehearsal_run.ps1 -BackendBaseUrl "https://your-backend.on
 - **[Operations Manual](docs/OPERATIONS_MANUAL.md)** - 배포/운영/장애 대응/릴리즈 절차
 - **[Operations Checklist](docs/OPERATIONS_CHECKLIST.md)** - 실서비스 점검/배포/장애 대응 실행 체크리스트
 - **[Alerting Templates](docs/ALERTING_TEMPLATES.md)** - Render/Sentry 운영 알림 룰 템플릿
+- **[Postgres + Flyway Transition Plan](docs/POSTGRES_FLYWAY_TRANSITION_PLAN.md)** - Postgres baseline, cutover 방식, 운영 검증 기준
+- **[Performance and Load Baseline](docs/PERFORMANCE_AND_LOAD_BASELINE.md)** - 성능 기준선, SLO, 부하 테스트 게이트
+- **[Architecture Case Study](docs/ARCHITECTURE_CASE_STUDY.md)** - 설계 이유와 트레이드오프 요약
 - **[Patch Notes](docs/PATCH_NOTES.md)** - 버전별 변경 이력
 - **[Roadmap](docs/ROADMAP.md)** - 향후 확장 로드맵
 - **[Public Service Evidence](docs/PUBLIC_SERVICE_EVIDENCE.md)** - 공개 URL/모니터링 증빙 템플릿

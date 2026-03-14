@@ -4,6 +4,7 @@ import com.sw103302.backend.dto.AuthResponse;
 import com.sw103302.backend.dto.EmailAvailabilityResponse;
 import com.sw103302.backend.dto.LoginRequest;
 import com.sw103302.backend.dto.RegisterRequest;
+import com.sw103302.backend.component.AuthMetricsRecorder;
 import com.sw103302.backend.entity.RefreshToken;
 import com.sw103302.backend.entity.User;
 import com.sw103302.backend.repository.RefreshTokenRepository;
@@ -24,7 +25,9 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,6 +59,9 @@ class AuthServiceTest {
     @Mock
     private StringRedisTemplate redisTemplate;
 
+    @Mock
+    private AuthMetricsRecorder authMetricsRecorder;
+
     private AuthService authService;
 
     @BeforeEach
@@ -68,7 +74,8 @@ class AuthServiceTest {
                 jwtService,
                 tokenHashService,
                 twoFactorService,
-                redisTemplate
+                redisTemplate,
+                authMetricsRecorder
         );
     }
 
@@ -95,6 +102,7 @@ class AuthServiceTest {
         assertThat(savedUser.getEmail()).isEqualTo(request.email());
         assertThat(savedUser.getPasswordHash()).isEqualTo(hashedPassword);
         assertThat(savedUser.getRole()).isEqualTo("ROLE_USER");
+        verify(authMetricsRecorder).recordFlow(eq("register"), eq("success"), anyLong());
     }
 
     @Test
@@ -107,6 +115,7 @@ class AuthServiceTest {
                 .hasMessage("email already exists");
 
         verify(userRepository, never()).save(any());
+        verify(authMetricsRecorder).recordFlow(eq("register"), eq("duplicate_email"), anyLong());
     }
 
     @Test
@@ -126,6 +135,9 @@ class AuthServiceTest {
         assertThat(response.accessToken()).isEqualTo(expectedAccessToken);
         assertThat(response.refreshToken()).isNotBlank();
         assertThat(response.requires2FA()).isFalse();
+        verify(authMetricsRecorder).recordStage(eq("login"), eq("lookup_user"), anyLong());
+        verify(authMetricsRecorder).recordStage(eq("login"), eq("verify_password"), anyLong());
+        verify(authMetricsRecorder).recordFlow(eq("login"), eq("success"), anyLong());
     }
 
     @Test
@@ -136,6 +148,7 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("invalid credentials");
+        verify(authMetricsRecorder).recordFlow(eq("login"), eq("invalid_credentials"), anyLong());
     }
 
     @Test
@@ -151,6 +164,7 @@ class AuthServiceTest {
                 .hasMessage("invalid credentials");
 
         verify(jwtService, never()).createAccessToken(anyString(), anyString());
+        verify(authMetricsRecorder).recordFlow(eq("login"), eq("invalid_credentials"), anyLong());
     }
 
     @Test
@@ -172,6 +186,9 @@ class AuthServiceTest {
         assertThat(response.accessToken()).isEqualTo("new_access_token");
         assertThat(response.refreshToken()).isNotBlank();
         assertThat(response.refreshToken()).isNotEqualTo("old_raw_refresh_token");
+        verify(authMetricsRecorder).recordStage(eq("refresh"), eq("lookup_refresh_token"), anyLong());
+        verify(authMetricsRecorder).recordStage(eq("refresh"), eq("rotate_refresh_token"), anyLong());
+        verify(authMetricsRecorder).recordFlow(eq("refresh"), eq("success"), anyLong());
     }
 
     @Test
