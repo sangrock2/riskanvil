@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { apiFetch } from "./http";
+import { apiFetch, ensureValidAccessToken } from "./http";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 function base64UrlEncode(value) {
@@ -46,12 +46,11 @@ describe("apiFetch auth refresh", () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(createJsonResponse({
         accessToken: freshToken,
-        refreshToken: "refresh-2",
       }))
       .mockResolvedValueOnce(createJsonResponse({ ok: true }));
 
     vi.stubGlobal("fetch", fetchMock);
-    localStorage.setItem("accessToken", expiredToken);
+    sessionStorage.setItem("accessToken", expiredToken);
     sessionStorage.setItem("refreshToken", "refresh-1");
 
     const result = await apiFetch("/api/protected");
@@ -61,7 +60,7 @@ describe("apiFetch auth refresh", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("/api/auth/refresh");
     expect(fetchMock.mock.calls[1][0]).toBe("/api/protected");
     expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe(`Bearer ${freshToken}`);
-    expect(sessionStorage.getItem("refreshToken")).toBe("refresh-2");
+    expect(sessionStorage.getItem("refreshToken")).toBeNull();
   });
 
   test("does not try to refresh before a public auth request", async () => {
@@ -70,7 +69,7 @@ describe("apiFetch auth refresh", () => {
       .mockResolvedValueOnce(createJsonResponse({ accessToken: "issued-now" }));
 
     vi.stubGlobal("fetch", fetchMock);
-    localStorage.setItem("accessToken", expiredToken);
+    sessionStorage.setItem("accessToken", expiredToken);
     sessionStorage.setItem("refreshToken", "refresh-1");
 
     await apiFetch("/api/auth/login", {
@@ -105,6 +104,7 @@ describe("apiFetch auth refresh", () => {
     await expect(apiFetch("/api/watchlist", {
       method: "POST",
       body: JSON.stringify({ ticker: "AAPL", market: "US" }),
+      auth: false,
       retry: 0,
     })).rejects.toMatchObject({
       message: "already exists",
@@ -136,12 +136,10 @@ describe("ProtectedRoute", () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(createJsonResponse({
         accessToken: freshToken,
-        refreshToken: "refresh-2",
       }));
 
     vi.stubGlobal("fetch", fetchMock);
-    localStorage.setItem("accessToken", expiredToken);
-    sessionStorage.setItem("refreshToken", "refresh-1");
+    sessionStorage.setItem("accessToken", expiredToken);
 
     render(
       <MemoryRouter initialEntries={["/dashboard"]}>
@@ -163,5 +161,77 @@ describe("ProtectedRoute", () => {
     expect(screen.queryByText("login-page")).not.toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock.mock.calls[0][0]).toBe("/api/auth/refresh");
+  });
+
+  test("attempts cookie-based refresh even when no refresh token is stored in session storage", async () => {
+    const expiredToken = makeToken(-30);
+    const freshToken = makeToken(300);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(createJsonResponse({ accessToken: freshToken }))
+      .mockResolvedValueOnce(createJsonResponse({ ok: true }));
+
+    vi.stubGlobal("fetch", fetchMock);
+    sessionStorage.setItem("accessToken", expiredToken);
+
+    const result = await apiFetch("/api/protected");
+
+    expect(result).toEqual({ ok: true });
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/auth/refresh");
+    expect(fetchMock.mock.calls[0][1].body).toBeUndefined();
+    expect(fetchMock.mock.calls[0][1].credentials).toBe("include");
+  });
+
+  test("preserves the session hint when refresh is temporarily unavailable", async () => {
+    const expiredToken = makeToken(-30);
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      createJsonResponse({ message: "try again later" }, 503)
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+    sessionStorage.setItem("accessToken", expiredToken);
+    localStorage.setItem("stock-ai:session-present", "1");
+
+    await expect(ensureValidAccessToken({
+      redirectOnFail: false,
+      forceRefresh: true,
+      allowSessionProbe: true,
+    })).rejects.toMatchObject({
+      status: 503,
+      isTransientAuthFailure: true,
+    });
+
+    expect(sessionStorage.getItem("accessToken")).toBe(expiredToken);
+    expect(localStorage.getItem("stock-ai:session-present")).toBe("1");
+  });
+
+  test("does not redirect to login when refresh is temporarily unavailable", async () => {
+    const expiredToken = makeToken(-30);
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      createJsonResponse({ message: "try again later" }, 503)
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+    sessionStorage.setItem("accessToken", expiredToken);
+    localStorage.setItem("stock-ai:session-present", "1");
+
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <Routes>
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <div>protected-content</div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/login" element={<div>login-page</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("Connection issue. Retrying...")).toBeInTheDocument();
+    expect(screen.queryByText("login-page")).not.toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

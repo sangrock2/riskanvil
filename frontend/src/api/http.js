@@ -1,4 +1,4 @@
-import { getToken, getRefreshToken, setTokens, clearAllTokens } from "../auth/token";
+import { getToken, getRefreshToken, hasSessionHint, setTokens, clearAllTokens } from "../auth/token";
 import { wasRecentlyActive } from "../hooks/useActivityDetection";
 
 // Track if we're currently refreshing to avoid multiple simultaneous refresh attempts
@@ -162,15 +162,27 @@ function shouldUseAuth(path, fetchOptions) {
   return !pathname.startsWith("/api/auth/");
 }
 
+function isTransientAuthFailureStatus(status) {
+  if (!status) return true;
+  return status === 429 || status >= 500;
+}
+
+function normalizeRefreshError(error, fallbackStatus = null) {
+  const refreshError = error instanceof Error ? error : new Error("Refresh failed");
+  const status = refreshError.status ?? fallbackStatus;
+  if (status) {
+    refreshError.status = status;
+  }
+  refreshError.isTransientAuthFailure = isTransientAuthFailureStatus(status);
+  return refreshError;
+}
+
 /**
  * refresh token으로 access token을 재발급한다.
  * 비활성 사용자/만료 사용자의 경우 토큰을 제거하고 로그인으로 이동한다.
  */
 async function refreshAccessToken({ redirectOnFail = true } = {}) {
   const refreshToken = getRefreshToken();
-  if (!refreshToken) {
-    throw new Error("No refresh token available");
-  }
 
   // Check if user was recently active (within 5 minutes)
   // Only refresh tokens for active users as requested by the user
@@ -184,26 +196,44 @@ async function refreshAccessToken({ redirectOnFail = true } = {}) {
   }
 
   try {
-    const response = await fetch(resolveApiPath("/api/auth/refresh"), {
+    const headers = {};
+    const requestInit = {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
+      credentials: "include",
+    };
+
+    if (refreshToken) {
+      headers["Content-Type"] = "application/json";
+      requestInit.headers = headers;
+      requestInit.body = JSON.stringify({ refreshToken });
+    }
+
+    const response = await fetch(resolveApiPath("/api/auth/refresh"), {
+      ...requestInit,
     });
 
     if (!response.ok) {
-      throw new Error("Refresh failed");
+      throw normalizeRefreshError(new Error("Refresh failed"), response.status);
     }
 
     const data = await response.json();
+    if (!data?.accessToken) {
+      const error = new Error("Refresh response missing access token");
+      error.status = response.status;
+      error.isTransientAuthFailure = false;
+      throw error;
+    }
     setTokens(data.accessToken, data.refreshToken);
     return data.accessToken;
   } catch (error) {
-    // Refresh failed - clear tokens and redirect to login
-    clearAllTokens("expired");
-    if (redirectOnFail) {
-      redirectToLogin("expired");
+    const refreshError = normalizeRefreshError(error);
+    if (!refreshError.isTransientAuthFailure) {
+      clearAllTokens("expired");
+      if (redirectOnFail) {
+        redirectToLogin("expired");
+      }
     }
-    throw error;
+    throw refreshError;
   }
 }
 
@@ -225,7 +255,11 @@ async function refreshAccessTokenOnce(options = {}) {
   }
 }
 
-export async function ensureValidAccessToken({ redirectOnFail = true, forceRefresh = false } = {}) {
+export async function ensureValidAccessToken({
+  redirectOnFail = true,
+  forceRefresh = false,
+  allowSessionProbe = false,
+} = {}) {
   const token = getToken();
 
   if (!forceRefresh && token && !isTokenExpired(token)) {
@@ -233,19 +267,16 @@ export async function ensureValidAccessToken({ redirectOnFail = true, forceRefre
   }
 
   const refreshToken = getRefreshToken();
-  if (!refreshToken) {
-    if (token) {
-      clearAllTokens("expired");
-      if (redirectOnFail) {
-        redirectToLogin("expired");
-      }
-    }
+  if (!token && !refreshToken && !hasSessionHint() && !allowSessionProbe) {
     return null;
   }
 
   try {
     return await refreshAccessTokenOnce({ redirectOnFail });
-  } catch {
+  } catch (error) {
+    if (error?.isTransientAuthFailure) {
+      throw error;
+    }
     return null;
   }
 }
@@ -257,6 +288,9 @@ function getRetryDelay(attempt) {
 
 // Check if error is retryable
 function isRetryableError(error, status) {
+  if (error?.isTransientAuthFailure) {
+    return true;
+  }
   // Network errors
   if (error.name === "TypeError" || error.message.includes("Failed to fetch")) {
     return true;
@@ -300,7 +334,11 @@ export async function apiFetch(path, options = {}) {
 
       const finalPath = resolveApiPath(path);
 
-      const res = await fetch(finalPath, { ...fetchOptions, headers });
+      const res = await fetch(finalPath, {
+        ...fetchOptions,
+        headers,
+        credentials: fetchOptions.credentials ?? "include",
+      });
 
       if (res.status === 401 && useAuth) {
         // Token expired - try to refresh
@@ -315,7 +353,11 @@ export async function apiFetch(path, options = {}) {
 
           // Retry original request with new token
           headers.Authorization = `Bearer ${newAccessToken}`;
-          const newRes = await fetch(finalPath, { ...fetchOptions, headers });
+          const newRes = await fetch(finalPath, {
+            ...fetchOptions,
+            headers,
+            credentials: fetchOptions.credentials ?? "include",
+          });
 
           if (!newRes.ok) {
             throw new Error(`HTTP ${newRes.status}`);
