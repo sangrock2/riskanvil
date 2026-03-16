@@ -6,6 +6,7 @@ import {
   subscribeAuthSync,
   syncTokens,
 } from "../auth/token";
+import { ensureValidAccessToken } from "../api/http";
 
 /**
  * Synchronize authentication state across multiple browser tabs
@@ -17,11 +18,27 @@ export function useAuthSync() {
 
   useEffect(() => {
     const unsubscribe = subscribeAuthSync((message) => {
-      if (message.type === "tokens" && message.accessToken && message.refreshToken) {
-        syncTokens(message.accessToken, message.refreshToken);
+      if (message.type === "tokens" && message.accessToken) {
+        syncTokens(message.accessToken);
         if (location.pathname === "/login" || location.pathname === "/register") {
           navigate("/dashboard", { replace: true });
         }
+        return;
+      }
+
+      if (message.type === "session-updated") {
+        ensureValidAccessToken({
+          redirectOnFail: false,
+          forceRefresh: true,
+          allowSessionProbe: true,
+        })
+          .then((token) => {
+            if (!token) return;
+            if (location.pathname === "/login" || location.pathname === "/register") {
+              navigate("/dashboard", { replace: true });
+            }
+          })
+          .catch(() => {});
         return;
       }
 

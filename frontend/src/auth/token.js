@@ -1,57 +1,96 @@
 const AUTH_SYNC_STORAGE_KEY = "stock-ai:auth-sync";
 const AUTH_SYNC_CHANNEL_NAME = "stock-ai-auth";
+const AUTH_SESSION_HINT_KEY = "stock-ai:session-present";
 const AUTH_SYNC_SENDER_ID = `tab-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const ACCESS_TOKEN_KEY = "accessToken";
+const REFRESH_TOKEN_KEY = "refreshToken";
 let authSyncChannel = null;
 
 export { AUTH_SYNC_STORAGE_KEY };
 
 /**
- * Get the access token from localStorage
+ * Get the access token from sessionStorage
  * @returns {string|null} The access token or null if not found
  */
 export function getToken() {
-  return localStorage.getItem("accessToken");
+  const token = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+  if (token) {
+    setSessionHint();
+    return token;
+  }
+
+  const legacyToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+  if (!legacyToken) {
+    return null;
+  }
+
+  sessionStorage.setItem(ACCESS_TOKEN_KEY, legacyToken);
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  setSessionHint();
+  return legacyToken;
 }
 
 /**
- * Store the access token in localStorage
+ * Store the access token in sessionStorage
  * @param {string} token - The JWT access token
  */
 export function setToken(token) {
-  localStorage.setItem("accessToken", token);
+  if (!token) return;
+  sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
 }
 
 /**
- * Remove the access token from localStorage
+ * Remove the access token from sessionStorage
  */
 export function clearToken() {
-  localStorage.removeItem("accessToken");
+  sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
 }
 
 /**
- * Get the refresh token from localStorage
+ * Get the refresh token from sessionStorage
  * @returns {string|null} The refresh token or null if not found
  */
 export function getRefreshToken() {
-  return sessionStorage.getItem("refreshToken");
+  const token = sessionStorage.getItem(REFRESH_TOKEN_KEY);
+  if (token) {
+    setSessionHint();
+    return token;
+  }
+
+  const legacyToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+  if (!legacyToken) {
+    return null;
+  }
+
+  sessionStorage.setItem(REFRESH_TOKEN_KEY, legacyToken);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  setSessionHint();
+  return legacyToken;
+}
+
+export function hasSessionHint() {
+  return localStorage.getItem(AUTH_SESSION_HINT_KEY) === "1";
 }
 
 /**
- * Store the refresh token in localStorage
+ * Store the refresh token in sessionStorage
  * @param {string} token - The refresh token
  */
 export function setRefreshToken(token) {
   if (!token) return;
-  sessionStorage.setItem("refreshToken", token);
+  sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
 /**
- * Remove the refresh token from localStorage
+ * Remove the refresh token from sessionStorage
  */
 export function clearRefreshToken() {
-  sessionStorage.removeItem("refreshToken");
+  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
   // backward compatibility: remove legacy localStorage key if present
-  localStorage.removeItem("refreshToken");
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
 /**
@@ -61,11 +100,19 @@ export function clearRefreshToken() {
  */
 export function setTokens(accessToken, refreshToken) {
   applyTokens(accessToken, refreshToken);
-  publishAuthSync({
-    type: "tokens",
-    accessToken,
-    refreshToken: refreshToken || getRefreshToken(),
-  });
+  publishAuthSync(
+    {
+      type: "tokens",
+      accessToken,
+    },
+    { persistToStorage: false }
+  );
+  publishAuthSync(
+    {
+      type: "session-updated",
+    },
+    { includeBroadcast: false }
+  );
 }
 
 export function syncTokens(accessToken, refreshToken) {
@@ -77,7 +124,10 @@ export function syncTokens(accessToken, refreshToken) {
  */
 export function clearAllTokens(reason = "logout") {
   clearTokenState();
-  publishAuthSync({ type: "logout", reason });
+  publishAuthSync({
+    type: "logout",
+    reason,
+  });
 }
 
 export function clearTokensLocally() {
@@ -128,25 +178,30 @@ export function subscribeAuthSync(listener) {
 }
 
 function getAuthSyncChannel() {
-  if (typeof window === "undefined" || typeof BroadcastChannel === "undefined") {
+  if (typeof window === "undefined" || typeof window.BroadcastChannel === "undefined") {
     return null;
   }
   if (!authSyncChannel) {
-    authSyncChannel = new BroadcastChannel(AUTH_SYNC_CHANNEL_NAME);
+    authSyncChannel = new window.BroadcastChannel(AUTH_SYNC_CHANNEL_NAME);
   }
   return authSyncChannel;
 }
 
-function publishAuthSync(message) {
+function publishAuthSync(message, { includeBroadcast = true, persistToStorage = true } = {}) {
   const payload = {
+    type: "tokens",
     ...message,
     senderId: AUTH_SYNC_SENDER_ID,
     eventId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
   };
 
   const channel = getAuthSyncChannel();
-  if (channel) {
+  if (channel && includeBroadcast) {
     channel.postMessage(payload);
+  }
+
+  if (!persistToStorage) {
+    return;
   }
 
   try {
@@ -166,12 +221,20 @@ function applyTokens(accessToken, refreshToken) {
   }
   if (refreshToken) {
     setRefreshToken(refreshToken);
+  } else {
+    clearRefreshToken();
+  }
+  if (accessToken || refreshToken) {
+    setSessionHint();
+  } else {
+    clearSessionHint();
   }
 }
 
 function clearTokenState() {
   clearToken();
   clearRefreshToken();
+  clearSessionHint();
   clearServiceWorkerCache();
 }
 
@@ -207,6 +270,22 @@ function clearServiceWorkerCache() {
     if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: "CLEAR_CACHE" });
     }
+  } catch {
+    // no-op
+  }
+}
+
+function setSessionHint() {
+  try {
+    localStorage.setItem(AUTH_SESSION_HINT_KEY, "1");
+  } catch {
+    // no-op
+  }
+}
+
+function clearSessionHint() {
+  try {
+    localStorage.removeItem(AUTH_SESSION_HINT_KEY);
   } catch {
     // no-op
   }

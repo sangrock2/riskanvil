@@ -2,6 +2,7 @@
  * 실시간 시세 WebSocket 클라이언트
  * Backend WebSocket 서버에 연결하여 실시간 시세 수신
  */
+import { ensureValidAccessToken } from "./http";
 
 export function resolveDefaultWsUrl(loc = null) {
   if (typeof window === "undefined" && !loc) {
@@ -44,8 +45,10 @@ const WS_URL =
   ) ||
   resolveDefaultWsUrl();
 
-class QuoteWebSocket {
-  constructor() {
+export class QuoteWebSocket {
+  constructor({ url = WS_URL, getAccessToken = defaultAccessTokenLoader } = {}) {
+    this.url = url;
+    this.getAccessToken = getAccessToken;
     this.ws = null;
     this.subscribers = new Map(); // ticker -> Set<callback>
     this.reconnectDelay = 1000;
@@ -58,6 +61,7 @@ class QuoteWebSocket {
     this._heartbeatTimer = null;
     this._pongTimeoutTimer = null;
     this._visibilityHandler = null;
+    this._authenticated = false;
   }
 
   /**
@@ -74,25 +78,36 @@ class QuoteWebSocket {
     this._intentionalClose = false;
 
     try {
-      this.ws = new WebSocket(WS_URL);
+      this.ws = new WebSocket(this.url);
 
-      this.ws.onopen = () => {
+      this.ws.onopen = async () => {
         this._connecting = false;
+        this._authenticated = false;
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
         this._clearReconnectTimer();
-        this._startHeartbeat();
         console.log('[WS] Connected to quote stream');
 
-        // 기존 구독 복원
-        for (const ticker of this.subscribers.keys()) {
-          this._send({ action: 'subscribe', ticker });
+        const token = await this._loadAccessToken();
+        if (!token) {
+          console.warn("[WS] Missing access token. Closing quote stream.");
+          this._intentionalClose = true;
+          this.ws?.close();
+          return;
         }
+
+        this._send({ action: "auth", token });
       };
 
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          if (data?.type === "auth" && data?.status === "ok") {
+            this._authenticated = true;
+            this._startHeartbeat();
+            this._restoreSubscriptions();
+            return;
+          }
           if (data?.type === "pong") {
             this._clearPongTimeout();
             return;
@@ -110,6 +125,7 @@ class QuoteWebSocket {
 
       this.ws.onclose = () => {
         this._connecting = false;
+        this._authenticated = false;
         this._stopHeartbeat();
         if (!this._intentionalClose) {
           this._scheduleReconnect();
@@ -145,7 +161,7 @@ class QuoteWebSocket {
     // 자동 연결
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       this.connect();
-    } else {
+    } else if (this._authenticated) {
       this._send({ action: 'subscribe', ticker: upper });
     }
   }
@@ -163,7 +179,9 @@ class QuoteWebSocket {
       callbacks.delete(callback);
       if (callbacks.size === 0) {
         this.subscribers.delete(upper);
-        this._send({ action: 'unsubscribe', ticker: upper });
+        if (this._authenticated) {
+          this._send({ action: 'unsubscribe', ticker: upper });
+        }
       }
     }
 
@@ -181,6 +199,7 @@ class QuoteWebSocket {
     this._clearReconnectTimer();
     this._stopHeartbeat();
     this._teardownVisibilityHandler();
+    this._authenticated = false;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -193,6 +212,20 @@ class QuoteWebSocket {
   _send(data) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
+    }
+  }
+
+  async _loadAccessToken() {
+    try {
+      return await this.getAccessToken();
+    } catch {
+      return null;
+    }
+  }
+
+  _restoreSubscriptions() {
+    for (const ticker of this.subscribers.keys()) {
+      this._send({ action: "subscribe", ticker });
     }
   }
 
@@ -265,6 +298,10 @@ class QuoteWebSocket {
     document.removeEventListener("visibilitychange", this._visibilityHandler);
     this._visibilityHandler = null;
   }
+}
+
+async function defaultAccessTokenLoader() {
+  return ensureValidAccessToken({ redirectOnFail: false });
 }
 
 export const quoteWS = new QuoteWebSocket();

@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { getToken, getRefreshToken, clearAllTokens } from "../auth/token";
+import { getToken, clearAllTokens } from "../auth/token";
 import { apiFetch } from "../api/http";
 import { useTranslation } from "../hooks/useTranslation";
 import ThemeToggle from "./ui/ThemeToggle";
@@ -34,23 +34,18 @@ export default function NavBar() {
   }, [loc.pathname]);
 
   async function logout() {
-    const refreshToken = getRefreshToken();
-
     // Revoke refresh token on server
-    if (refreshToken) {
-      try {
-        await apiFetch("/api/auth/logout", {
-          method: "POST",
-          body: JSON.stringify({ refreshToken }),
-          retry: 0, // Don't retry logout
-        });
-      } catch (error) {
-        // Ignore errors - clear tokens anyway
-        console.error("Logout error:", error);
-      }
+    try {
+      await apiFetch("/api/auth/logout", {
+        method: "POST",
+        retry: 0,
+      });
+    } catch (error) {
+      // Ignore errors - clear tokens anyway
+      console.error("Logout error:", error);
     }
 
-    // Clear tokens from localStorage (triggers multi-tab sync)
+    // Clear tokens locally and notify other tabs
     clearAllTokens();
     nav("/login");
   }
