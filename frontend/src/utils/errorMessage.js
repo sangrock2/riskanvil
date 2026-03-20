@@ -50,6 +50,10 @@ export function toUserErrorMessage(error, t, fallbackKey, context = "") {
   const path = getErrorPath(error);
   const text = getErrorText(error).toLowerCase();
 
+  if (error?.timedOut || text.includes("timed out")) {
+    return t("errors.requestTimeout");
+  }
+
   if (error?.name === "TypeError" || text.includes("failed to fetch")) {
     return t("errors.network");
   }

@@ -75,16 +75,18 @@ const QuickAnalysisWidget = memo(function QuickAnalysisWidget() {
           onChange={(e) => setTicker(e.target.value.toUpperCase())}
           onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
           className={styles.input}
+          data-testid="dashboard-quick-analysis-input"
         />
         <select
           value={market}
           onChange={(e) => setMarket(e.target.value)}
           className={styles.select}
+          data-testid="dashboard-quick-analysis-market"
         >
           <option value="US">{t("common.market.us")} (US)</option>
           <option value="KR">{t("common.market.kr")} (KR)</option>
         </select>
-        <button onClick={handleAnalyze} className={styles.btnPrimary}>
+        <button onClick={handleAnalyze} className={styles.btnPrimary} data-testid="dashboard-quick-analysis-submit">
           {t("dashboard.analyze")}
         </button>
       </div>
@@ -384,7 +386,7 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid="dashboard-page">
       <div className={styles.header}>
         <h1 className={styles.title}>{t("dashboard.title")}</h1>
         <button

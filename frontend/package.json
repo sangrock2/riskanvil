@@ -18,6 +18,7 @@
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@vitejs/plugin-react": "^4.4.1",
     "jsdom": "^26.1.0",
     "vite": "^5.4.11",
@@ -30,6 +31,8 @@
     "preview": "vite preview --host 0.0.0.0 --port 3000",
     "test": "vitest run --config vitest.config.cjs --pool=threads --poolOptions.threads.singleThread=true",
     "test:watch": "vitest --config vitest.config.cjs --pool=threads --poolOptions.threads.singleThread=true",
+    "test:e2e": "playwright test --config playwright.config.cjs",
+    "test:e2e:deployed": "playwright test e2e/deployed.smoke.spec.js --config playwright.config.cjs",
     "system-map:generate": "node ../scripts/generate_system_map_data.js",
     "openapi:generate": "python ../scripts/generate_typed_client.py",
     "openapi:check": "npm run openapi:generate && git diff --exit-code src/api/generated"

@@ -13,7 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Normalizes DB_URL values that are commonly entered without JDBC prefix on cloud dashboards.
+ * Normalizes PostgreSQL DB_URL values that are commonly entered without the JDBC prefix.
  * Example: postgresql://host:5432/db -> jdbc:postgresql://host:5432/db
  */
 public class DbUrlEnvironmentPostProcessor implements EnvironmentPostProcessor, Ordered {
@@ -64,10 +64,6 @@ public class DbUrlEnvironmentPostProcessor implements EnvironmentPostProcessor, 
         if (lower.startsWith("postgres://")) {
             return "jdbc:postgresql://" + trimmed.substring("postgres://".length());
         }
-        if (lower.startsWith("mysql://")) {
-            return "jdbc:mysql://" + trimmed.substring("mysql://".length());
-        }
-
         return trimmed;
     }
 

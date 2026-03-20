@@ -18,8 +18,13 @@ import java.time.Duration;
 
 @Configuration
 public class WebClientConfig {
+    private static final String INTERNAL_SERVICE_TOKEN_HEADER = "X-Internal-Service-Token";
+
     @Bean
-    public WebClient aiWebClient(@Value("${ai.baseUrl}") String baseUrl) {
+    public WebClient aiWebClient(
+            @Value("${ai.baseUrl}") String baseUrl,
+            @Value("${ai.internal.service-token}") String internalServiceToken
+    ) {
         int timeoutSec = 180;
 
         ConnectionProvider provider = ConnectionProvider.builder("ai-pool")
@@ -39,6 +44,7 @@ public class WebClientConfig {
                 .baseUrl(baseUrl)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .filter(requestIdForwardFilter())
+                .filter(internalServiceTokenFilter(internalServiceToken))
                 .build();
     }
 
@@ -60,6 +66,19 @@ public class WebClientConfig {
                     .headers(h -> h.set(RequestIdFilter.HEADER, rid))
                     .build();
 
+            return next.exchange(mutated);
+        };
+    }
+
+    private ExchangeFilterFunction internalServiceTokenFilter(String internalServiceToken) {
+        return (request, next) -> {
+            if (request.headers().getFirst(INTERNAL_SERVICE_TOKEN_HEADER) != null) {
+                return next.exchange(request);
+            }
+
+            ClientRequest mutated = ClientRequest.from(request)
+                    .headers(headers -> headers.set(INTERNAL_SERVICE_TOKEN_HEADER, internalServiceToken))
+                    .build();
             return next.exchange(mutated);
         };
     }

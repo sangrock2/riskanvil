@@ -7,12 +7,16 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.*;
+import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
@@ -34,14 +38,19 @@ import java.util.regex.Pattern;
 public class QuoteWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(QuoteWebSocketHandler.class);
-    private static final long DEFAULT_AUTH_TIMEOUT_MILLIS = 10_000;
+    private static final long DEFAULT_AUTH_TIMEOUT_MILLIS = 3_000;
+    private static final int DEFAULT_MAX_TOTAL_SESSIONS = 200;
+    private static final int DEFAULT_MAX_UNAUTHENTICATED_PER_IP = 3;
     private static final int MAX_SUBSCRIPTIONS_PER_SESSION = 30;
     private static final int MAX_INBOUND_MESSAGE_CHARS = 512;
     private static final Pattern TICKER_PATTERN = Pattern.compile("^[A-Z0-9._-]{1,15}$");
+
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
     private final JwtService jwtService;
     private final long authTimeoutMillis;
+    private final int maxTotalSessions;
+    private final int maxUnauthenticatedConnectionsPerIp;
     private final ScheduledExecutorService authTimeoutScheduler;
 
     // 연결된 세션들
@@ -54,14 +63,28 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
     private final Map<String, Set<String>> sessionSubscriptions = new ConcurrentHashMap<>();
     // 티커별 구독 세션 역인덱스 (브로드캐스트 O(N) 스캔 방지)
     private final Map<String, Set<WebSocketSession>> tickerSubscribers = new ConcurrentHashMap<>();
+    // 인증 전 연결 제한을 위한 클라이언트 추적
+    private final Map<String, String> sessionClientKeys = new ConcurrentHashMap<>();
+    private final Map<String, Set<String>> unauthenticatedSessionsByClient = new ConcurrentHashMap<>();
 
     @Autowired
     public QuoteWebSocketHandler(
             ApplicationEventPublisher eventPublisher,
             ObjectMapper objectMapper,
-            JwtService jwtService
+            JwtService jwtService,
+            @Value("${quote.websocket.auth-timeout-millis:3000}") long authTimeoutMillis,
+            @Value("${quote.websocket.max-total-sessions:200}") int maxTotalSessions,
+            @Value("${quote.websocket.max-unauthenticated-per-ip:3}") int maxUnauthenticatedConnectionsPerIp
     ) {
-        this(eventPublisher, objectMapper, jwtService, DEFAULT_AUTH_TIMEOUT_MILLIS, createAuthTimeoutScheduler());
+        this(
+                eventPublisher,
+                objectMapper,
+                jwtService,
+                authTimeoutMillis,
+                maxTotalSessions,
+                maxUnauthenticatedConnectionsPerIp,
+                createAuthTimeoutScheduler()
+        );
     }
 
     QuoteWebSocketHandler(
@@ -71,23 +94,61 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
             long authTimeoutMillis,
             ScheduledExecutorService authTimeoutScheduler
     ) {
+        this(
+                eventPublisher,
+                objectMapper,
+                jwtService,
+                authTimeoutMillis,
+                DEFAULT_MAX_TOTAL_SESSIONS,
+                DEFAULT_MAX_UNAUTHENTICATED_PER_IP,
+                authTimeoutScheduler
+        );
+    }
+
+    QuoteWebSocketHandler(
+            ApplicationEventPublisher eventPublisher,
+            ObjectMapper objectMapper,
+            JwtService jwtService,
+            long authTimeoutMillis,
+            int maxTotalSessions,
+            int maxUnauthenticatedConnectionsPerIp,
+            ScheduledExecutorService authTimeoutScheduler
+    ) {
         this.eventPublisher = eventPublisher;
         this.objectMapper = objectMapper;
         this.jwtService = jwtService;
         this.authTimeoutMillis = authTimeoutMillis;
+        this.maxTotalSessions = maxTotalSessions;
+        this.maxUnauthenticatedConnectionsPerIp = maxUnauthenticatedConnectionsPerIp;
         this.authTimeoutScheduler = authTimeoutScheduler;
     }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
+        if (sessions.size() >= maxTotalSessions) {
+            log.warn("Rejecting websocket connection because max session limit was reached");
+            closeSession(session, "connection_limit_exceeded");
+            return;
+        }
+
+        String clientKey = resolveClientKey(session);
         sessions.add(session);
+        sessionClientKeys.put(session.getId(), clientKey);
         sessionSubscriptions.put(session.getId(), ConcurrentHashMap.newKeySet());
+
+        int unauthenticatedCount = registerUnauthenticatedSession(clientKey, session.getId());
+        if (unauthenticatedCount > maxUnauthenticatedConnectionsPerIp) {
+            log.warn("Rejecting websocket connection because unauthenticated connection limit was exceeded: client={}", clientKey);
+            closeSession(session, "too_many_connections");
+            return;
+        }
+
         scheduleAuthenticationTimeout(session);
         log.info("WebSocket connected: {}", session.getId());
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
             if (message.getPayloadLength() > MAX_INBOUND_MESSAGE_CHARS) {
                 sendError(session, "message_too_large");
@@ -115,13 +176,15 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
 
-            if (ticker.isEmpty()) return;
+            if (ticker.isEmpty()) {
+                return;
+            }
             if (!TICKER_PATTERN.matcher(ticker).matches()) {
                 sendError(session, "invalid_ticker");
                 return;
             }
 
-            Set<String> subs = sessionSubscriptions.computeIfAbsent(session.getId(), k -> ConcurrentHashMap.newKeySet());
+            Set<String> subs = sessionSubscriptions.computeIfAbsent(session.getId(), key -> ConcurrentHashMap.newKeySet());
 
             if ("subscribe".equals(action)) {
                 if (!subs.contains(ticker) && subs.size() >= MAX_SUBSCRIPTIONS_PER_SESSION) {
@@ -134,7 +197,7 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
                     eventPublisher.publishEvent(QuoteSubscriptionEvent.subscribe(ticker));
                 }
                 if (added) {
-                    tickerSubscribers.computeIfAbsent(ticker, k -> ConcurrentHashMap.newKeySet()).add(session);
+                    tickerSubscribers.computeIfAbsent(ticker, key -> ConcurrentHashMap.newKeySet()).add(session);
                     log.debug("Session {} subscribed to {}", session.getId(), ticker);
                 }
             } else if ("unsubscribe".equals(action)) {
@@ -178,7 +241,9 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
     public void broadcastQuote(String ticker, String jsonPayload) {
         Set<WebSocketSession> subscribers = tickerSubscribers.getOrDefault(ticker, Set.of());
         for (WebSocketSession session : subscribers) {
-            if (!session.isOpen()) continue;
+            if (!session.isOpen()) {
+                continue;
+            }
             try {
                 session.sendMessage(new TextMessage(jsonPayload));
             } catch (IOException e) {
@@ -207,6 +272,8 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
         cancelAuthenticationTimeout(session.getId());
         cancelTokenExpiry(session.getId());
         authenticatedSessionIds.remove(session.getId());
+        unregisterSessionClientKey(session.getId());
+
         Set<String> removedTickers = sessionSubscriptions.remove(session.getId());
         if (removedTickers == null || removedTickers.isEmpty()) {
             return;
@@ -258,6 +325,7 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
             }
 
             authenticatedSessionIds.add(session.getId());
+            markSessionAuthenticated(session.getId());
             cancelAuthenticationTimeout(session.getId());
             scheduleTokenExpiry(session, tokenLifetimeMillis);
             sendAuthOk(session);
@@ -327,6 +395,46 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
             sessions.remove(session);
             cleanupSessionSubscriptions(session);
         }
+    }
+
+    private int registerUnauthenticatedSession(String clientKey, String sessionId) {
+        Set<String> sessionsForClient = unauthenticatedSessionsByClient.computeIfAbsent(clientKey, key -> ConcurrentHashMap.newKeySet());
+        sessionsForClient.add(sessionId);
+        return sessionsForClient.size();
+    }
+
+    private void markSessionAuthenticated(String sessionId) {
+        String clientKey = sessionClientKeys.get(sessionId);
+        if (clientKey == null) {
+            return;
+        }
+        Set<String> sessionsForClient = unauthenticatedSessionsByClient.get(clientKey);
+        if (sessionsForClient == null) {
+            return;
+        }
+        sessionsForClient.remove(sessionId);
+        if (sessionsForClient.isEmpty()) {
+            unauthenticatedSessionsByClient.remove(clientKey, sessionsForClient);
+        }
+    }
+
+    private void unregisterSessionClientKey(String sessionId) {
+        markSessionAuthenticated(sessionId);
+        sessionClientKeys.remove(sessionId);
+    }
+
+    private String resolveClientKey(WebSocketSession session) {
+        InetSocketAddress remoteAddress = session.getRemoteAddress();
+        if (remoteAddress == null) {
+            return "unknown:" + session.getId();
+        }
+        String host = remoteAddress.getAddress() != null
+                ? remoteAddress.getAddress().getHostAddress()
+                : remoteAddress.getHostString();
+        if (host == null || host.isBlank()) {
+            return "unknown:" + session.getId();
+        }
+        return host;
     }
 
     private static ScheduledExecutorService createAuthTimeoutScheduler() {

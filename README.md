@@ -23,7 +23,7 @@ stock-ai/
 ### Backend
 - Spring Boot 4.0.0, Java 21
 - Spring Security (JWT 인증)
-- Spring Data JPA + PostgreSQL 16 (Render), MySQL 8.4 (local)
+- Spring Data JPA + Flyway + PostgreSQL 16
 - Redis (캐싱)
 - Resilience4j (서킷 브레이커)
 
@@ -32,15 +32,19 @@ stock-ai/
 - Alpha Vantage API 연동
 - 기술적 분석 (RSI, MACD, Bollinger Bands 등)
 - AI 감성 분석
+- OpenAI 우선, Ollama fallback
 
 ## 실행 방법
 
 ### Docker (권장)
 ```bash
-docker-compose up -d
+cp .env.example .env
+docker compose up -d
 ```
 
-### Docker (Postgres 검증용)
+`docker-compose.yml` 는 PostgreSQL/Redis/Prometheus/Grafana 포트를 `127.0.0.1` 에만 바인딩합니다. 실행 전 `AI_INTERNAL_SERVICE_TOKEN`, `TOTP_ENCRYPTION_KEY`, `JWT_SECRET`, `REFRESH_TOKEN_PEPPER`, `GRAFANA_USER`, `GRAFANA_PASSWORD` 를 `.env` 에 채워야 합니다. `nginx/certs/fullchain.pem` 과 `nginx/certs/privkey.pem` 이 있으면 HTTPS(443) 템플릿을, 없으면 로컬용 HTTP(80) 템플릿을 자동으로 사용합니다.
+
+### Docker (경량 PostgreSQL 스택)
 ```bash
 docker compose -f docker-compose.postgres.yml up -d
 ```
@@ -80,7 +84,9 @@ python -m uvicorn main:app --reload  # http://localhost:8000
 - Render 배포 가이드: **[docs/DEPLOY_RENDER.md](docs/DEPLOY_RENDER.md)**
 - Blueprint: 저장소 루트 `render.yaml` 사용
 - Frontend Static Site에는 `VITE_API_BASE_URL` 설정 필요
-- Backend Web Service에는 `SPRING_PROFILES_ACTIVE=prod,postgres`, `JWT_SECRET`, `REFRESH_TOKEN_PEPPER`, `DB_URL(PostgreSQL)`, `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 설정 필요
+- Backend Web Service에는 `SPRING_PROFILES_ACTIVE=prod,postgres`, `JWT_SECRET`, `REFRESH_TOKEN_PEPPER`, `TOTP_ENCRYPTION_KEY`, `AI_INTERNAL_SERVICE_TOKEN`, `DB_URL(PostgreSQL)`, `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 설정 필요
+- Backend Web Service에서 refresh token을 쿠키로 쓰려면 `REFRESH_TOKEN_COOKIE_SECURE=true` 를 권장하고, 프런트/백엔드가 교차 사이트면 `REFRESH_TOKEN_COOKIE_SAME_SITE=None` 도 함께 설정 필요
+- AI Private Service에는 `AI_INTERNAL_SERVICE_TOKEN` 을 Backend와 동일한 값으로 설정 필요
 
 ### 운영 검증 스크립트
 
@@ -144,6 +150,10 @@ DB_USERNAME=your_db_username
 DB_PASSWORD=your_db_password
 JWT_SECRET=your-secret-key-min-32-bytes
 REFRESH_TOKEN_PEPPER=optional-extra-secret
+TOTP_ENCRYPTION_KEY=dedicated-secret-for-encrypting-totp-seeds
+AI_INTERNAL_SERVICE_TOKEN=shared-secret-between-backend-and-ai
+REFRESH_TOKEN_COOKIE_SECURE=true
+REFRESH_TOKEN_COOKIE_SAME_SITE=Lax
 
 # AI Service
 ALPHAVANTAGE_API_KEY=your-api-key

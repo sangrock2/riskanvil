@@ -17,6 +17,30 @@
   font-size: 14px;
 }
 
+.stateCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 24px;
+  text-align: center;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 16px;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+}
+
+.stateCard p {
+  margin: 0;
+}
+
+.stateActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 /* Header */
 .header {
   display: flex;
@@ -31,12 +55,24 @@
   box-shadow: var(--shadow-sm);
 }
 
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .header h1 {
   margin: 0;
   font-size: clamp(24px, 2.6vw, 34px);
   font-weight: var(--font-extrabold);
   letter-spacing: -0.02em;
   color: var(--color-text);
+}
+
+.headerStatus {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
 }
 
 .createBtn,
@@ -458,8 +494,13 @@
     align-items: stretch;
   }
 
+  .headerText {
+    align-items: flex-start;
+  }
+
   .actions,
-  .modalActions {
+  .modalActions,
+  .stateActions {
     width: 100%;
     flex-direction: column;
   }

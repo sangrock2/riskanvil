@@ -18,9 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.sw103302.backend.util.PortfolioSymbolUtil.groupUniqueTickersByMarket;
@@ -561,9 +563,11 @@ public class PortfolioService {
             throw new IllegalStateException("Portfolio total value is zero");
         }
 
+        Map<String, Double> normalizedTargetWeights = normalizeTargetWeights(req.targetWeights(), positions);
+
         Map<String, BigDecimal> currentValues = new HashMap<>();
         for (PortfolioPosition pos : positions) {
-            currentValues.merge(pos.getTicker(), resolvePrice(pos, currentPrices).multiply(pos.getQuantity()), BigDecimal::add);
+            currentValues.merge(symbolKey(pos), resolvePrice(pos, currentPrices).multiply(pos.getQuantity()), BigDecimal::add);
         }
 
         Map<String, Double> currentWeights = new HashMap<>();
@@ -571,23 +575,26 @@ public class PortfolioService {
             currentWeights.put(e.getKey(), e.getValue().divide(totalValue, 8, RoundingMode.HALF_UP).doubleValue());
         }
 
-        double weightSum = req.targetWeights().values().stream().mapToDouble(Double::doubleValue).sum();
+        double weightSum = normalizedTargetWeights.values().stream().mapToDouble(Double::doubleValue).sum();
         if (Math.abs(weightSum - 1.0) > 0.01) {
             throw new IllegalArgumentException(
                 String.format("Target weights must sum to 1.0 (current sum: %.4f)", weightSum));
         }
 
-        List<RebalanceResponse.RebalanceTrade> trades = req.targetWeights().entrySet().stream()
-            .map(e -> {
-                String ticker = e.getKey();
-                double targetWeight = e.getValue();
-                double currentWeight = currentWeights.getOrDefault(ticker, 0.0);
+        Set<String> allKeys = new HashSet<>(currentWeights.keySet());
+        allKeys.addAll(normalizedTargetWeights.keySet());
+
+        List<RebalanceResponse.RebalanceTrade> trades = allKeys.stream()
+            .map(key -> {
+                SymbolParts symbol = parseSymbolKey(key);
+                double targetWeight = normalizedTargetWeights.getOrDefault(key, 0.0);
+                double currentWeight = currentWeights.getOrDefault(key, 0.0);
                 double diff = targetWeight - currentWeight;
                 BigDecimal amount = totalValue.multiply(BigDecimal.valueOf(Math.abs(diff)))
                     .setScale(2, RoundingMode.HALF_UP);
                 String action = diff >= 0 ? "BUY" : "SELL";
                 return new RebalanceResponse.RebalanceTrade(
-                    ticker, action,
+                    symbol.ticker(), symbol.market(), action,
                     Math.round(currentWeight * 10000.0) / 10000.0,
                     Math.round(targetWeight * 10000.0) / 10000.0,
                     Math.round(diff * 10000.0) / 10000.0,
@@ -601,7 +608,64 @@ public class PortfolioService {
         return new RebalanceResponse(totalValue.setScale(2, RoundingMode.HALF_UP), trades);
     }
 
+    private Map<String, Double> normalizeTargetWeights(Map<String, Double> rawTargetWeights, List<PortfolioPosition> positions) {
+        if (rawTargetWeights == null || rawTargetWeights.isEmpty()) {
+            throw new IllegalArgumentException("Target weights are required");
+        }
+
+        Map<String, List<PortfolioPosition>> positionsByTicker = positions.stream()
+            .collect(Collectors.groupingBy(pos -> pos.getTicker().trim().toUpperCase()));
+
+        Map<String, Double> normalized = new HashMap<>();
+        for (Map.Entry<String, Double> entry : rawTargetWeights.entrySet()) {
+            String rawKey = entry.getKey() == null ? "" : entry.getKey().trim();
+            Double weight = entry.getValue();
+
+            if (rawKey.isBlank()) {
+                throw new IllegalArgumentException("Target weight key must not be blank");
+            }
+            if (weight == null || weight < 0.0 || weight > 1.0) {
+                throw new IllegalArgumentException("Target weight must be between 0.0 and 1.0");
+            }
+
+            String normalizedKey = normalizeTargetKey(rawKey, positionsByTicker);
+            Double previous = normalized.put(normalizedKey, weight);
+            if (previous != null) {
+                throw new IllegalArgumentException("Duplicate target weight for " + normalizedKey);
+            }
+        }
+
+        return normalized;
+    }
+
+    private String normalizeTargetKey(String rawKey, Map<String, List<PortfolioPosition>> positionsByTicker) {
+        String trimmed = rawKey.trim();
+        if (trimmed.contains(":")) {
+            SymbolParts parsed = parseSymbolKey(trimmed);
+            return symbolKey(parsed.ticker(), parsed.market());
+        }
+
+        String ticker = trimmed.toUpperCase();
+        List<PortfolioPosition> matches = positionsByTicker.getOrDefault(ticker, List.of());
+        if (matches.size() > 1) {
+            throw new IllegalArgumentException("Ticker " + ticker + " exists in multiple markets. Use TICKER:MARKET.");
+        }
+        if (matches.size() == 1) {
+            return symbolKey(matches.get(0));
+        }
+        return symbolKey(ticker, "US");
+    }
+
+    private SymbolParts parseSymbolKey(String rawKey) {
+        String[] parts = rawKey.split(":", 2);
+        if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
+            throw new IllegalArgumentException("Target weight key must be TICKER:MARKET");
+        }
+        return new SymbolParts(parts[0].trim().toUpperCase(), parts[1].trim().toUpperCase());
+    }
+
     private record Totals(BigDecimal totalValue, BigDecimal totalCost, BigDecimal totalReturn, BigDecimal totalReturnPercent) {}
+    private record SymbolParts(String ticker, String market) {}
 
     /**
      * SecurityContext 기준 현재 사용자 엔티티를 조회한다.

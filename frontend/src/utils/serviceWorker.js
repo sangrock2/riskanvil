@@ -1,7 +1,45 @@
 // Service Worker registration and utilities
 
+function isServiceWorkerEnabled() {
+  const raw =
+    import.meta.env.VITE_ENABLE_SERVICE_WORKER ??
+    import.meta.env.REACT_APP_ENABLE_SERVICE_WORKER ??
+    "";
+  return /^(1|true|yes|on)$/i.test(String(raw).trim());
+}
+
+async function clearManagedCaches() {
+  if (!("caches" in window)) {
+    return;
+  }
+
+  const cacheNames = await caches.keys();
+  await Promise.all(
+    cacheNames
+      .filter((name) => name.startsWith("stock-ai-"))
+      .map((name) => caches.delete(name))
+  );
+}
+
+async function unregisterAllServiceWorkers() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(registrations.map((registration) => registration.unregister()));
+  await clearManagedCaches();
+}
+
 export function register() {
   if ('serviceWorker' in navigator) {
+    if (!isServiceWorkerEnabled()) {
+      unregisterAllServiceWorkers().catch(() => {
+        // Ignore cleanup failures for legacy registrations.
+      });
+      return;
+    }
+
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('/service-worker.js')
@@ -33,8 +71,8 @@ export function register() {
 
 export function unregister() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.unregister();
+    unregisterAllServiceWorkers().catch(() => {
+      // Ignore cleanup failures.
     });
   }
 }

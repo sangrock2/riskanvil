@@ -13,12 +13,12 @@ This guide populates sample data for one existing user so you can validate major
 - Chatbot conversations/messages
 - Price alerts
 - Usage dashboard logs
-- Paper trading accounts/positions/orders (safe insert)
+- Paper trading accounts plus sample positions/orders for empty paper accounts
 
 ## Prerequisites
 
-1. `mysql` service is running via Docker Compose.
-2. `.env` contains `MYSQL_ROOT_PASSWORD` and `MYSQL_DATABASE`.
+1. `postgres` service is running via Docker Compose.
+2. `.env` contains `POSTGRES_PASSWORD` and `POSTGRES_DB`.
 3. The target user already exists in `users` table (register once first).
 
 ## Run
@@ -33,15 +33,13 @@ Or seed all existing users at once:
 pwsh -File scripts/seed_demo_data.ps1 -AllUsers
 ```
 
-## Run Without Docker (direct mysql CLI)
+## Run Without Docker (direct psql CLI)
 
-If your MySQL server is already running locally and you are logged in via `mysql` client, you can run seed directly:
+If your PostgreSQL server is already running locally, you can run seed directly with `psql`:
 
-```sql
-USE stock_ai;
-SELECT id, email FROM users;
-SET @target_user_id := 1;
-SOURCE C:/Users/Sw103/Desktop/stock-ai/scripts/sql/seed_demo_data.sql;
+```bash
+psql -h localhost -U postgres -d stock_ai -c "SELECT id, email FROM users;"
+psql -h localhost -U postgres -d stock_ai -v target_user_id=1 -f scripts/sql/seed_demo_data.sql
 ```
 
 Replace `1` with your real user id.
@@ -49,9 +47,10 @@ Replace `1` with your real user id.
 ## Notes
 
 - Seed marker: `demo-seed-v1`
-- Script is idempotent for seeded rows.
+- Script is idempotent for tagged seed rows.
 - Existing non-seed data is not deleted.
-- If MySQL is not running, the script auto-runs `docker compose up -d mysql`.
+- Existing paper-trading positions/orders are preserved instead of being overwritten.
+- If PostgreSQL is not running, the script auto-runs `docker compose up -d postgres`.
 - Disable auto-start with:
 
 ```powershell

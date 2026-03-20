@@ -11,7 +11,7 @@ Key architectural decisions for Stock-AI platform with rationale, alternatives, 
 3. [ADR-003: React Query for State Management](#adr-003-react-query-for-state-management)
 4. [ADR-004: Spring Boot 4.0 with Java 21](#adr-004-spring-boot-40-with-java-21)
 5. [ADR-005: FastAPI for AI Service](#adr-005-fastapi-for-ai-service)
-6. [ADR-006: MySQL as Primary Database](#adr-006-mysql-as-primary-database)
+6. [ADR-006: PostgreSQL as Primary Database](#adr-006-postgresql-as-primary-database)
 7. [ADR-007: Redis for Caching Layer](#adr-007-redis-for-caching-layer)
 8. [ADR-008: Server-Sent Events (SSE) for Streaming](#adr-008-server-sent-events-sse-for-streaming)
 9. [ADR-009: ChromaDB for RAG System](#adr-009-chromadb-for-rag-system)
@@ -62,7 +62,7 @@ Split into **3 microservices**:
                             │
                             ▼
                      ┌─────────────┐
-                     │ MySQL+Redis │
+                     │ PostgreSQL+Redis │
                      └─────────────┘
 ```
 
@@ -442,9 +442,9 @@ Python is the dominant language for data science and ML.
 
 ---
 
-## ADR-006: MySQL as Primary Database
+## ADR-006: PostgreSQL as Primary Database
 
-**Status**: Accepted (2024-01)
+**Status**: Accepted (2024-01), revised as canonical default (2026-03)
 
 ### Context
 
@@ -459,31 +459,33 @@ Need relational database for:
 - Strong consistency
 - Complex queries (JOINs, aggregations)
 - Cost-effective (<$100/month for 100K users)
+- Same dialect across local development and managed production
 
 ### Decision
 
-**MySQL 8.4** (InnoDB engine):
+**PostgreSQL 16**:
 - Full ACID compliance
 - Foreign key constraints
-- JSON column type (for flexible schema)
-- Window functions (for analytics)
+- JSON/JSONB-friendly ecosystem for hybrid payloads
+- Window functions, partial indexes, and mature query planner
+- Strong standards compliance for predictable local/managed behavior
 
 ### Alternatives
 
-**1. PostgreSQL**:
-- **Pros**: Advanced features (JSONB, full-text search, PostGIS), stronger standards compliance
-- **Cons**: Slightly more complex to tune, smaller managed hosting ecosystem
-- **Rejected**: Both equally good, team familiar with MySQL
+**1. CockroachDB**:
+- **Pros**: Horizontal scaling, PostgreSQL wire compatibility
+- **Cons**: Operational complexity, different performance profile for OLTP joins
+- **Rejected**: Scope and cost were too high for the project stage
 
 **2. MongoDB**:
 - **Pros**: Schema-less, horizontal scaling, high write throughput
 - **Cons**: No foreign keys, eventual consistency, complex JOINs
 - **Rejected**: Relational data model fits stock portfolios better
 
-**3. Amazon Aurora**:
-- **Pros**: MySQL-compatible, auto-scaling, 5x performance
+**3. Amazon Aurora PostgreSQL**:
+- **Pros**: Managed failover, autoscaling options, PostgreSQL compatibility
 - **Cons**: AWS lock-in, cost ($$$)
-- **Rejected**: Want multi-cloud option, MySQL cheaper
+- **Rejected**: Wanted lower-cost multi-platform deployment path
 
 **4. SQLite**:
 - **Pros**: Serverless, zero config, fast for small data
@@ -493,15 +495,15 @@ Need relational database for:
 ### Consequences
 
 **Positive**:
-- ✅ **Mature**: 25+ years of production use
-- ✅ **Reliable**: Battle-tested in finance/banking
-- ✅ **Ecosystem**: ORMs (Hibernate, Sequelize), tools (phpMyAdmin, Adminer)
-- ✅ **Managed Options**: AWS RDS, Google Cloud SQL, DigitalOcean
-- ✅ **Cost**: ~$15/month for 1M rows
+- ✅ **Unified Dialect**: Local, test, and production schema behavior stay aligned
+- ✅ **Reliable**: Battle-tested in finance/banking workloads
+- ✅ **Ecosystem**: Strong ORM, migration, and managed-hosting support
+- ✅ **Migration Safety**: Flyway baseline and future migrations share one canonical path
+- ✅ **Cost**: Reasonable managed plans for project-scale workloads
 
 **Negative**:
-- ❌ **Horizontal Scaling**: Sharding is complex (mitigated: vertical scaling sufficient)
-- ❌ **JSON**: JSONB in Postgres slightly faster (not critical path)
+- ❌ **Operational Discipline**: Flyway + validate workflow requires stricter migration hygiene
+- ❌ **Horizontal Scaling**: Sharding is still complex (mitigated: vertical scaling sufficient)
 
 **Schema**:
 - 19 tables (users, portfolios, watchlist, etc.)
@@ -564,7 +566,7 @@ public Quote getQuote(String ticker, String market) {
 - **Cons**: Less flexible (HTTP only), config complexity
 - **Rejected**: Need programmatic cache management (eviction, batch updates)
 
-**4. Database Query Cache** (MySQL):
+**4. Database Query Cache** (database-side):
 - **Pros**: Built-in, no extra infrastructure
 - **Cons**: Slow (still hits DB), invalidation issues
 - **Rejected**: Not fast enough (<50ms goal)
@@ -1026,7 +1028,7 @@ paths = last_price * np.exp(log_paths)
 | 003 | React Query | ✅ Accepted | Medium (frontend) |
 | 004 | Spring Boot 4.0 + Java 21 | ✅ Accepted | High (backend) |
 | 005 | FastAPI + Python 3.12 | ✅ Accepted | High (AI service) |
-| 006 | MySQL 8.4 | ✅ Accepted | High (data) |
+| 006 | PostgreSQL 16 | ✅ Accepted | High (data) |
 | 007 | Redis Caching | ✅ Accepted | Medium (performance) |
 | 008 | Server-Sent Events | ✅ Accepted | Medium (UX) |
 | 009 | ChromaDB RAG | ✅ Accepted | Medium (AI quality) |

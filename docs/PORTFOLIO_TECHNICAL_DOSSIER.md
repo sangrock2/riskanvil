@@ -26,7 +26,7 @@
 ## 2. 프로젝트 한 줄 요약
 
 Stock-AI는 **개인 투자자의 분석 의사결정을 지원하는 AI 기반 풀스택 투자 분석 플랫폼**으로,  
-`React SPA + Spring Boot API + FastAPI AI 엔진 + MySQL/Redis + Nginx/Prometheus/Grafana`로 구성된다.
+`React SPA + Spring Boot API + FastAPI AI 엔진 + PostgreSQL/Redis + Nginx/Prometheus/Grafana`로 구성된다.
 
 핵심 가치:
 
@@ -65,7 +65,7 @@ Stock-AI는 **개인 투자자의 분석 의사결정을 지원하는 AI 기반 
 
 보조 인프라:
 
-1. MySQL: 영속 데이터 저장(Flyway 마이그레이션).
+1. PostgreSQL: 영속 데이터 저장(Flyway 마이그레이션).
 2. Redis: 캐시 및 일부 인증 플로우 상태.
 3. Prometheus/Grafana: 메트릭 수집/시각화.
 4. Sentry(옵션): FE/BE/AI 오류 수집.
@@ -129,7 +129,7 @@ Stock-AI는 **개인 투자자의 분석 의사결정을 지원하는 AI 기반 
 | Spring Boot | 4.0.0 | 엔터프라이즈급 안정성, 보안/데이터/운영 생태계 | 설정/구조가 비교적 무겁다 |
 | Java | 21 | LTS, 생산성/성능 균형, 타입 안정성 | 러닝커브가 Python/JS 대비 높음 |
 | Spring Security + JWT | - | 무상태 인증, API 서버 수평 확장 친화적 | 토큰 폐기/회전 정책 설계 필요 |
-| JPA + MySQL | MySQL 8.4 | 관계형 모델 강점, 트랜잭션 안정성 | 복잡 쿼리 시 튜닝 필요 |
+| JPA + PostgreSQL | PostgreSQL 16 | 관계형 모델 강점, 트랜잭션 안정성 | 복잡 쿼리 시 튜닝 필요 |
 | Flyway | - | 스키마 변경 이력화/재현성 확보 | 마이그레이션 품질관리 필요 |
 | Redis Cache | 7.x | AI 호출 비용/지연 완화 | 캐시 일관성 정책 필요 |
 | Spring WebFlux WebClient | - | AI 서비스 호출 비동기/타임아웃 제어 | 장애 처리 시 정책 복잡도 증가 |
@@ -387,7 +387,7 @@ Stock-AI는 **개인 투자자의 분석 의사결정을 지원하는 AI 기반 
 
 ### 9.1 Docker Compose 서비스 구성
 
-1. `mysql`
+1. `postgres`
 2. `redis`
 3. `ai`
 4. `backend`

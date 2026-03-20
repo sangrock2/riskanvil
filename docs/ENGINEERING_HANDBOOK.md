@@ -15,7 +15,7 @@ Stock-AI는 다음 3개 애플리케이션 계층으로 구성됩니다.
 - 사용자 브라우저 -> Nginx -> Frontend
 - Frontend -> Backend REST/WebSocket
 - Backend -> AI Service (HTTP)
-- Backend -> MySQL(local) or Postgres(Render) / Redis
+- Backend -> PostgreSQL / Redis
 - Monitoring: Prometheus + Grafana
 
 ## 2. Technology Stack (Code-Verified)
@@ -34,7 +34,7 @@ Stock-AI는 다음 3개 애플리케이션 계층으로 구성됩니다.
 - Spring Boot `4.0.0`
 - Java Toolchain `21`
 - Spring Security + JWT (`jjwt 0.12.6`)
-- Spring Data JPA + Flyway + MySQL(local) / Postgres(Render)
+- Spring Data JPA + Flyway + PostgreSQL
 - Redis Cache
 - Resilience4j (CircuitBreaker/Retry)
 - Spring WebSocket + SSE
@@ -53,7 +53,7 @@ Stock-AI는 다음 3개 애플리케이션 계층으로 구성됩니다.
 ### 2.4 Infrastructure
 
 - Docker Compose
-- MySQL 8.4 / Redis 7
+- PostgreSQL 16 / Redis 7
 - Nginx 1.27
 - Prometheus / Grafana
 
@@ -158,12 +158,12 @@ stock-ai/
 
 현재 상태는 다음처럼 정리된다.
 
-- 로컬 기본 개발 흐름은 여전히 MySQL 중심이지만, Postgres 전용 baseline 경로(`db/migration-postgres`)도 함께 관리한다.
+- 로컬 기본 개발 흐름과 운영 배포 모두 PostgreSQL을 기준으로 맞춘다.
 - Render Postgres 운영 환경은 Flyway를 기본 활성화하고 `JPA validate`로만 검증한다.
 - 신규 Postgres DB는 `V1__baseline_schema.sql` + `V2__align_constraints_and_indexes.sql`로 초기화된다.
 - 기존 운영 Postgres DB는 `baseline-on-migrate=true`, `baseline-version=2`로 첫 배포 시 schema history만 맞춘다.
 
-즉 지금은 "운영 Postgres에서도 Flyway 히스토리를 추적하는 상태"까지 올라왔고, 남은 일은 실제 운영 배포에서 첫 baseline 적용과 smoke verification이다. 상세 기준은 [POSTGRES_FLYWAY_TRANSITION_PLAN.md](./POSTGRES_FLYWAY_TRANSITION_PLAN.md)에 정리한다.
+즉 지금은 "개발/테스트/운영 모두 Postgres + Flyway 기준으로 추적하는 상태"까지 정렬됐고, 남은 일은 운영 smoke verification과 레거시 정리다. 상세 기준은 [POSTGRES_FLYWAY_TRANSITION_PLAN.md](./POSTGRES_FLYWAY_TRANSITION_PLAN.md)에 정리한다.
 
 주요 테이블 그룹:
 
@@ -198,13 +198,13 @@ stock-ai/
 ### 10.1 Quick Start
 
 ```bash
-docker compose up -d mysql redis
+docker compose up -d postgres redis
 cd backend && ./gradlew bootRun
 cd ai && uvicorn main:app --reload
 cd frontend && npm install && npm start
 ```
 
-Postgres baseline/Flyway 경로를 검증할 때는 아래 스택을 사용한다.
+전체 스택을 가볍게 검증할 때는 아래 경량 compose를 사용한다.
 
 ```bash
 docker compose -f docker-compose.postgres.yml up -d
@@ -217,22 +217,24 @@ docker compose -f docker-compose.postgres.yml up -d
 - `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`
 - `JWT_SECRET`
 - `AI_BASE_URL`
-- `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
 
 ## 11. Testing Strategy
 
 - Backend: JUnit5 + Spring Boot Test + Testcontainers
 - AI: pytest
-- Frontend: Jest + React Testing Library
-- Smoke/E2E 보조 스크립트: `scripts/`
+- Frontend: Vitest + Testing Library (jsdom)
+- API smoke: `scripts/e2e_smoke.py`, `scripts/integration_tests.ps1`
+- Browser E2E: Playwright smoke (`frontend/e2e/smoke.spec.js`)
 
 기본 실행 예시:
 
 ```bash
 cd backend && ./gradlew test
 cd ai && pytest
-cd frontend && npm test -- --watchAll=false
-pwsh -File scripts/smoke.ps1
+cd frontend && npm test
+cd frontend && npm run test:e2e
+pwsh -File scripts/run_all_tests.ps1
 ```
 
 ## 12. Engineering Conventions

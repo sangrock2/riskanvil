@@ -34,7 +34,7 @@ const WatchlistItemRow = memo(function WatchlistItemRow({
     const displayPrice = realtimeQuote?.price ?? s?.price;
 
     return (
-        <div className={styles.item}>
+        <div className={styles.item} data-testid={`watchlist-item-${item.ticker}-${item.market}`}>
             <div className={styles.itemContent}>
                 <div className={styles.left} onClick={() => onOpenDetail(item)}>
                     <div className={styles.mainLine}>
@@ -399,7 +399,7 @@ export default function Watchlist() {
     }, [items, searchQuery, selectedTagFilter, sortBy, sortOrder]);
 
     return (
-        <div className={styles.container}>
+        <div className={styles.container} data-testid="watchlist-page">
             <div className={styles.topbar}>
                 <div>
                     <div className={styles.title}>{t('watchlist.title')}</div>
@@ -482,18 +482,20 @@ export default function Watchlist() {
                         onChange={(e) => setTicker(e.target.value)}
                         placeholder={t('watchlist.addTickerPlaceholder')}
                         onKeyPress={(e) => e.key === "Enter" && add()}
+                        data-testid="watchlist-add-ticker"
                     />
 
                     <select
                         className={styles.input}
                         value={market}
                         onChange={(e) => setMarket(e.target.value)}
+                        data-testid="watchlist-add-market"
                     >
                         <option value="US">{t('common.market.us')}</option>
                         <option value="KR">{t('common.market.kr')}</option>
                     </select>
 
-                    <button className={styles.btn} onClick={add}>
+                    <button className={styles.btn} onClick={add} data-testid="watchlist-add-submit">
                         {t('common.add')}
                     </button>
                 </div>
@@ -554,7 +556,7 @@ export default function Watchlist() {
                 ) : displayedItems.length === 0 ? (
                     <div className={styles.small}>{t('watchlist.noItems')}</div>
                 ) : (
-                    <div className={styles.list}>
+                    <div className={styles.list} data-testid="watchlist-items">
                         {displayedItems.map((it) => (
                             <WatchlistItemRow
                                 key={it.id}

@@ -9,16 +9,16 @@ import com.sw103302.backend.entity.AnalysisRun;
 import com.sw103302.backend.entity.User;
 import com.sw103302.backend.repository.AnalysisRunRepository;
 import com.sw103302.backend.repository.UserRepository;
-import com.sw103302.backend.util.AnalysisRunSpecs;
 import com.sw103302.backend.util.SecurityUtil;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.*;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -30,6 +30,7 @@ import java.util.List;
  */
 @Service
 public class AnalysisService {
+    private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
     private final AiClient aiClient;
     private final ObjectMapper objectMapper;
     private final UserRepository userRepository;
@@ -134,16 +135,10 @@ public class AnalysisService {
     public List<AnalysisRunSummary> myHistory(int limit) {
         String email = SecurityUtil.requireCurrentEmail();
 
-        var runs = analysisRunRepository.findByUser_EmailOrderByCreatedAtDesc(
-                email, PageRequest.of(0, Math.max(1, Math.min(limit, 100)))
+        return analysisRunRepository.findSummaryByUserEmail(
+                email,
+                PageRequest.of(0, Math.max(1, Math.min(limit, 100)), Sort.by(Sort.Direction.DESC, "createdAt"))
         );
-
-        return runs.stream()
-                .map(r -> new AnalysisRunSummary(
-                        r.getId(), r.getTicker(), r.getMarket(),
-                        r.getAction(), r.getConfidence(), r.getCreatedAt()
-                ))
-                .toList();
     }
 
     /**
@@ -154,25 +149,21 @@ public class AnalysisService {
         String email = SecurityUtil.requireCurrentEmail();
 
         Pageable pageable = toPageable(page, size, sort);
+        Instant fromInstant = from == null ? null : from.atStartOfDay(ZONE).toInstant();
+        Instant toExclusive = to == null ? null : to.plusDays(1).atStartOfDay(ZONE).toInstant();
 
-        var spec = Specification
-                .where(AnalysisRunSpecs.userEmail(email))
-                .and(AnalysisRunSpecs.tickerEq(ticker))
-                .and(AnalysisRunSpecs.marketEq(market))
-                .and(AnalysisRunSpecs.actionEq(action))
-                .and(AnalysisRunSpecs.createdBetween(from, to));
-
-        var result = analysisRunRepository.findAll(spec, pageable);
-
-        var items = result.getContent().stream()
-                .map(r -> new AnalysisRunSummary(
-                        r.getId(), r.getTicker(), r.getMarket(),
-                        r.getAction(), r.getConfidence(), r.getCreatedAt()
-                ))
-                .toList();
+        var result = analysisRunRepository.findSummaryPageByFilters(
+                email,
+                normalizeFilter(ticker),
+                normalizeFilter(market),
+                normalizeFilter(action),
+                fromInstant,
+                toExclusive,
+                pageable
+        );
 
         return new PageResponse<>(
-                items,
+                result.getContent(),
                 result.getNumber(),
                 result.getSize(),
                 result.getTotalElements(),
@@ -234,5 +225,12 @@ public class AnalysisService {
         }
 
         return PageRequest.of(p, s, Sort.by(dir, prop));
+    }
+
+    private String normalizeFilter(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

@@ -54,7 +54,7 @@ docker-compose down       # Stop all services
 ### Backend Structure (backend/src/main/java/com/sw103302/backend/)
 - `controller/` - REST endpoints (Analysis, Backtest, Auth, Market, Watchlist, etc.)
 - `service/` - Business logic with Spring Cache and async support
-- `entity/` - JPA entities mapped to MySQL tables
+- `entity/` - JPA entities mapped to PostgreSQL tables
 - `component/` - Filters (JWT, RequestId), AiClient, SseEmitterRegistry
 - `config/` - Security, WebClient, Redis, Resilience4j configurations
 - `dto/` - Request/Response objects
@@ -74,9 +74,9 @@ docker-compose down       # Stop all services
 
 ## Database
 
-MySQL 8.4 with Flyway migrations at `backend/src/main/resources/db/migration/`. Migrations run automatically on startup.
+PostgreSQL 16 with Flyway migrations at `backend/src/main/resources/db/migration-postgres/`. Migrations run automatically on startup.
 
-**Test database**: H2 in-memory (configured in `application-test.properties`)
+**Test database**: H2 in-memory in PostgreSQL compatibility mode (configured in `application-test.properties`)
 
 ## Configuration
 

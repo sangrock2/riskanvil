@@ -12,6 +12,7 @@ import { Spinner } from "./components/ui/Loading";
 import { useAuthSync } from "./hooks/useAuthSync";
 import { useActivityDetection } from "./hooks/useActivityDetection";
 import { useTranslation } from "./hooks/useTranslation";
+import { SYSTEM_MAP_ENABLED } from "./config/featureFlags";
 import styles from "./App.module.css";
 
 // Lazy load pages for code splitting
@@ -35,7 +36,9 @@ const DividendCalendar = lazy(() => import("./pages/DividendCalendar"));
 const EarningsCalendar = lazy(() => import("./pages/EarningsCalendar"));
 const RiskDashboard = lazy(() => import("./pages/RiskDashboard"));
 const PaperTrading = lazy(() => import("./pages/PaperTrading"));
-const SystemMap = lazy(() => import("./pages/SystemMap"));
+const SystemMap = SYSTEM_MAP_ENABLED
+  ? lazy(() => import("./pages/SystemMap"))
+  : null;
 const Landing = lazy(() => import("./pages/Landing"));
 const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
 
@@ -184,7 +187,13 @@ function AppContent() {
               </ProtectedRoute>
             } />
 
-            <Route path="/system-map" element={<SystemMap />} />
+            {SYSTEM_MAP_ENABLED ? (
+              <Route path="/system-map" element={
+                <ProtectedRoute>
+                  <SystemMap />
+                </ProtectedRoute>
+              } />
+            ) : null}
 
             <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

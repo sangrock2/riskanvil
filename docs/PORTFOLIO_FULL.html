@@ -397,7 +397,7 @@
 <hr />
 <h2 id="section-1">2. 프로젝트 한 줄 요약</h2>
 <p>Stock-AI는 <strong>개인 투자자의 분석 의사결정을 지원하는 AI 기반 풀스택 투자 분석 플랫폼</strong>으로,<br />
-<code>React SPA + Spring Boot API + FastAPI AI 엔진 + MySQL/Redis + Nginx/Prometheus/Grafana</code>로 구성된다.</p>
+<code>React SPA + Spring Boot API + FastAPI AI 엔진 + PostgreSQL/Redis + Nginx/Prometheus/Grafana</code>로 구성된다.</p>
 <p>핵심 가치:</p>
 <ol>
 <li>분석 자동화: 기술적/기본적/뉴스/리스크를 통합 분석.</li>
@@ -430,7 +430,7 @@
 </code></pre>
 <p>보조 인프라:</p>
 <ol>
-<li>MySQL: 영속 데이터 저장(Flyway 마이그레이션).</li>
+<li>PostgreSQL: 영속 데이터 저장(Flyway 마이그레이션).</li>
 <li>Redis: 캐시 및 일부 인증 플로우 상태.</li>
 <li>Prometheus/Grafana: 메트릭 수집/시각화.</li>
 <li>Sentry(옵션): FE/BE/AI 오류 수집.</li>
@@ -607,8 +607,8 @@
 <td>토큰 폐기/회전 정책 설계 필요</td>
 </tr>
 <tr>
-<td>JPA + MySQL</td>
-<td>MySQL 8.4</td>
+<td>JPA + PostgreSQL</td>
+<td>PostgreSQL 16</td>
 <td>관계형 모델 강점, 트랜잭션 안정성</td>
 <td>복잡 쿼리 시 튜닝 필요</td>
 </tr>
@@ -967,7 +967,7 @@
 <h2 id="devops">9. DevOps/운영 구조</h2>
 <h3 id="docker-compose">9.1 Docker Compose 서비스 구성</h3>
 <ol>
-<li><code>mysql</code></li>
+<li><code>postgres</code></li>
 <li><code>redis</code></li>
 <li><code>ai</code></li>
 <li><code>backend</code></li>

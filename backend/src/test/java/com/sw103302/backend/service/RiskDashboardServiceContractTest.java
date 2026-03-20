@@ -190,4 +190,55 @@ class RiskDashboardServiceContractTest {
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Failed to generate risk dashboard");
     }
+
+    @Test
+    void getPortfolioRisk_shouldKeepSameTickerDifferentMarketsSeparated() {
+        PortfolioPosition usAapl = new PortfolioPosition(
+                portfolio, "AAPL", "US",
+                BigDecimal.ONE, new BigDecimal("100"),
+                LocalDate.of(2025, 1, 1), null
+        );
+        PortfolioPosition krAapl = new PortfolioPosition(
+                portfolio, "AAPL", "KR",
+                BigDecimal.ONE, new BigDecimal("200"),
+                LocalDate.of(2025, 1, 1), null
+        );
+
+        when(positionRepository.findByPortfolio_IdOrderByCreatedAtDesc(10L))
+                .thenReturn(List.of(usAapl, krAapl));
+        when(priceService.fetchPricesBatch(anyList(), eq("US")))
+                .thenReturn(Map.of("AAPL", new BigDecimal("150")));
+        when(priceService.fetchPricesBatch(anyList(), eq("KR")))
+                .thenReturn(Map.of("AAPL", new BigDecimal("250")));
+        when(aiClient.post(eq("/portfolio/risk"), any())).thenReturn("""
+            {
+              "generatedAt": "2026-02-26T12:00:00Z",
+              "riskLevel": "LOW",
+              "annualizedVolatilityPct": 10.0,
+              "maxDrawdownPct": 5.0,
+              "valueAtRisk95Pct": 1.0,
+              "expectedShortfall95Pct": 1.5,
+              "sharpeRatio": 1.2,
+              "betaToMarket": 0.9,
+              "diversificationScore": 50.0,
+              "concentrationScore": 50.0,
+              "holdings": [],
+              "timeSeries": []
+            }
+            """);
+
+        service.getPortfolioRisk(10L, 252);
+
+        ArgumentCaptor<Object> reqCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(aiClient).post(eq("/portfolio/risk"), reqCaptor.capture());
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> request = (Map<String, Object>) reqCaptor.getValue();
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> holdings = (List<Map<String, Object>>) request.get("holdings");
+
+        assertThat(holdings).extracting(h -> h.get("market")).containsExactlyInAnyOrder("US", "KR");
+        assertThat(holdings).extracting(h -> ((Number) h.get("value")).doubleValue())
+                .containsExactlyInAnyOrder(150.0, 250.0);
+    }
 }

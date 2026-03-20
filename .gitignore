@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+key.txt
 
 # Keep the example template
 !.env.example
@@ -21,8 +22,11 @@ nul
 node_modules/
 frontend/build/
 frontend/dist/
+frontend/playwright-report/
+frontend/test-results/
 backend/build/
 backend/.gradle-local/
+backend/.gradle-local-review/
 **/__pycache__/
 *.pyc
 .npm-cache/
@@ -32,3 +36,8 @@ artifacts/reports/*
 !artifacts/reports/.gitkeep
 artifacts/screenshots/*
 !artifacts/screenshots/.gitkeep
+
+# Local-only workspace files
+.claude/settings.local.json
+.tmp-*/
+*.PNG

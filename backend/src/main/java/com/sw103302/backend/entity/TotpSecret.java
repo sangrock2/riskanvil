@@ -17,7 +17,7 @@ public class TotpSecret {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(nullable = false, length = 32)
+    @Column(nullable = false, length = 255)
     private String secret;
 
     @Column(nullable = false)

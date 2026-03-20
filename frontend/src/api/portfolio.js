@@ -4,16 +4,28 @@ import { apiFetch } from "./http";
  * Portfolio management API client
  */
 
-export async function getPortfolios() {
-  return apiFetch("/api/portfolio");
+const PORTFOLIO_REQUEST_OPTIONS = {
+  timeoutMs: 15000,
+  retry: 0,
+};
+
+export async function getPortfolios(options = {}) {
+  return apiFetch("/api/portfolio", {
+    ...PORTFOLIO_REQUEST_OPTIONS,
+    ...options,
+  });
 }
 
-export async function getPortfolioDetail(id) {
-  return apiFetch(`/api/portfolio/${id}`);
+export async function getPortfolioDetail(id, options = {}) {
+  return apiFetch(`/api/portfolio/${id}`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
+    ...options,
+  });
 }
 
 export async function createPortfolio(data) {
   return apiFetch("/api/portfolio", {
+    ...PORTFOLIO_REQUEST_OPTIONS,
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -22,6 +34,7 @@ export async function createPortfolio(data) {
 
 export async function updatePortfolio(id, data) {
   return apiFetch(`/api/portfolio/${id}`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -30,12 +43,14 @@ export async function updatePortfolio(id, data) {
 
 export async function deletePortfolio(id) {
   return apiFetch(`/api/portfolio/${id}`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
     method: "DELETE"
   });
 }
 
 export async function addPosition(portfolioId, data) {
   return apiFetch(`/api/portfolio/${portfolioId}/position`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -44,6 +59,7 @@ export async function addPosition(portfolioId, data) {
 
 export async function updatePosition(portfolioId, positionId, data) {
   return apiFetch(`/api/portfolio/${portfolioId}/position/${positionId}`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
@@ -52,26 +68,34 @@ export async function updatePosition(portfolioId, positionId, data) {
 
 export async function deletePosition(portfolioId, positionId) {
   return apiFetch(`/api/portfolio/${portfolioId}/position/${positionId}`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
     method: "DELETE"
   });
 }
 
-export async function getPortfolioEarningsCalendar(portfolioId, daysAhead = 90) {
-  return apiFetch(`/api/portfolio/${portfolioId}/earnings-calendar?daysAhead=${daysAhead}`);
+export async function getPortfolioEarningsCalendar(portfolioId, daysAhead = 90, options = {}) {
+  return apiFetch(`/api/portfolio/${portfolioId}/earnings-calendar?daysAhead=${daysAhead}`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
+    ...options,
+  });
 }
 
-export async function getPortfolioRiskDashboard(portfolioId, lookbackDays = 252) {
-  return apiFetch(`/api/portfolio/${portfolioId}/risk-dashboard?lookbackDays=${lookbackDays}`);
+export async function getPortfolioRiskDashboard(portfolioId, lookbackDays = 252, options = {}) {
+  return apiFetch(`/api/portfolio/${portfolioId}/risk-dashboard?lookbackDays=${lookbackDays}`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
+    ...options,
+  });
 }
 
 /**
  * 포트폴리오 리밸런싱 추천
  * @param {number} portfolioId
- * @param {Object} targetWeights - { ticker: weight (0~1), ... }, 합계 1.0
+ * @param {Object} targetWeights - { ticker: weight } 또는 { "TICKER:MARKET": weight }, 합계 1.0
  * @returns {Promise<{totalValue: number, trades: Array}>}
  */
 export async function rebalancePortfolio(portfolioId, targetWeights) {
   return apiFetch(`/api/portfolio/${portfolioId}/rebalance`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ targetWeights })
@@ -85,6 +109,7 @@ export async function rebalancePortfolio(portfolioId, targetWeights) {
  */
 export async function getEfficientFrontier(tickers, options = {}) {
   return apiFetch("/api/portfolio/efficient-frontier", {
+    ...PORTFOLIO_REQUEST_OPTIONS,
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ tickers, ...options })
@@ -98,6 +123,7 @@ export async function getEfficientFrontier(tickers, options = {}) {
  */
 export async function getSimilarStocks(ticker, options = {}) {
   return apiFetch(`/api/similarity/find`, {
+    ...PORTFOLIO_REQUEST_OPTIONS,
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ticker, ...options })

@@ -14,7 +14,6 @@ import com.sw103302.backend.repository.UserRepository;
 import com.sw103302.backend.repository.UserSettingsRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,7 +30,6 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     private static final String DEFAULT_ROLE = "ROLE_USER";
     private static final int REFRESH_TOKEN_VALIDITY_DAYS = 7;
-    private static final String PENDING_2FA_PREFIX = "2fa:pending:";
     private static final Duration PENDING_2FA_TTL = Duration.ofMinutes(5);
 
     private final UserRepository users;
@@ -41,7 +39,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final TokenHashService tokenHashService;
     private final TwoFactorService twoFactorService;
-    private final StringRedisTemplate redisTemplate;
+    private final PendingTwoFactorStore pendingTwoFactorStore;
     private final AuthMetricsRecorder authMetricsRecorder;
 
     public AuthService(UserRepository users,
@@ -51,7 +49,7 @@ public class AuthService {
                        JwtService jwtService,
                        TokenHashService tokenHashService,
                        TwoFactorService twoFactorService,
-                       StringRedisTemplate redisTemplate,
+                       PendingTwoFactorStore pendingTwoFactorStore,
                        AuthMetricsRecorder authMetricsRecorder) {
         this.users = users;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -60,7 +58,7 @@ public class AuthService {
         this.jwtService = jwtService;
         this.tokenHashService = tokenHashService;
         this.twoFactorService = twoFactorService;
-        this.redisTemplate = redisTemplate;
+        this.pendingTwoFactorStore = pendingTwoFactorStore;
         this.authMetricsRecorder = authMetricsRecorder;
     }
 
@@ -134,11 +132,7 @@ public class AuthService {
             if (totpEnabled) {
                 stageStartNs = System.nanoTime();
                 String pendingToken = UUID.randomUUID().toString();
-                redisTemplate.opsForValue().set(
-                        PENDING_2FA_PREFIX + pendingToken,
-                        user.getEmail(),
-                        PENDING_2FA_TTL
-                );
+                pendingTwoFactorStore.store(pendingToken, user.getEmail(), PENDING_2FA_TTL);
                 authMetricsRecorder.recordStage("login", "store_pending_2fa", elapsedMs(stageStartNs));
                 outcome = "requires_2fa";
                 return AuthResponse.pending2FA(pendingToken);
@@ -173,10 +167,8 @@ public class AuthService {
         String outcome = "success";
 
         try {
-            String redisKey = PENDING_2FA_PREFIX + req.pendingToken();
-
             long stageStartNs = System.nanoTime();
-            String email = redisTemplate.opsForValue().get(redisKey);
+            String email = pendingTwoFactorStore.get(req.pendingToken());
             authMetricsRecorder.recordStage("verify_2fa", "lookup_pending_token", elapsedMs(stageStartNs));
             if (email == null) {
                 outcome = "invalid_pending_token";
@@ -206,7 +198,7 @@ public class AuthService {
             }
 
             stageStartNs = System.nanoTime();
-            redisTemplate.delete(redisKey);
+            pendingTwoFactorStore.delete(req.pendingToken());
             authMetricsRecorder.recordStage("verify_2fa", "delete_pending_token", elapsedMs(stageStartNs));
 
             stageStartNs = System.nanoTime();

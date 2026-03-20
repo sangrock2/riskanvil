@@ -1,0 +1,78 @@
+name: Production Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      frontend_url:
+        description: "Override frontend URL"
+        required: false
+        default: ""
+      backend_health_url:
+        description: "Override backend readiness URL"
+        required: false
+        default: ""
+      ai_health_url:
+        description: "Override AI health URL"
+        required: false
+        default: ""
+  schedule:
+    - cron: "15 0 * * *"
+
+jobs:
+  production-smoke:
+    name: Production Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FRONTEND_URL: ${{ inputs.frontend_url || vars.PROD_SMOKE_FRONTEND_URL }}
+      BACKEND_HEALTH_URL: ${{ inputs.backend_health_url || vars.PROD_SMOKE_BACKEND_HEALTH_URL }}
+      AI_HEALTH_URL: ${{ inputs.ai_health_url || vars.PROD_SMOKE_AI_HEALTH_URL }}
+      PROD_SMOKE_EMAIL: ${{ secrets.PROD_SMOKE_EMAIL }}
+      PROD_SMOKE_PASSWORD: ${{ secrets.PROD_SMOKE_PASSWORD }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm --prefix frontend ci
+
+      - name: Install Playwright browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate production smoke configuration
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:FRONTEND_URL)) {
+            throw "FRONTEND_URL is missing. Set workflow input or repo variable PROD_SMOKE_FRONTEND_URL."
+          }
+          if ([string]::IsNullOrWhiteSpace($env:PROD_SMOKE_EMAIL) -or [string]::IsNullOrWhiteSpace($env:PROD_SMOKE_PASSWORD)) {
+            throw "Production smoke credentials are missing. Set secrets PROD_SMOKE_EMAIL and PROD_SMOKE_PASSWORD."
+          }
+
+      - name: Run production smoke
+        shell: pwsh
+        run: |
+          ./scripts/run_production_smoke.ps1 `
+            -FrontendUrl $env:FRONTEND_URL `
+            -BackendHealthUrl $env:BACKEND_HEALTH_URL `
+            -AiHealthUrl $env:AI_HEALTH_URL `
+            -Email $env:PROD_SMOKE_EMAIL `
+            -Password $env:PROD_SMOKE_PASSWORD
+
+      - name: Upload production smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-smoke-artifacts
+          path: |
+            artifacts/reports/public-service-verification.json
+            frontend/playwright-report
+            frontend/test-results/playwright
+          if-no-files-found: warn

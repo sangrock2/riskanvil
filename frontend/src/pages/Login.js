@@ -11,6 +11,10 @@ export default function Login() {
     const { t } = useTranslation();
     const nav = useNavigate();
     const [searchParams] = useSearchParams();
+    const emailInputId = "login-email";
+    const passwordInputId = "login-password";
+    const totpInputId = "login-totp-code";
+    const backupCodeInputId = "login-backup-code";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [err, setErr] = useState("");
@@ -47,6 +51,8 @@ export default function Login() {
         const data = await apiFetch("/api/auth/login", {
             method: "POST",
             body: JSON.stringify({ email, password }),
+            retry: 0,
+            timeoutMs: 20000,
         });
 
         if (data.requires2FA) {
@@ -74,6 +80,8 @@ export default function Login() {
             const data = await apiFetch("/api/auth/verify-2fa", {
                 method: "POST",
                 body: JSON.stringify(body),
+                retry: 0,
+                timeoutMs: 15000,
             });
 
             setTokens(data.accessToken, data.refreshToken);
@@ -117,7 +125,7 @@ export default function Login() {
     // 2FA verification screen
     if (requires2FA) {
         return (
-            <div className={styles.container}>
+            <div className={styles.container} data-testid="login-page">
                 <h2>{t("auth.twoFactorTitle")}</h2>
                 <p className={styles.twoFactorDesc}>
                     {t("auth.twoFactorDesc")}
@@ -125,8 +133,9 @@ export default function Login() {
 
                 {!useBackupCode ? (
                     <div className={styles.row}>
-                        <label>{t("auth.twoFactorCode")}</label>
+                        <label htmlFor={totpInputId}>{t("auth.twoFactorCode")}</label>
                         <input
+                            id={totpInputId}
                             className={styles.input}
                             value={totpCode}
                             onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -139,8 +148,9 @@ export default function Login() {
                     </div>
                 ) : (
                     <div className={styles.row}>
-                        <label>{t("auth.backupCode")}</label>
+                        <label htmlFor={backupCodeInputId}>{t("auth.backupCode")}</label>
                         <input
+                            id={backupCodeInputId}
                             className={styles.input}
                             value={backupCode}
                             onChange={(e) => setBackupCode(e.target.value.toUpperCase())}
@@ -183,7 +193,7 @@ export default function Login() {
     }
 
     return (
-        <div className={styles.container}>
+        <div className={styles.container} data-testid="login-page">
             <h2>{t("auth.login")}</h2>
 
             {infoMessage && (
@@ -192,27 +202,31 @@ export default function Login() {
                 </div>
             )}
 
-            <form onSubmit={submit}>
+            <form onSubmit={submit} data-testid="login-form">
                 <div className={styles.row}>
-                    <label>{t("auth.email")}</label>
+                    <label htmlFor={emailInputId}>{t("auth.email")}</label>
                     <input
+                        id={emailInputId}
                         className={styles.input}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         autoComplete="email"
+                        data-testid="login-email-input"
                     />
                     {fieldErrors.email && <div className={styles.fieldError}>{fieldErrors.email}</div>}
                 </div>
 
                 <div className={styles.row}>
-                    <label>{t("auth.password")}</label>
+                    <label htmlFor={passwordInputId}>{t("auth.password")}</label>
                     <div className={styles.passwordWrap}>
                         <input
+                            id={passwordInputId}
                             className={`${styles.input} ${styles.passwordInput}`}
                             type={showPassword ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             autoComplete="current-password"
+                            data-testid="login-password-input"
                         />
                         <button
                             type="button"
@@ -227,7 +241,7 @@ export default function Login() {
                     {fieldErrors.password && <div className={styles.fieldError}>{fieldErrors.password}</div>}
                 </div>
 
-                <button className={styles.button} type="submit" disabled={submitting}>
+                <button className={styles.button} type="submit" disabled={submitting} data-testid="login-submit">
                     {submitting ? t("common.loading") : t("auth.loginButton")}
                 </button>
 

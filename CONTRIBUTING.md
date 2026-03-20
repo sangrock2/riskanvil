@@ -11,7 +11,7 @@ Stock-AI에 기여해주셔서 감사합니다.
 ## 2. 개발 환경
 
 1. `.env.example` -> `.env` 복사
-2. 인프라 실행: `docker compose up -d mysql redis`
+2. 인프라 실행: `docker compose up -d postgres redis`
 3. 서비스 실행
    - Backend: `cd backend && ./gradlew bootRun`
    - AI: `cd ai && uvicorn main:app --reload`
@@ -38,7 +38,7 @@ Stock-AI에 기여해주셔서 감사합니다.
 ```bash
 cd backend && ./gradlew test
 cd ai && pytest
-cd frontend && npm test -- --watchAll=false
+cd frontend && npm test
 ```
 
 ## 6. 문서 정책

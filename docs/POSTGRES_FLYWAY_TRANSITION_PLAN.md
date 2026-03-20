@@ -18,7 +18,7 @@
 
 | 구분 | 현재 동작 | 근거 |
 |---|---|---|
-| 로컬 기본 개발 | MySQL 기본, Flyway 활성화, JPA `update` | `backend/src/main/resources/application.properties` |
+| 로컬 기본 개발 | PostgreSQL 기본, Flyway 활성화, JPA `validate` | `backend/src/main/resources/application.properties` |
 | Postgres 로컬 검증 | `docker-compose.postgres.yml` 기준 Postgres + Flyway + JPA `validate` | `docker-compose.postgres.yml` |
 | 운영 배포 | Render Postgres, Flyway 활성화, baseline version 2, JPA `validate` | `backend/src/main/resources/application-postgres.properties`, `render.yaml` |
 | 테스트 | H2 기본 테스트 + Testcontainers Postgres baseline 검증 | `backend/src/test/resources/application-test.properties`, `PostgresFlywayMigrationTest` |
@@ -96,9 +96,9 @@
 
 1. 실제 Render DB가 baseline version 2 전략과 충돌하지 않는지 첫 배포에서 확인해야 한다.
 2. 운영 DB에 과거 수동 DDL 차이가 있다면 `JPA validate` 또는 후속 `V3+` 마이그레이션에서 드러날 수 있다.
-3. 로컬 기본 DB는 아직 MySQL이다. 개발/운영 DB 방언 완전 일치까지는 남아 있다.
+3. 레거시 migration 경로(`db/migration`)는 기록 보존용으로 남아 있다. 실제 실행 기준은 `db/migration-postgres`다.
 
-즉 "운영 Postgres를 Flyway 히스토리에 편입하는 코드 작업"은 끝났지만, "개발 환경까지 Postgres로 완전 통일"은 별도 단계다.
+즉 "운영 Postgres를 Flyway 히스토리에 편입하는 코드 작업"을 넘어, 이제는 개발 환경까지 Postgres 단일 기준으로 정렬된 상태다.
 
 ## 6. Deployment Runbook
 
@@ -149,8 +149,8 @@
 
 다음 단계는 DB 방언을 완전히 하나로 줄이는 것이다.
 
-1. 로컬 기본 개발 DB를 Postgres로 전환
-2. MySQL 전용 마이그레이션 경로는 레거시로 동결
+1. 운영 smoke test와 백업 리허설을 자동화
+2. 레거시 migration 경로(`db/migration`)의 보존 정책을 문서화
 3. 신규 스키마 변경은 Postgres migration만 정본으로 관리
 
 이 단계까지 끝나면 "개발/테스트/운영 DB 일치"를 포트폴리오와 면접에서 더 강하게 설명할 수 있다.

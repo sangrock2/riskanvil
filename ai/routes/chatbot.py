@@ -1,9 +1,14 @@
 """AI Chatbot endpoint"""
-from fastapi import APIRouter
-from pydantic import BaseModel
-from typing import Optional
+import asyncio
 import os
 import logging
+from typing import Optional
+
+import httpx
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+
+from config import OLLAMA_BASE_URL, OLLAMA_MODEL
 
 router = APIRouter()
 logger = logging.getLogger("app")
@@ -27,6 +32,83 @@ def get_openai_client():
     return openai_client
 
 
+async def _chat_with_openai(model_id: str, messages: list[dict]) -> Optional[dict]:
+    try:
+        client = get_openai_client()
+    except Exception as e:
+        logger.warning("OpenAI client unavailable, falling back to Ollama: %s", e)
+        return None
+
+    def _request():
+        return client.chat.completions.create(
+            model=model_id,
+            messages=messages,
+            max_tokens=1500,
+            temperature=0.7,
+        )
+
+    try:
+        response = await asyncio.to_thread(_request)
+    except Exception as e:
+        logger.warning("OpenAI chat request failed, falling back to Ollama: %s", e)
+        return None
+
+    assistant_message = response.choices[0].message.content
+    if isinstance(assistant_message, list):
+        assistant_message = "".join(
+            part.get("text", "")
+            for part in assistant_message
+            if isinstance(part, dict)
+        )
+    assistant_message = (assistant_message or "").strip()
+    if not assistant_message:
+        return None
+
+    usage = getattr(response, "usage", None)
+    return {
+        "message": assistant_message,
+        "tokensIn": getattr(usage, "prompt_tokens", 0) or 0,
+        "tokensOut": getattr(usage, "completion_tokens", 0) or 0,
+    }
+
+
+async def _chat_with_ollama(messages: list[dict]) -> Optional[dict]:
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": messages,
+        "stream": False,
+        "options": {
+            "temperature": 0.7,
+            "num_predict": 1500,
+        },
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(f"{OLLAMA_BASE_URL}/api/chat", json=payload)
+    except (httpx.ConnectError, httpx.TimeoutException) as e:
+        logger.warning("Ollama unavailable after OpenAI failure: %s", e)
+        return None
+    except Exception as e:
+        logger.error("Ollama fallback failed: %s", e)
+        return None
+
+    if response.status_code != 200:
+        logger.warning("Ollama fallback returned HTTP %s", response.status_code)
+        return None
+
+    data = response.json()
+    assistant_message = ((data.get("message") or {}).get("content") or "").strip()
+    if not assistant_message:
+        return None
+
+    return {
+        "message": assistant_message,
+        "tokensIn": int(data.get("prompt_eval_count") or 0),
+        "tokensOut": int(data.get("eval_count") or 0),
+    }
+
+
 class ChatMessage(BaseModel):
     role: str
     content: str
@@ -35,13 +117,16 @@ class ChatMessage(BaseModel):
 class ChatbotRequest(BaseModel):
     message: str
     model: str = "opus"
-    history: list[ChatMessage] = []
+    history: list[ChatMessage] = Field(default_factory=list)
     context: Optional[str] = None  # Portfolio/watchlist context injected by backend
 
 
 @router.post("/chatbot")
 async def chatbot(req: ChatbotRequest):
-    """AI chatbot for financial assistance"""
+    """AI chatbot for financial assistance.
+
+    OpenAI is the primary provider. Ollama is used only as a fallback.
+    """
 
     # Map model names to OpenAI model IDs
     model_map = {
@@ -85,30 +170,16 @@ async def chatbot(req: ChatbotRequest):
         messages.append({"role": msg.role, "content": msg.content})
     messages.append({"role": "user", "content": req.message})
 
-    try:
-        client = get_openai_client()
+    full_messages = [{"role": "system", "content": system_prompt}]
+    full_messages.extend(messages)
 
-        full_messages = [{"role": "system", "content": system_prompt}]
-        full_messages.extend(messages)
+    openai_result = await _chat_with_openai(model_id, full_messages)
+    if openai_result is not None:
+        return openai_result
 
-        response = client.chat.completions.create(
-            model=model_id,
-            messages=full_messages,
-            max_tokens=1500,
-            temperature=0.7
-        )
+    ollama_result = await _chat_with_ollama(full_messages)
+    if ollama_result is not None:
+        return ollama_result
 
-        assistant_message = response.choices[0].message.content
-
-        return {
-            "message": assistant_message,
-            "tokensIn": response.usage.prompt_tokens,
-            "tokensOut": response.usage.completion_tokens
-        }
-    except Exception as e:
-        logger.exception("Chatbot request failed")
-        return {
-            "message": "현재 요청을 처리할 수 없습니다. 잠시 후 다시 시도해 주세요.",
-            "tokensIn": 0,
-            "tokensOut": 0
-        }
+    logger.error("Chatbot request failed across all providers")
+    raise HTTPException(status_code=503, detail="AI provider unavailable")

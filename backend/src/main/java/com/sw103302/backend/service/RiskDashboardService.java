@@ -15,9 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static com.sw103302.backend.util.PortfolioSymbolUtil.groupUniqueTickersByMarket;
+import static com.sw103302.backend.util.PortfolioSymbolUtil.symbolKey;
 
 @Service
 public class RiskDashboardService {
@@ -71,24 +75,37 @@ public class RiskDashboardService {
             );
         }
 
-        Map<String, List<PortfolioPosition>> byMarket = positions.stream()
-                .collect(Collectors.groupingBy(PortfolioPosition::getMarket));
+        Map<String, BigDecimal> fallbackEntryPrices = positions.stream()
+                .collect(Collectors.toMap(
+                        pos -> symbolKey(pos),
+                        PortfolioPosition::getEntryPrice,
+                        (first, second) -> first
+                ));
 
-        Map<String, BigDecimal> currentPrices = new java.util.HashMap<>();
-        for (Map.Entry<String, List<PortfolioPosition>> entry : byMarket.entrySet()) {
+        Map<String, BigDecimal> currentPrices = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : groupUniqueTickersByMarket(positions).entrySet()) {
             String market = entry.getKey();
-            List<String> tickers = entry.getValue().stream()
-                    .map(PortfolioPosition::getTicker)
-                    .distinct()
-                    .toList();
-            currentPrices.putAll(priceService.fetchPricesBatch(tickers, market));
+            List<String> tickers = entry.getValue();
+            Map<String, BigDecimal> prices = priceService.fetchPricesBatch(tickers, market);
+            for (String ticker : tickers) {
+                String key = symbolKey(ticker, market);
+                BigDecimal price = prices.get(ticker);
+                if (price != null) {
+                    currentPrices.put(key, price);
+                    continue;
+                }
+                BigDecimal fallback = fallbackEntryPrices.get(key);
+                if (fallback != null) {
+                    currentPrices.put(key, fallback);
+                }
+            }
         }
 
         BigDecimal totalValue = BigDecimal.ZERO;
         List<Map<String, Object>> holdings = new ArrayList<>();
 
         for (PortfolioPosition pos : positions) {
-            BigDecimal price = currentPrices.getOrDefault(pos.getTicker(), pos.getEntryPrice());
+            BigDecimal price = currentPrices.getOrDefault(symbolKey(pos), pos.getEntryPrice());
             BigDecimal value = price.multiply(pos.getQuantity());
             totalValue = totalValue.add(value);
 

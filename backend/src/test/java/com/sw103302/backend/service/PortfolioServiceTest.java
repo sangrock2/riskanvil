@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -348,5 +349,82 @@ class PortfolioServiceTest {
         assertThat(priceByMarket.get("US")).isEqualByComparingTo("150.00");
         assertThat(priceByMarket.get("KR")).isEqualByComparingTo("250.00");
         assertThat(response.performance().totalValue()).isEqualByComparingTo("400.00");
+    }
+
+    @Test
+    void rebalance_withCompositeKeys_shouldSeparateSameTickerAcrossMarkets() {
+        Long portfolioId = 1L;
+        Portfolio portfolio = new Portfolio(testUser, "Mixed Market", null, null, null);
+        ReflectionTestUtils.setField(portfolio, "id", portfolioId);
+
+        PortfolioPosition usPosition = new PortfolioPosition(
+            portfolio, "AAPL", "US", BigDecimal.ONE, new BigDecimal("100.00"), LocalDate.now(), null
+        );
+        PortfolioPosition krPosition = new PortfolioPosition(
+            portfolio, "AAPL", "KR", BigDecimal.ONE, new BigDecimal("200.00"), LocalDate.now(), null
+        );
+
+        securityUtilMock.when(SecurityUtil::currentEmail).thenReturn("user@example.com");
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(testUser));
+        when(portfolioRepository.findByIdAndUser_Id(portfolioId, testUser.getId()))
+            .thenReturn(Optional.of(portfolio));
+        when(positionRepository.findByPortfolio_IdOrderByCreatedAtDesc(portfolioId))
+            .thenReturn(List.of(usPosition, krPosition));
+        when(priceService.fetchPricesBatch(anyList(), eq("US")))
+            .thenReturn(Map.of("AAPL", new BigDecimal("150.00")));
+        when(priceService.fetchPricesBatch(anyList(), eq("KR")))
+            .thenReturn(Map.of("AAPL", new BigDecimal("250.00")));
+
+        RebalanceResponse response = portfolioService.rebalance(
+            portfolioId,
+            new RebalanceRequest(Map.of("AAPL:US", 0.70, "AAPL:KR", 0.30))
+        );
+
+        assertThat(response.trades()).extracting(RebalanceResponse.RebalanceTrade::market)
+            .containsExactlyInAnyOrder("US", "KR");
+
+        Map<String, RebalanceResponse.RebalanceTrade> tradeByMarket = response.trades().stream()
+            .collect(java.util.stream.Collectors.toMap(RebalanceResponse.RebalanceTrade::market, Function.identity()));
+        assertThat(tradeByMarket.get("US").action()).isEqualTo("BUY");
+        assertThat(tradeByMarket.get("KR").action()).isEqualTo("SELL");
+    }
+
+    @Test
+    void rebalance_shouldCreateSellTradeWhenTargetOmitsExistingPosition() {
+        Long portfolioId = 1L;
+        Portfolio portfolio = new Portfolio(testUser, "Core", null, null, null);
+        ReflectionTestUtils.setField(portfolio, "id", portfolioId);
+
+        PortfolioPosition aapl = new PortfolioPosition(
+            portfolio, "AAPL", "US", BigDecimal.ONE, new BigDecimal("100.00"), LocalDate.now(), null
+        );
+        PortfolioPosition msft = new PortfolioPosition(
+            portfolio, "MSFT", "US", BigDecimal.ONE, new BigDecimal("100.00"), LocalDate.now(), null
+        );
+
+        securityUtilMock.when(SecurityUtil::currentEmail).thenReturn("user@example.com");
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(testUser));
+        when(portfolioRepository.findByIdAndUser_Id(portfolioId, testUser.getId()))
+            .thenReturn(Optional.of(portfolio));
+        when(positionRepository.findByPortfolio_IdOrderByCreatedAtDesc(portfolioId))
+            .thenReturn(List.of(aapl, msft));
+        when(priceService.fetchPricesBatch(anyList(), eq("US")))
+            .thenReturn(Map.of(
+                "AAPL", new BigDecimal("100.00"),
+                "MSFT", new BigDecimal("100.00")
+            ));
+
+        RebalanceResponse response = portfolioService.rebalance(
+            portfolioId,
+            new RebalanceRequest(Map.of("AAPL", 1.0))
+        );
+
+        assertThat(response.trades()).extracting(RebalanceResponse.RebalanceTrade::ticker)
+            .contains("MSFT");
+        assertThat(response.trades().stream()
+            .filter(trade -> "MSFT".equals(trade.ticker()))
+            .findFirst()
+            .orElseThrow()
+            .action()).isEqualTo("SELL");
     }
 }

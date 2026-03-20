@@ -10,6 +10,9 @@ import styles from "../css/Register.module.css";
 export default function Register() {
     const { t } = useTranslation();
     const nav = useNavigate();
+    const emailInputId = "register-email";
+    const passwordInputId = "register-password";
+    const confirmPasswordInputId = "register-confirm-password";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -64,6 +67,7 @@ export default function Register() {
                 method: "POST",
                 body: JSON.stringify({ email: emailToCheck }),
                 retry: 0,
+                timeoutMs: 10000,
             });
 
             setCheckedEmail(emailToCheck);
@@ -130,6 +134,8 @@ export default function Register() {
             const data = await apiFetch("/api/auth/register", {
                 method: "POST",
                 body: JSON.stringify({ email: normalized, password }),
+                retry: 0,
+                timeoutMs: 20000,
             });
 
             setTokens(data.accessToken, data.refreshToken);
@@ -146,30 +152,34 @@ export default function Register() {
     }
 
     return (
-        <div className={styles.container}>
+        <div className={styles.container} data-testid="register-page">
             <h2>{t("auth.register")}</h2>
 
-            <form onSubmit={submit}>
+            <form onSubmit={submit} data-testid="register-form">
                 <div className={styles.row}>
-                    <label>{t("auth.email")}</label>
+                    <label htmlFor={emailInputId}>{t("auth.email")}</label>
                     <div className={styles.emailCheckWrap}>
                         <input
+                            id={emailInputId}
                             className={styles.input}
                             value={email}
                             onChange={(e) => onEmailChange(e.target.value)}
                             autoComplete="email"
+                            data-testid="register-email-input"
                         />
                         <button
                             type="button"
                             className={styles.checkButton}
                             onClick={checkEmailAvailability}
                             disabled={checkingEmail || submitting}
+                            data-testid="register-email-check"
                         >
                             {checkingEmail ? t("auth.emailChecking") : t("auth.emailCheckButton")}
                         </button>
                     </div>
                     {emailCheckMessage && (
                         <div
+                            data-testid="register-email-status"
                             className={`${styles.emailCheckStatus} ${
                                 emailCheckStatus === "available"
                                     ? styles.emailCheckStatusAvailable
@@ -185,14 +195,16 @@ export default function Register() {
                 </div>
 
                 <div className={styles.row}>
-                    <label>{t("auth.password")}</label>
+                    <label htmlFor={passwordInputId}>{t("auth.password")}</label>
                     <div className={styles.passwordWrap}>
                         <input
+                            id={passwordInputId}
                             className={`${styles.input} ${styles.passwordInput}`}
                             type={showPassword ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             autoComplete="new-password"
+                            data-testid="register-password-input"
                         />
                         <button
                             type="button"
@@ -208,14 +220,16 @@ export default function Register() {
                 </div>
 
                 <div className={styles.row}>
-                    <label>{t("auth.confirmPassword")}</label>
+                    <label htmlFor={confirmPasswordInputId}>{t("auth.confirmPassword")}</label>
                     <div className={styles.passwordWrap}>
                         <input
+                            id={confirmPasswordInputId}
                             className={`${styles.input} ${styles.passwordInput}`}
                             type={showConfirmPassword ? "text" : "password"}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                             autoComplete="new-password"
+                            data-testid="register-confirm-password-input"
                         />
                         <button
                             type="button"
@@ -232,7 +246,12 @@ export default function Register() {
                     )}
                 </div>
 
-                <button className={styles.button} type="submit" disabled={submitting || checkingEmail}>
+                <button
+                    className={styles.button}
+                    type="submit"
+                    disabled={submitting || checkingEmail}
+                    data-testid="register-submit"
+                >
                     {submitting ? t("common.loading") : t("auth.registerButton")}
                 </button>
                 {err && <div className={styles.error}>{err}</div>}

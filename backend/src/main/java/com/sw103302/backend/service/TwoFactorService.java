@@ -1,10 +1,5 @@
 package com.sw103302.backend.service;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.client.j2se.MatrixToImageWriter;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
 import com.sw103302.backend.dto.DisableTotpRequest;
 import com.sw103302.backend.dto.SetupTotpResponse;
 import com.sw103302.backend.dto.VerifyTotpRequest;
@@ -24,12 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 @Service
@@ -39,18 +31,21 @@ public class TwoFactorService {
     private final BackupCodeRepository backupCodeRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TotpSecretCryptoService totpSecretCryptoService;
     private final GoogleAuthenticator gAuth = new GoogleAuthenticator();
 
     public TwoFactorService(UserSettingsRepository settingsRepository,
                             TotpSecretRepository totpRepository,
                             BackupCodeRepository backupCodeRepository,
                             UserRepository userRepository,
-                            PasswordEncoder passwordEncoder) {
+                            PasswordEncoder passwordEncoder,
+                            TotpSecretCryptoService totpSecretCryptoService) {
         this.settingsRepository = settingsRepository;
         this.totpRepository = totpRepository;
         this.backupCodeRepository = backupCodeRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.totpSecretCryptoService = totpSecretCryptoService;
     }
 
     @Transactional
@@ -64,9 +59,12 @@ public class TwoFactorService {
         // Save to DB (not enabled yet)
         TotpSecret totpSecret = totpRepository.findByUser_Id(user.getId())
             .orElse(new TotpSecret(user));
-        totpSecret.setSecret(secret);
+        totpSecret.setSecret(totpSecretCryptoService.encrypt(secret));
         totpSecret.setEnabled(false);
+        totpSecret.setVerifiedAt(null);
         totpRepository.save(totpSecret);
+
+        backupCodeRepository.deleteByUser_Id(user.getId());
 
         // Generate QR code URL
         String issuer = "Stock-AI";
@@ -94,7 +92,7 @@ public class TwoFactorService {
             .orElseThrow(() -> new IllegalStateException("TOTP not set up"));
 
         int code = Integer.parseInt(req.code());
-        boolean valid = gAuth.authorize(totpSecret.getSecret(), code);
+        boolean valid = gAuth.authorize(readSecret(totpSecret, true), code);
 
         if (valid) {
             totpSecret.setEnabled(true);
@@ -124,13 +122,12 @@ public class TwoFactorService {
             .orElseThrow(() -> new IllegalStateException("TOTP not enabled"));
 
         int code = Integer.parseInt(req.totpCode());
-        if (!gAuth.authorize(totpSecret.getSecret(), code)) {
+        if (!gAuth.authorize(readSecret(totpSecret, true), code)) {
             throw new IllegalArgumentException("Invalid TOTP code");
         }
 
-        // Disable
-        totpSecret.setEnabled(false);
-        totpRepository.save(totpSecret);
+        backupCodeRepository.deleteByUser_Id(user.getId());
+        totpRepository.delete(totpSecret);
 
         UserSettings settings = getOrCreateSettings(user);
         settings.setTotpEnabled(false);
@@ -150,7 +147,7 @@ public class TwoFactorService {
         }
 
         int codeInt = Integer.parseInt(code);
-        return gAuth.authorize(totpSecret.getSecret(), codeInt);
+        return gAuth.authorize(readSecret(totpSecret, false), codeInt);
     }
 
     @Transactional
@@ -195,5 +192,15 @@ public class TwoFactorService {
         String email = SecurityUtil.currentEmail();
         return userRepository.findByEmail(email)
             .orElseThrow(() -> new IllegalStateException("User not found"));
+    }
+
+    private String readSecret(TotpSecret totpSecret, boolean migrateLegacySecret) {
+        String storedSecret = totpSecret.getSecret();
+        String plainSecret = totpSecretCryptoService.decrypt(storedSecret);
+        if (migrateLegacySecret && !totpSecretCryptoService.isEncrypted(storedSecret)) {
+            totpSecret.setSecret(totpSecretCryptoService.encrypt(plainSecret));
+            totpRepository.save(totpSecret);
+        }
+        return plainSecret;
     }
 }

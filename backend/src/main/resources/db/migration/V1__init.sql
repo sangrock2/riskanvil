@@ -1,4 +1,4 @@
--- MySQL 8.x 기준
+-- Legacy relational baseline kept for history; active runtime uses db/migration-postgres
 CREATE TABLE users (
    id BIGINT NOT NULL AUTO_INCREMENT,
    email VARCHAR(190) NOT NULL,

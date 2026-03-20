@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate } from "react-router-dom";
 import { getToken, clearAllTokens } from "../auth/token";
 import { apiFetch } from "../api/http";
 import { useTranslation } from "../hooks/useTranslation";
+import { SYSTEM_MAP_ENABLED } from "../config/featureFlags";
 import ThemeToggle from "./ui/ThemeToggle";
 import SearchAutocomplete from "./SearchAutocomplete";
 import styles from "../css/NavBar.module.css";
@@ -95,6 +96,7 @@ export default function NavBar() {
                   className={`${styles.btn} ${styles.btnDanger}`}
                   onClick={logout}
                   aria-label={t("nav.logout")}
+                  data-testid="navbar-logout"
                 >
                   {t("nav.logout")}
                 </button>
@@ -202,14 +204,16 @@ export default function NavBar() {
             >
               {t("nav.paperTrading")}
             </Link>
-            <Link
-              className={getLinkClass("/system-map")}
-              to="/system-map"
-              role="menuitem"
-              aria-current={active === "/system-map" ? "page" : undefined}
-            >
-              {t("nav.systemMap")}
-            </Link>
+            {loggedIn && SYSTEM_MAP_ENABLED ? (
+              <Link
+                className={getLinkClass("/system-map")}
+                to="/system-map"
+                role="menuitem"
+                aria-current={active === "/system-map" ? "page" : undefined}
+              >
+                {t("nav.systemMap")}
+              </Link>
+            ) : null}
             <Link
               className={getLinkClass("/chatbot")}
               to="/chatbot"

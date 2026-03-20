@@ -48,6 +48,7 @@ export const translations = {
     errors: {
       genericRequest: "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       network: "네트워크 연결을 확인한 후 다시 시도해 주세요.",
+      requestTimeout: "서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.",
       invalidCredentials: "이메일 또는 비밀번호가 올바르지 않습니다.",
       alreadyExists: "이미 존재하는 항목입니다.",
       forbidden: "이 작업을 수행할 권한이 없습니다.",
@@ -840,6 +841,7 @@ export const translations = {
     errors: {
       genericRequest: "We could not process your request. Please try again.",
       network: "Check your network connection and try again.",
+      requestTimeout: "The server is taking too long to respond. Please try again shortly.",
       invalidCredentials: "The email or password is incorrect.",
       alreadyExists: "This item already exists.",
       forbidden: "You do not have permission to perform this action.",

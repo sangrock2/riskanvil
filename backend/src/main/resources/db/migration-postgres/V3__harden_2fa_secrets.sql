@@ -1,0 +1,2 @@
+ALTER TABLE totp_secrets
+    ALTER COLUMN secret TYPE VARCHAR(255);

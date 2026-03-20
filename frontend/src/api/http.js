@@ -4,6 +4,8 @@ import { wasRecentlyActive } from "../hooks/useActivityDetection";
 // Track if we're currently refreshing to avoid multiple simultaneous refresh attempts
 let isRefreshing = false;
 let refreshSubscribers = [];
+const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
+const REFRESH_REQUEST_TIMEOUT_MS = 15000;
 const API_BASE_URL = (
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.REACT_APP_API_BASE_URL ||
@@ -167,6 +169,77 @@ function isTransientAuthFailureStatus(status) {
   return status === 429 || status >= 500;
 }
 
+function isAbortError(error) {
+  return error?.name === "AbortError";
+}
+
+function isTimeoutError(error) {
+  const text = String(error?.message || "").toLowerCase();
+  return Boolean(error?.timedOut) || text.includes("timed out");
+}
+
+function createAbortSignal(timeoutMs, externalSignal) {
+  if (!timeoutMs && !externalSignal) {
+    return { signal: undefined, cleanup: () => {} };
+  }
+
+  const controller = new AbortController();
+  let timeoutId = null;
+  let abortListener = null;
+
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort(externalSignal.reason);
+    } else {
+      abortListener = () => controller.abort(externalSignal.reason);
+      externalSignal.addEventListener("abort", abortListener, { once: true });
+    }
+  }
+
+  if (timeoutMs) {
+    timeoutId = globalThis.setTimeout(() => {
+      const timeoutError = new Error(`Request timed out after ${timeoutMs}ms`);
+      timeoutError.name = "AbortError";
+      timeoutError.timedOut = true;
+      controller.abort(timeoutError);
+    }, timeoutMs);
+  }
+
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      if (timeoutId) {
+        globalThis.clearTimeout(timeoutId);
+      }
+      if (externalSignal && abortListener) {
+        externalSignal.removeEventListener("abort", abortListener);
+      }
+    },
+  };
+}
+
+async function fetchWithTimeout(url, init = {}, timeoutMs = null) {
+  const { signal: externalSignal, ...rest } = init;
+  const { signal, cleanup } = createAbortSignal(timeoutMs, externalSignal);
+
+  try {
+    return await fetch(url, {
+      ...rest,
+      signal,
+    });
+  } catch (error) {
+    if (isAbortError(error) && timeoutMs && !externalSignal?.aborted) {
+      const timeoutError = new Error(`Request timed out after ${timeoutMs}ms`);
+      timeoutError.name = "AbortError";
+      timeoutError.timedOut = true;
+      throw timeoutError;
+    }
+    throw error;
+  } finally {
+    cleanup();
+  }
+}
+
 function normalizeRefreshError(error, fallbackStatus = null) {
   const refreshError = error instanceof Error ? error : new Error("Refresh failed");
   const status = refreshError.status ?? fallbackStatus;
@@ -208,9 +281,9 @@ async function refreshAccessToken({ redirectOnFail = true } = {}) {
       requestInit.body = JSON.stringify({ refreshToken });
     }
 
-    const response = await fetch(resolveApiPath("/api/auth/refresh"), {
+    const response = await fetchWithTimeout(resolveApiPath("/api/auth/refresh"), {
       ...requestInit,
-    });
+    }, REFRESH_REQUEST_TIMEOUT_MS);
 
     if (!response.ok) {
       throw normalizeRefreshError(new Error("Refresh failed"), response.status);
@@ -291,6 +364,9 @@ function isRetryableError(error, status) {
   if (error?.isTransientAuthFailure) {
     return true;
   }
+  if (isTimeoutError(error)) {
+    return true;
+  }
   // Network errors
   if (error.name === "TypeError" || error.message.includes("Failed to fetch")) {
     return true;
@@ -313,7 +389,13 @@ function isRetryableError(error, status) {
  * - 네트워크/5xx/429 재시도(지수 백오프)
  */
 export async function apiFetch(path, options = {}) {
-  const { retry = 3, retryDelay = null, responseType = "auto", ...fetchOptions } = options;
+  const {
+    retry = 3,
+    retryDelay = null,
+    responseType = "auto",
+    timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+    ...fetchOptions
+  } = options;
   let lastError = null;
   const useAuth = shouldUseAuth(path, fetchOptions);
 
@@ -334,11 +416,11 @@ export async function apiFetch(path, options = {}) {
 
       const finalPath = resolveApiPath(path);
 
-      const res = await fetch(finalPath, {
+      const res = await fetchWithTimeout(finalPath, {
         ...fetchOptions,
         headers,
         credentials: fetchOptions.credentials ?? "include",
-      });
+      }, timeoutMs);
 
       if (res.status === 401 && useAuth) {
         // Token expired - try to refresh
@@ -353,11 +435,11 @@ export async function apiFetch(path, options = {}) {
 
           // Retry original request with new token
           headers.Authorization = `Bearer ${newAccessToken}`;
-          const newRes = await fetch(finalPath, {
+          const newRes = await fetchWithTimeout(finalPath, {
             ...fetchOptions,
             headers,
             credentials: fetchOptions.credentials ?? "include",
-          });
+          }, timeoutMs);
 
           if (!newRes.ok) {
             throw new Error(`HTTP ${newRes.status}`);

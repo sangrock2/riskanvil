@@ -6,7 +6,9 @@ import java.util.Map;
 
 /**
  * 포트폴리오 리밸런싱 요청
- * targetWeights: 목표 비중 (티커 → 0.0~1.0, 합계 = 1.0)
+ * targetWeights:
+ * - legacy: 티커 -> 0.0~1.0
+ * - multi-market: "TICKER:MARKET" -> 0.0~1.0
  */
 public record RebalanceRequest(
     @NotNull(message = "Target weights are required")

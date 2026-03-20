@@ -142,14 +142,14 @@
 
 ## 10. Important Tradeoffs We Intentionally Accepted
 
-### 10.1 Local MySQL vs Render Postgres
+### 10.1 PostgreSQL as the Unified Default
 
-아직 남아 있는 설계 부채지만, 운영 경로는 한 단계 정리했다.
+DB 기준은 이제 로컬과 운영 모두 PostgreSQL로 정렬했다.
 
-- 장점: 기존 MySQL 기반 로컬 개발 흐름을 유지하면서도, 운영 Postgres는 Flyway baseline으로 히스토리에 편입시켰다.
-- 단점: 로컬 기본 DB와 운영 DB가 여전히 달라 장기적으로는 방언 비용이 남아 있다.
+- 장점: 개발/테스트/운영의 방언 차이가 줄어들어 migration 검증과 장애 재현이 단순해졌다.
+- 단점: 과거 레거시 migration 경로는 기록 보존용으로 남아 있어, 최종 정리 시점은 별도로 관리해야 한다.
 
-즉 운영 안정화는 끝냈지만, 최종 상태는 로컬도 Postgres로 수렴하는 쪽이다.
+즉 지금의 기준선은 Postgres 단일 경로이며, 남은 일은 레거시 자산을 안전하게 축소하는 것이다.
 
 ### 10.2 Active Tab Session Convenience
 
@@ -205,7 +205,7 @@
 
 다음 단계는 기능 추가보다 아래가 우선이다.
 
-1. 로컬 기본 DB를 Postgres로 전환
+1. Postgres smoke verification과 백업 리허설을 자동화
 2. 로그인과 캐시 hit/miss 메트릭을 실제 대시보드와 주간 기준선으로 연결
 3. 프런트 Web Vitals의 릴리즈별 추세 기록
 4. 부하 테스트 결과의 정식 릴리즈 기록화

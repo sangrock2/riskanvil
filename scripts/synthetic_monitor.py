@@ -29,6 +29,7 @@ from typing import Any
 
 BASE_URL = os.getenv("SYN_BASE_URL", "http://localhost:8080").rstrip("/")
 AI_HEALTH_URL = os.getenv("SYN_AI_HEALTH_URL", "").strip()
+BACKEND_HEALTH_PATH = os.getenv("SYN_BACKEND_HEALTH_PATH", "/actuator/health/readiness")
 EMAIL = os.getenv("SYN_EMAIL", f"synthetic_{uuid.uuid4().hex[:10]}@example.com")
 PASSWORD = os.getenv("SYN_PASSWORD", "Passw0rd!2345")
 REGISTER_IF_MISSING = os.getenv("SYN_REGISTER_IF_MISSING", "true").lower() == "true"
@@ -164,7 +165,7 @@ def _wait_for_backend_ready() -> None:
     last_error = "unknown"
     while time.time() < deadline:
         try:
-            _request("GET", "/actuator/health", expected_status=(200,))
+            _request("GET", BACKEND_HEALTH_PATH, expected_status=(200,))
             _log("backend readiness check passed")
             return
         except Exception as exc:  # noqa: BLE001
@@ -220,7 +221,7 @@ def _run_cycle(token: str) -> CycleResult:
                 )
             )
 
-    record("backend_health", lambda: _request("GET", "/actuator/health", expected_status=(200,)))
+    record("backend_health", lambda: _request("GET", BACKEND_HEALTH_PATH, expected_status=(200,)))
 
     if AI_HEALTH_URL:
         record(
@@ -299,6 +300,7 @@ def _write_report(cycles: list[CycleResult], overall_ok: bool, reason: str) -> N
         "generatedAtEpochMs": int(time.time() * 1000),
         "baseUrl": BASE_URL,
         "aiHealthUrl": AI_HEALTH_URL,
+        "backendHealthPath": BACKEND_HEALTH_PATH,
         "durationMinutes": DURATION_MINUTES,
         "intervalSeconds": INTERVAL_SECONDS,
         "totalCycles": total_cycles,

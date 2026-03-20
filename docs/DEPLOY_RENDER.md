@@ -12,7 +12,7 @@ Stock-AI를 Render에 배포할 때 필요한 최소 설정입니다.
    Health Check Path: `/health`
 2. `backend`: **Web Service (Docker)**  
    Root Directory: `backend`  
-   Health Check Path: `/actuator/health`
+   Health Check Path: `/actuator/health/readiness`
 3. `frontend`: **Static Site**  
    Root Directory: `frontend`  
    Build Command: `npm ci && npm run build`  

@@ -13,6 +13,7 @@ public record RebalanceResponse(
 ) {
     public record RebalanceTrade(
         String ticker,
+        String market,
         String action,            // "BUY" or "SELL"
         double currentWeight,     // 현재 비중 (0.0~1.0)
         double targetWeight,      // 목표 비중 (0.0~1.0)

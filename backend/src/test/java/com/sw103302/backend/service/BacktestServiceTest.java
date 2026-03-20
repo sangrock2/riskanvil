@@ -21,8 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -206,14 +206,13 @@ class BacktestServiceTest {
     void myHistory_shouldReturnBacktestHistory() {
         // Given
         String email = "user@example.com";
-        User user = new User(email, "hash", "ROLE_USER");
-        BacktestRun run1 = new BacktestRun(user, "AAPL", "US", "SMA_CROSS", "{}", "{}", 0.15, -0.08, 1.2, 0.12);
-        BacktestRun run2 = new BacktestRun(user, "GOOGL", "US", "RSI", "{}", "{}", 0.10, -0.05, 0.9, 0.08);
+        BacktestRunSummary summary1 = new BacktestRunSummary(1L, "AAPL", "US", "SMA_CROSS", 0.15, -0.08, 1.2, 0.12, Instant.now());
+        BacktestRunSummary summary2 = new BacktestRunSummary(2L, "GOOGL", "US", "RSI", 0.10, -0.05, 0.9, 0.08, Instant.now().minusSeconds(60));
 
         securityUtilMock.when(SecurityUtil::currentEmail).thenReturn(email);
         securityUtilMock.when(SecurityUtil::requireCurrentEmail).thenReturn(email);
-        when(backtestRunRepository.findByUser_EmailOrderByCreatedAtDesc(eq(email), any(Pageable.class)))
-                .thenReturn(List.of(run1, run2));
+        when(backtestRunRepository.findSummaryByUserEmail(eq(email), any(Pageable.class)))
+                .thenReturn(List.of(summary1, summary2));
 
         // When
         List<BacktestRunSummary> history = backtestService.myHistory(10);
@@ -242,13 +241,12 @@ class BacktestServiceTest {
     void myBacktestHistoryPage_shouldReturnPaginatedResults() {
         // Given
         String email = "user@example.com";
-        User user = new User(email, "hash", "ROLE_USER");
-        BacktestRun run = new BacktestRun(user, "AAPL", "US", "SMA_CROSS", "{}", "{}", 0.15, -0.08, 1.2, 0.12);
+        BacktestRunSummary summary = new BacktestRunSummary(1L, "AAPL", "US", "SMA_CROSS", 0.15, -0.08, 1.2, 0.12, Instant.now());
 
         securityUtilMock.when(SecurityUtil::currentEmail).thenReturn(email);
         securityUtilMock.when(SecurityUtil::requireCurrentEmail).thenReturn(email);
-        when(backtestRunRepository.findAll(any(Specification.class), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(run), PageRequest.of(0, 10), 1));
+        when(backtestRunRepository.findSummaryPageByFilters(anyString(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(summary), PageRequest.of(0, 10), 1));
 
         // When - pass actual filter values to avoid null Specification issue
         var response = backtestService.myBacktestHistoryPage(0, 10, "createdAt,desc", "AAPL", "US", "SMA_CROSS");
@@ -301,7 +299,7 @@ class BacktestServiceTest {
         String email = "user@example.com";
         securityUtilMock.when(SecurityUtil::currentEmail).thenReturn(email);
         securityUtilMock.when(SecurityUtil::requireCurrentEmail).thenReturn(email);
-        when(backtestRunRepository.findByUser_EmailOrderByCreatedAtDesc(anyString(), any(Pageable.class)))
+        when(backtestRunRepository.findSummaryByUserEmail(anyString(), any(Pageable.class)))
                 .thenReturn(List.of());
 
         // When - request with limit > 100
@@ -309,7 +307,7 @@ class BacktestServiceTest {
 
         // Then - should be clamped to 100
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(backtestRunRepository).findByUser_EmailOrderByCreatedAtDesc(eq(email), pageableCaptor.capture());
+        verify(backtestRunRepository).findSummaryByUserEmail(eq(email), pageableCaptor.capture());
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
     }
 }

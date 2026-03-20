@@ -13,5 +13,6 @@ module.exports = defineConfig({
     globals: true,
     setupFiles: "./src/setupTests.js",
     css: true,
+    exclude: ["e2e/**", "node_modules/**", "dist/**"],
   },
 });

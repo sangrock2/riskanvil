@@ -14,10 +14,27 @@ export default function Portfolio() {
   const toast = useToast();
 
   // React Query hooks
-  const { data: portfolios = [], isLoading: loadingList } = usePortfolios();
-  const { data: portfolioDetail, isLoading: loadingDetail } = usePortfolioDetail(selectedPortfolio);
+  const {
+    data: portfolios = [],
+    isLoading: loadingList,
+    isFetching: fetchingList,
+    error: listError,
+    refetch: refetchPortfolios,
+  } = usePortfolios();
+  const {
+    data: portfolioDetail,
+    isLoading: loadingDetail,
+    isFetching: fetchingDetail,
+    error: detailError,
+    refetch: refetchPortfolioDetail,
+  } = usePortfolioDetail(selectedPortfolio);
   const mutations = usePortfolioMutations();
   const loading = loadingList || loadingDetail;
+  const showListLoadingState = !selectedPortfolio && loadingList && !portfolios.length;
+  const showListErrorState = !selectedPortfolio && listError && !portfolios.length;
+  const showDetailLoadingState = Boolean(selectedPortfolio) && loadingDetail && !portfolioDetail;
+  const showDetailErrorState = Boolean(selectedPortfolio) && detailError && !portfolioDetail;
+  const backgroundRefreshing = fetchingList || fetchingDetail;
 
   // Form states
   const [createForm, setCreateForm] = useState({
@@ -105,57 +122,84 @@ export default function Portfolio() {
     }
   };
 
-  if (loading && !portfolios.length) {
-    return <div className={styles.loading}>{t("portfolio.loadingPortfolios")}</div>;
-  }
-
   return (
-    <div className={styles.container}>
+    <div className={styles.container} data-testid="portfolio-page">
       <header className={styles.header}>
-        <h1>{t("portfolio.myPortfolios")}</h1>
-        <button className={styles.createBtn} onClick={() => setShowCreateModal(true)}>
-          + {t("portfolio.newPortfolio")}
-        </button>
+        <div className={styles.headerText}>
+          <h1>{t("portfolio.myPortfolios")}</h1>
+          {backgroundRefreshing ? (
+            <p className={styles.headerStatus}>{t("common.loading")}</p>
+          ) : null}
+        </div>
+        {!selectedPortfolio ? (
+          <button
+            className={styles.createBtn}
+            onClick={() => setShowCreateModal(true)}
+            data-testid="portfolio-create-open"
+          >
+            + {t("portfolio.newPortfolio")}
+          </button>
+        ) : null}
       </header>
 
       {!selectedPortfolio ? (
         // Portfolio List View
-        <div className={styles.grid}>
-          {portfolios.map(p => (
-            <div key={p.id} className={styles.card} onClick={() => setSelectedPortfolio(p.id)}>
-              <h3>{p.name}</h3>
-              {p.description && <p className={styles.description}>{p.description}</p>}
-
-              <div className={styles.metrics}>
-                <div className={styles.metric}>
-                  <span className={styles.label}>{t("portfolio.positions")}</span>
-                  <span className={styles.value}>{p.positionCount}</span>
-                </div>
-                <div className={styles.metric}>
-                  <span className={styles.label}>{t("portfolio.totalValue")}</span>
-                  <span className={styles.value}>${p.totalValue?.toFixed(2) || "0.00"}</span>
-                </div>
-                <div className={styles.metric}>
-                  <span className={styles.label}>{t("portfolio.return")}</span>
-                  <span className={p.totalReturnPercent >= 0 ? styles.positive : styles.negative}>
-                    {p.totalReturnPercent?.toFixed(2)}%
-                  </span>
-                </div>
-              </div>
-
-              <div className={styles.meta}>
-                <span>{t("portfolio.risk")}: {p.riskProfile}</span>
-                {p.targetReturn && <span>{t("portfolio.target")}: {p.targetReturn}%</span>}
-              </div>
+        <>
+          {showListLoadingState ? (
+            <div className={styles.stateCard} data-testid="portfolio-loading-state">
+              <p>{t("portfolio.loadingPortfolios")}</p>
             </div>
-          ))}
+          ) : showListErrorState ? (
+            <div className={styles.stateCard} data-testid="portfolio-error-state">
+              <p>{toUserErrorMessage(listError, t, "portfolio.failedToLoadPortfolios")}</p>
+              <button className={styles.btnSecondary} onClick={() => refetchPortfolios()}>
+                {t("common.retry")}
+              </button>
+            </div>
+          ) : (
+            <div className={styles.grid}>
+              {portfolios.map((p) => (
+                <div
+                  key={p.id}
+                  className={styles.card}
+                  onClick={() => setSelectedPortfolio(p.id)}
+                  data-testid="portfolio-card"
+                >
+                  <h3>{p.name}</h3>
+                  {p.description && <p className={styles.description}>{p.description}</p>}
 
-          {portfolios.length === 0 && (
-            <div className={styles.empty}>
-              <p>{t("portfolio.noPortfolios")}</p>
+                  <div className={styles.metrics}>
+                    <div className={styles.metric}>
+                      <span className={styles.label}>{t("portfolio.positions")}</span>
+                      <span className={styles.value}>{p.positionCount}</span>
+                    </div>
+                    <div className={styles.metric}>
+                      <span className={styles.label}>{t("portfolio.totalValue")}</span>
+                      <span className={styles.value}>${p.totalValue?.toFixed(2) || "0.00"}</span>
+                    </div>
+                    <div className={styles.metric}>
+                      <span className={styles.label}>{t("portfolio.return")}</span>
+                      <span className={p.totalReturnPercent >= 0 ? styles.positive : styles.negative}>
+                        {p.totalReturnPercent?.toFixed(2)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={styles.meta}>
+                    <span>{t("portfolio.risk")}: {p.riskProfile}</span>
+                    {p.targetReturn && <span>{t("portfolio.target")}: {p.targetReturn}%</span>}
+                  </div>
+                </div>
+              ))}
+
+              {portfolios.length === 0 && (
+                <div className={styles.empty}>
+                  <p>{t("portfolio.noPortfolios")}</p>
+                </div>
+              )}
             </div>
           )}
-        </div>
+        </>
       ) : (
         // Portfolio Detail View
         <div className={styles.detail}>
@@ -167,7 +211,11 @@ export default function Portfolio() {
             </button>
             <h2>{portfolioDetail?.name}</h2>
             <div className={styles.actions}>
-              <button className={styles.addBtn} onClick={() => setShowAddPositionModal(true)}>
+              <button
+                className={styles.addBtn}
+                onClick={() => setShowAddPositionModal(true)}
+                data-testid="portfolio-add-position-open"
+              >
                 + {t("portfolio.addPosition")}
               </button>
               <button className={styles.deleteBtn} onClick={() => handleDeletePortfolio(selectedPortfolio)}>
@@ -176,7 +224,23 @@ export default function Portfolio() {
             </div>
           </div>
 
-          {portfolioDetail && (
+          {showDetailLoadingState ? (
+            <div className={styles.stateCard} data-testid="portfolio-detail-loading-state">
+              <p>{t("portfolio.loadingPortfolios")}</p>
+            </div>
+          ) : showDetailErrorState ? (
+            <div className={styles.stateCard} data-testid="portfolio-detail-error-state">
+              <p>{toUserErrorMessage(detailError, t, "portfolio.failedToLoadDetails")}</p>
+              <div className={styles.stateActions}>
+                <button className={styles.btnSecondary} onClick={() => refetchPortfolioDetail()}>
+                  {t("common.retry")}
+                </button>
+                <button className={styles.backBtn} onClick={() => setSelectedPortfolio(null)}>
+                  {t("back")}
+                </button>
+              </div>
+            </div>
+          ) : portfolioDetail ? (
             <>
               {/* Performance Summary */}
               <div className={styles.performance}>
@@ -214,7 +278,7 @@ export default function Portfolio() {
                   </thead>
                   <tbody>
                     {portfolioDetail.positions.map(pos => (
-                      <tr key={pos.id}>
+                      <tr key={pos.id} data-testid={`portfolio-position-row-${pos.ticker}-${pos.market}`}>
                         <td><strong>{pos.ticker}</strong></td>
                         <td>{pos.market}</td>
                         <td>{pos.quantity}</td>
@@ -241,13 +305,25 @@ export default function Portfolio() {
                 )}
               </div>
             </>
+          ) : (
+            <div className={styles.stateCard}>
+              <p>{t("portfolio.failedToLoadDetails")}</p>
+              <div className={styles.stateActions}>
+                <button className={styles.btnSecondary} onClick={() => refetchPortfolioDetail()}>
+                  {t("common.retry")}
+                </button>
+                <button className={styles.backBtn} onClick={() => setSelectedPortfolio(null)}>
+                  {t("back")}
+                </button>
+              </div>
+            </div>
           )}
         </div>
       )}
 
       {/* Create Portfolio Modal */}
       {showCreateModal && (
-        <div className={styles.modal}>
+        <div className={styles.modal} data-testid="portfolio-create-modal">
           <div className={styles.modalContent}>
             <h3>{t("portfolio.createNewPortfolio")}</h3>
             <form onSubmit={handleCreatePortfolio}>
@@ -258,12 +334,14 @@ export default function Portfolio() {
                 onChange={(e) => setCreateForm({...createForm, name: e.target.value})}
                 required
                 className={styles.input}
+                data-testid="portfolio-create-name"
               />
               <textarea
                 placeholder={t("portfolio.description")}
                 value={createForm.description}
                 onChange={(e) => setCreateForm({...createForm, description: e.target.value})}
                 className={styles.textarea}
+                data-testid="portfolio-create-description"
               />
               <input
                 type="number"
@@ -272,11 +350,13 @@ export default function Portfolio() {
                 value={createForm.targetReturn}
                 onChange={(e) => setCreateForm({...createForm, targetReturn: e.target.value})}
                 className={styles.input}
+                data-testid="portfolio-create-target-return"
               />
               <select
                 value={createForm.riskProfile}
                 onChange={(e) => setCreateForm({...createForm, riskProfile: e.target.value})}
                 className={styles.select}
+                data-testid="portfolio-create-risk-profile"
               >
                 <option value="conservative">{t("portfolio.conservative")}</option>
                 <option value="moderate">{t("portfolio.moderate")}</option>
@@ -284,7 +364,9 @@ export default function Portfolio() {
               </select>
 
               <div className={styles.modalActions}>
-                <button type="submit" className={styles.btnPrimary}>{t("portfolio.create")}</button>
+                <button type="submit" className={styles.btnPrimary} data-testid="portfolio-create-submit">
+                  {t("portfolio.create")}
+                </button>
                 <button type="button" className={styles.btnSecondary} onClick={() => setShowCreateModal(false)}>
                   {t("cancel")}
                 </button>
@@ -296,7 +378,7 @@ export default function Portfolio() {
 
       {/* Add Position Modal */}
       {showAddPositionModal && (
-        <div className={styles.modal}>
+        <div className={styles.modal} data-testid="portfolio-add-position-modal">
           <div className={styles.modalContent}>
             <h3>{t("portfolio.addPosition")}</h3>
             <form onSubmit={handleAddPosition}>
@@ -307,11 +389,13 @@ export default function Portfolio() {
                 onChange={(e) => setPositionForm({...positionForm, ticker: e.target.value.toUpperCase()})}
                 required
                 className={styles.input}
+                data-testid="portfolio-position-ticker"
               />
               <select
                 value={positionForm.market}
                 onChange={(e) => setPositionForm({...positionForm, market: e.target.value})}
                 className={styles.select}
+                data-testid="portfolio-position-market"
               >
                 <option value="US">{t("portfolio.usMarket")}</option>
                 <option value="KR">{t("portfolio.krMarket")}</option>
@@ -324,6 +408,7 @@ export default function Portfolio() {
                 onChange={(e) => setPositionForm({...positionForm, quantity: e.target.value})}
                 required
                 className={styles.input}
+                data-testid="portfolio-position-quantity"
               />
               <input
                 type="number"
@@ -333,6 +418,7 @@ export default function Portfolio() {
                 onChange={(e) => setPositionForm({...positionForm, entryPrice: e.target.value})}
                 required
                 className={styles.input}
+                data-testid="portfolio-position-entry-price"
               />
               <input
                 type="date"
@@ -349,7 +435,9 @@ export default function Portfolio() {
               />
 
               <div className={styles.modalActions}>
-                <button type="submit" className={styles.btnPrimary}>{t("portfolio.addPosition")}</button>
+                <button type="submit" className={styles.btnPrimary} data-testid="portfolio-position-submit">
+                  {t("portfolio.addPosition")}
+                </button>
                 <button type="button" className={styles.btnSecondary} onClick={() => setShowAddPositionModal(false)}>
                   {t("cancel")}
                 </button>

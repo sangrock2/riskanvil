@@ -126,7 +126,7 @@ Render에서 배포 방법:
 ### 4.1 헬스체크
 
 - [ ] `https://riskanvil-ai.onrender.com/health` -> `{"status":"ok"}`
-- [ ] `https://riskanvil-backend.onrender.com/actuator/health` -> `"status":"UP"`
+- [ ] `https://riskanvil-backend.onrender.com/actuator/health/readiness` -> `"status":"UP"`
 
 ### 4.2 인증/설정 API
 
@@ -209,6 +209,13 @@ Render에서 배포 방법:
 - [ ] 실패 시 Render backend 로그에서 같은 `requestId` 검색
 - [ ] 점검 결과를 문서 상단 `오늘 점검 기록`에 반영
 
+### 4.5.1 자동 공개 smoke (권장)
+
+- [ ] `pwsh -File scripts/run_production_smoke.ps1 -FrontendUrl https://riskanvil-frontend.onrender.com -BackendHealthUrl https://riskanvil-backend.onrender.com/actuator/health/readiness -AiHealthUrl https://riskanvil-ai.onrender.com/health -Email <smoke-user> -Password <smoke-password>` 실행
+- [ ] `artifacts/reports/public-service-verification.json` 생성 확인
+- [ ] `frontend/playwright-report/` 생성 확인
+- [ ] 필요 시 GitHub Actions `Production Smoke` workflow 수동 실행
+
 ### 4.6 단기/고부하 점검 (릴리즈 중요도 높을 때 필수)
 
 - [ ] `load_test_short.py` 1회 실행
@@ -228,7 +235,7 @@ $AI = "https://riskanvil-ai.onrender.com"
 
 # 1) Health
 Invoke-RestMethod "$AI/health"
-Invoke-RestMethod "$BACKEND/actuator/health"
+Invoke-RestMethod "$BACKEND/actuator/health/readiness"
 
 # 2) Login (실계정 사용)
 $loginBody = @{

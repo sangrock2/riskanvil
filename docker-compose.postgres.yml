@@ -33,9 +33,10 @@ services:
     environment:
       - ENVIRONMENT=development
       - DATA_PROVIDER=${DATA_PROVIDER:-yfinance}
-      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.1:8b}
+      - AI_INTERNAL_SERVICE_TOKEN=${AI_INTERNAL_SERVICE_TOKEN:-dev-only-ai-internal-token-change-me-before-prod}
       - ALPHAVANTAGE_API_KEY=${ALPHAVANTAGE_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - FINNHUB_API_KEY=${FINNHUB_API_KEY}
@@ -53,6 +54,7 @@ services:
       - "8080"
     environment:
       - AI_BASE_URL=http://ai:8000
+      - AI_INTERNAL_SERVICE_TOKEN=${AI_INTERNAL_SERVICE_TOKEN:-dev-only-ai-internal-token-change-me-before-prod}
       - DB_URL=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-stock_ai}
       - DB_USERNAME=${POSTGRES_USER:-postgres}
       - DB_PASSWORD=${POSTGRES_PASSWORD:-postgres}
@@ -66,6 +68,9 @@ services:
       - MANAGEMENT_HEALTH_REDIS_ENABLED=false
       - JWT_SECRET=${JWT_SECRET:-dev-only-change-in-production-use-strong-random-secret-minimum-32-bytes-required}
       - REFRESH_TOKEN_PEPPER=${REFRESH_TOKEN_PEPPER:-local-dev-postgres-pepper}
+      - TOTP_ENCRYPTION_KEY=${TOTP_ENCRYPTION_KEY:-dev-only-totp-encryption-key-minimum-32-bytes}
+      - REFRESH_TOKEN_COOKIE_SECURE=${REFRESH_TOKEN_COOKIE_SECURE:-true}
+      - REFRESH_TOKEN_COOKIE_SAME_SITE=Lax
     depends_on:
       postgres:
         condition: service_healthy

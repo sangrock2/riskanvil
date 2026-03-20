@@ -11,10 +11,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import java.net.URI;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,11 +32,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class QuoteWebSocketRelay extends TextWebSocketHandler {
 
     private static final Logger log = LoggerFactory.getLogger(QuoteWebSocketRelay.class);
+    private static final String INTERNAL_SERVICE_TOKEN_HEADER = "X-Internal-Service-Token";
     private final ObjectMapper objectMapper;
     private final QuoteWebSocketHandler broadcastHandler;
 
     @Value("${ai.baseUrl:http://localhost:8000}")
     private String aiBaseUrl;
+
+    @Value("${ai.internal.service-token}")
+    private String aiInternalServiceToken;
 
     private WebSocketSession aiSession;
     private final ScheduledExecutorService reconnectScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -73,7 +79,9 @@ public class QuoteWebSocketRelay extends TextWebSocketHandler {
             log.info("Connecting to AI WebSocket: {}", wsUrl);
 
             StandardWebSocketClient client = new StandardWebSocketClient();
-            aiSession = client.execute(this, wsUrl).get(10, TimeUnit.SECONDS);
+            WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
+            headers.set(INTERNAL_SERVICE_TOKEN_HEADER, aiInternalServiceToken);
+            aiSession = client.execute(this, headers, URI.create(wsUrl)).get(10, TimeUnit.SECONDS);
             log.info("Connected to AI WebSocket relay");
             reconnectAttempts = 0;
             reconnectScheduled.set(false);

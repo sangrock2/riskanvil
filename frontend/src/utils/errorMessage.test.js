@@ -35,4 +35,13 @@ describe("toUserErrorMessage", () => {
     expect(toUserErrorMessage(error, tKo, "auth.loginRequired", "login"))
       .toBe("이메일 또는 비밀번호가 올바르지 않습니다.");
   });
+
+  test("maps timed out requests to a friendly message", () => {
+    const error = new Error("Request timed out after 15000ms");
+    error.name = "AbortError";
+    error.timedOut = true;
+
+    expect(toUserErrorMessage(error, tKo, "portfolio.failedToLoadPortfolios", "portfolio"))
+      .toBe("서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.");
+  });
 });

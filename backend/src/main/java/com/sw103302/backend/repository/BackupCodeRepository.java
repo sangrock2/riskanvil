@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface BackupCodeRepository extends JpaRepository<BackupCode, Long> {
     List<BackupCode> findByUser_IdAndUsed(Long userId, boolean used);
+    void deleteByUser_Id(Long userId);
 }

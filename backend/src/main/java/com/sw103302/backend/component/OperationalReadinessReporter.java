@@ -43,15 +43,24 @@ public class OperationalReadinessReporter {
         }
 
         warnIfDefaultJwtSecret();
+        warnIfDefaultAiInternalToken();
         warnIfCorsPlaceholder();
         warnIfSentryDisabled();
         warnIfDatasourceLooksInvalid(datasourceUrl);
+        warnIfDefaultTotpEncryptionKey();
     }
 
     private void warnIfDefaultJwtSecret() {
         String secret = env.getProperty("security.jwt.secret", "");
         if (secret.contains("dev-only") || secret.contains("change-in-production")) {
             log.warn("JWT_SECRET appears to be a development default. Set a strong random secret in production.");
+        }
+    }
+
+    private void warnIfDefaultAiInternalToken() {
+        String token = env.getProperty("ai.internal.service-token", "");
+        if (token.contains("dev-only") || token.contains("change-me")) {
+            log.warn("AI_INTERNAL_SERVICE_TOKEN appears to be a development default. Set a strong shared token in production.");
         }
     }
 
@@ -77,6 +86,13 @@ public class OperationalReadinessReporter {
         String lower = datasourceUrl.toLowerCase(Locale.ROOT);
         if (!lower.startsWith("jdbc:")) {
             log.warn("spring.datasource.url does not start with jdbc:. Current value={}", summarizeJdbcUrl(datasourceUrl));
+        }
+    }
+
+    private void warnIfDefaultTotpEncryptionKey() {
+        String key = env.getProperty("security.totp.encryption-key", "");
+        if (key.contains("dev-only") || key.contains("change-me")) {
+            log.warn("TOTP_ENCRYPTION_KEY appears to be a development default. Set a dedicated strong key in production.");
         }
     }
 

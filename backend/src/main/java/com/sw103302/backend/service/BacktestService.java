@@ -7,11 +7,9 @@ import com.sw103302.backend.entity.BacktestRun;
 import com.sw103302.backend.entity.User;
 import com.sw103302.backend.repository.BacktestRunRepository;
 import com.sw103302.backend.repository.UserRepository;
-import com.sw103302.backend.util.BacktestRunSpecs;
 import com.sw103302.backend.util.SecurityUtil;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.*;
@@ -99,13 +97,10 @@ public class BacktestService {
     public List<BacktestRunSummary> myHistory(int limit) {
         String email = SecurityUtil.requireCurrentEmail();
 
-        var list = backtestRunRepository.findByUser_EmailOrderByCreatedAtDesc(email, PageRequest.of(0, Math.max(1, Math.min(limit, 100))));
-        return list.stream()
-                .map(r -> new BacktestRunSummary(
-                        r.getId(), r.getTicker(), r.getMarket(), r.getStrategy(),
-                        r.getTotalReturn(), r.getMaxDrawdown(), r.getSharpe(), r.getCagr(), r.getCreatedAt()
-                ))
-                .toList();
+        return backtestRunRepository.findSummaryByUserEmail(
+                email,
+                PageRequest.of(0, Math.max(1, Math.min(limit, 100)), Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
     }
 
     /**
@@ -116,25 +111,16 @@ public class BacktestService {
         String email = SecurityUtil.requireCurrentEmail();
 
         Pageable pageable = toPageable(page, size, sort);
-
-        var spec = Specification
-                .where(BacktestRunSpecs.userEmail(email))
-                .and(BacktestRunSpecs.tickerEq(ticker))
-                .and(BacktestRunSpecs.marketEq(market))
-                .and(BacktestRunSpecs.strategyEq(strategy));
-
-        var result = backtestRunRepository.findAll(spec, pageable);
-
-        var items = result.getContent().stream()
-                .map(r -> new BacktestRunSummary(
-                        r.getId(), r.getTicker(), r.getMarket(), r.getStrategy(),
-                        r.getTotalReturn(), r.getMaxDrawdown(), r.getSharpe(), r.getCagr(),
-                        r.getCreatedAt()
-                ))
-                .toList();
+        var result = backtestRunRepository.findSummaryPageByFilters(
+                email,
+                normalizeFilter(ticker),
+                normalizeFilter(market),
+                normalizeFilter(strategy),
+                pageable
+        );
 
         return new PageResponse<>(
-                items,
+                result.getContent(),
                 result.getNumber(),
                 result.getSize(),
                 result.getTotalElements(),
@@ -195,5 +181,12 @@ public class BacktestService {
         }
 
         return PageRequest.of(p, s, Sort.by(dir, prop));
+    }
+
+    private String normalizeFilter(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

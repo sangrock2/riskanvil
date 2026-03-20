@@ -7,6 +7,7 @@ import com.sw103302.backend.dto.RegisterRequest;
 import com.sw103302.backend.component.AuthMetricsRecorder;
 import com.sw103302.backend.entity.RefreshToken;
 import com.sw103302.backend.entity.User;
+import com.sw103302.backend.entity.UserSettings;
 import com.sw103302.backend.repository.RefreshTokenRepository;
 import com.sw103302.backend.repository.UserRepository;
 import com.sw103302.backend.repository.UserSettingsRepository;
@@ -16,9 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -57,7 +58,7 @@ class AuthServiceTest {
     private TwoFactorService twoFactorService;
 
     @Mock
-    private StringRedisTemplate redisTemplate;
+    private PendingTwoFactorStore pendingTwoFactorStore;
 
     @Mock
     private AuthMetricsRecorder authMetricsRecorder;
@@ -74,7 +75,7 @@ class AuthServiceTest {
                 jwtService,
                 tokenHashService,
                 twoFactorService,
-                redisTemplate,
+                pendingTwoFactorStore,
                 authMetricsRecorder
         );
     }
@@ -138,6 +139,26 @@ class AuthServiceTest {
         verify(authMetricsRecorder).recordStage(eq("login"), eq("lookup_user"), anyLong());
         verify(authMetricsRecorder).recordStage(eq("login"), eq("verify_password"), anyLong());
         verify(authMetricsRecorder).recordFlow(eq("login"), eq("success"), anyLong());
+    }
+
+    @Test
+    void login_withTwoFactorEnabled_shouldReturnPendingTokenAndStorePendingState() {
+        LoginRequest request = new LoginRequest("user@example.com", "password123");
+        User user = new User("user@example.com", "hashed_password", "ROLE_USER");
+        UserSettings settings = new UserSettings(user);
+        settings.setTotpEnabled(true);
+
+        when(userRepository.findByEmailIgnoreCase(request.email())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(request.password(), user.getPasswordHash())).thenReturn(true);
+        when(userSettingsRepository.findByUser_Id(any())).thenReturn(Optional.of(settings));
+
+        AuthResponse response = authService.login(request);
+
+        assertThat(response.requires2FA()).isTrue();
+        assertThat(response.pendingToken()).isNotBlank();
+        assertThat(response.accessToken()).isNull();
+        verify(pendingTwoFactorStore).store(eq(response.pendingToken()), eq(user.getEmail()), any(Duration.class));
+        verify(authMetricsRecorder).recordFlow(eq("login"), eq("requires_2fa"), anyLong());
     }
 
     @Test

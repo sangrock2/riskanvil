@@ -6,6 +6,10 @@ public record AuthResponse(
     Boolean requires2FA,
     String pendingToken
 ) {
+    public static AuthResponse accessOnly(String accessToken) {
+        return new AuthResponse(accessToken, null, false, null);
+    }
+
     /** Normal login (no 2FA) */
     public static AuthResponse of(String accessToken, String refreshToken) {
         return new AuthResponse(accessToken, refreshToken, false, null);

@@ -50,7 +50,8 @@ DB_PASSWORD=your_db_password
 
 ### 3.1 Health
 
-- Backend: `/actuator/health`
+- Backend readiness: `/actuator/health/readiness`
+- Backend aggregate diagnostics: `/actuator/health`
 - AI: `/health`
 
 ### 3.2 Logs
@@ -71,6 +72,7 @@ DB_PASSWORD=your_db_password
 ### 3.4 Metrics
 
 - Backend: `/actuator/prometheus`
+- AI: `/metrics`
 - 최소 추적 지표:
   - HTTP 5xx 비율
   - 응답시간 p95/p99
@@ -106,6 +108,9 @@ DB_PASSWORD=your_db_password
 - 24시간 합성 모니터링:
   - `python scripts/synthetic_monitor.py`
   - 리포트: `artifacts/reports/synthetic-monitor-report.json`
+- 배포 공개 smoke:
+  - `pwsh -File scripts/run_production_smoke.ps1 ...`
+  - 산출물: `artifacts/reports/public-service-verification.json`, `frontend/playwright-report/`
 - 단기 부하 테스트:
   - `python scripts/load_test_short.py`
   - 리포트: `artifacts/reports/load-test-short-report.json`
@@ -120,6 +125,12 @@ DB_PASSWORD=your_db_password
 3. 배포 로그에서 서버 시작/포트 바인딩 확인
 4. 배포 후 체크리스트 수행
 5. 이상 징후 시 즉시 롤백
+
+GitHub Actions 운영 smoke:
+- `.github/workflows/production-smoke.yml`
+- 필요값:
+  - repo variable: `PROD_SMOKE_FRONTEND_URL`, `PROD_SMOKE_BACKEND_HEALTH_URL`, `PROD_SMOKE_AI_HEALTH_URL`
+  - repo secret: `PROD_SMOKE_EMAIL`, `PROD_SMOKE_PASSWORD`
 
 ### 4.4 롤백 기준
 
@@ -164,7 +175,7 @@ DB_PASSWORD=your_db_password
 1. `DB_URL`를 `jdbc:postgresql://.../<db_name>`으로 교정
 2. Render PostgreSQL의 실제 DB 이름 확인
 3. `DB_USERNAME`, `DB_PASSWORD` 재설정
-4. 재배포 후 `/actuator/health` 확인
+4. 재배포 후 `/actuator/health/readiness` 확인
 
 ### 5.4 AI 지연/타임아웃 시
 

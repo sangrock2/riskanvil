@@ -252,7 +252,7 @@ function buildScenarioFrames(scenarioId, rawInput, stepCount) {
           ...state,
           stage: "db.read",
           db: {
-            source: "MySQL",
+            source: "PostgreSQL",
             repositories: ["PortfolioRepository", "PortfolioPositionRepository"],
             positions,
           },
@@ -339,7 +339,7 @@ function buildScenarioFrames(scenarioId, rawInput, stepCount) {
           ...state,
           stage: "cache.persist",
           persistence: {
-            mysqlUpdated: true,
+            postgresUpdated: true,
             redisUpdated: true,
             cacheTtlSec: 180,
           },
@@ -759,7 +759,7 @@ function buildArchitecture(raw) {
     { id: "be_ai_client", layer: "backend-service", label: "AiClient", tech: "WebClient + Cache + Retry" },
     { id: "be_ws_handler", layer: "backend-service", label: "QuoteWebSocketHandler", tech: "Spring WebSocket" },
     { id: "be_ws_relay", layer: "backend-service", label: "QuoteWebSocketRelay", tech: "AI relay + reconnect" },
-    { id: "db_mysql", layer: "backend-data", label: "MySQL", tech: "JPA + Flyway" },
+    { id: "db_postgresql", layer: "backend-data", label: "PostgreSQL", tech: "JPA + Flyway" },
     { id: "db_redis", layer: "backend-data", label: "Redis Cache", tech: "Spring Cache" },
     { id: "ai_gateway", layer: "ai-route", label: "FastAPI main.py", tech: "Router aggregation" },
     { id: "ext_yfinance", layer: "external", label: "Yahoo Finance", tech: "yfinance" },
@@ -840,9 +840,9 @@ function buildArchitecture(raw) {
   addEdge("ai_route_intelligence", "ext_ollama", "fallback/provider");
   addEdge("svc_MarketCacheService", "db_redis", "cache read/write");
   addEdge("svc_PriceService", "db_redis", "prices cache");
-  addEdge("svc_UsageService", "db_mysql", "usage_log");
-  addEdge("svc_PortfolioService", "db_mysql", "portfolio tables");
-  addEdge("svc_WatchlistService", "db_mysql", "watchlist tables");
+  addEdge("svc_UsageService", "db_postgresql", "usage_log");
+  addEdge("svc_PortfolioService", "db_postgresql", "portfolio tables");
+  addEdge("svc_WatchlistService", "db_postgresql", "watchlist tables");
 
   const allFrontendApiPaths = [
     ...(raw.frontend.apiModules || []).flatMap((m) => m.paths || []),
@@ -885,7 +885,7 @@ function buildArchitecture(raw) {
   }
 
   for (const r of raw.backend.repositories || []) {
-    addEdge(`repo_${safeId(r.name)}`, "db_mysql", "JPA");
+    addEdge(`repo_${safeId(r.name)}`, "db_postgresql", "JPA");
   }
 
   const positioned = assignPositions(nodes);
@@ -1073,7 +1073,7 @@ function useScenario(graph) {
           {
             title: "3) DB 포지션 조회",
             detail: "Repository 계층에서 포트폴리오/포지션 데이터를 조회합니다.",
-            nodeIds: [svc("PortfolioService"), "repo_PortfolioRepository", "repo_PortfolioPositionRepository", "db_mysql"].filter(Boolean),
+            nodeIds: [svc("PortfolioService"), "repo_PortfolioRepository", "repo_PortfolioPositionRepository", "db_postgresql"].filter(Boolean),
           },
           {
             title: "4) 시장별 가격 배치 호출",
@@ -1116,7 +1116,7 @@ function useScenario(graph) {
           {
             title: "4) MarketCache 업데이트",
             detail: "업데이트된 insights_json이 DB/캐시에 저장됩니다.",
-            nodeIds: [svc("MarketCacheService"), "db_mysql", "db_redis"].filter(Boolean),
+            nodeIds: [svc("MarketCacheService"), "db_postgresql", "db_redis"].filter(Boolean),
           },
           { title: "5) UI 재렌더", detail: "score/action/price 요약이 watchlist 카드에 반영됩니다.", nodeIds: ["fe_query", "fe_ui"] },
         ],
@@ -1135,7 +1135,7 @@ function useScenario(graph) {
             nodeIds: ["be_ai_client", "ai_gateway", ai("intelligence"), "ext_openai", "ext_ollama"].filter(Boolean),
             edgeIds: ["be_ai_client->ai_gateway", "ai_gateway->ai_route_intelligence", "ai_route_intelligence->ext_openai", "ai_route_intelligence->ext_ollama"].filter(Boolean),
           },
-          { title: "4) 스트림 완료 + 히스토리 저장", detail: "완성된 보고서가 report-history와 usage log에 기록됩니다.", nodeIds: ["db_mysql", "svc_UsageService", "svc_MarketCacheService"].filter(Boolean) },
+          { title: "4) 스트림 완료 + 히스토리 저장", detail: "완성된 보고서가 report-history와 usage log에 기록됩니다.", nodeIds: ["db_postgresql", "svc_UsageService", "svc_MarketCacheService"].filter(Boolean) },
           { title: "5) Export API", detail: "같은 리포트를 TXT/JSON/PDF로 ExportController에서 직렬화하여 다운로드합니다.", nodeIds: [ctrl("ReportExportController"), "fe_ui"].filter(Boolean) },
         ],
       },
@@ -1181,7 +1181,7 @@ function useScenario(graph) {
         steps: [
           { title: "1) 로그인 요청 생성", detail: "이메일/비밀번호가 Auth API 요청으로 전송됩니다.", nodeIds: ["fe_ui", "fe_api"] },
           { title: "2) AuthController / AuthService 검증", detail: "유저 조회 및 패스워드 해시 검증을 수행합니다.", nodeIds: [ctrl("AuthController"), svc("AuthService"), svc("TokenHashService")].filter(Boolean), edgeIds: ["fe_api->ctrl_AuthController", "ctrl_AuthController->svc_AuthService", "svc_AuthService->svc_TokenHashService"].filter(Boolean) },
-          { title: "3) JWT/Refresh 발급", detail: "JwtService가 access/refresh 토큰을 발급하고 refresh 저장소를 갱신합니다.", nodeIds: [svc("AuthService"), svc("JwtService"), repo("RefreshTokenRepository"), "db_mysql"].filter(Boolean), edgeIds: ["svc_AuthService->svc_JwtService", "svc_AuthService->repo_RefreshTokenRepository", "repo_RefreshTokenRepository->db_mysql"].filter(Boolean) },
+          { title: "3) JWT/Refresh 발급", detail: "JwtService가 access/refresh 토큰을 발급하고 refresh 저장소를 갱신합니다.", nodeIds: [svc("AuthService"), svc("JwtService"), repo("RefreshTokenRepository"), "db_postgresql"].filter(Boolean), edgeIds: ["svc_AuthService->svc_JwtService", "svc_AuthService->repo_RefreshTokenRepository", "repo_RefreshTokenRepository->db_postgresql"].filter(Boolean) },
           { title: "4) Access 만료 후 Refresh 호출", detail: "프론트 인터셉터가 refresh 엔드포인트를 호출해 세션을 유지합니다.", nodeIds: ["fe_api", ctrl("AuthController"), svc("AuthService")].filter(Boolean), edgeIds: ["fe_api->ctrl_AuthController", "ctrl_AuthController->svc_AuthService"].filter(Boolean) },
           { title: "5) 재발급 토큰으로 요청 재시도", detail: "새 access token으로 원래 API 요청을 자동 재시도합니다.", nodeIds: ["fe_query", "fe_api", "fe_ui"] },
         ],
@@ -1194,9 +1194,9 @@ function useScenario(graph) {
         steps: [
           { title: "1) 주문 입력", detail: "{{ticker}} {{side}} {{qty}}주 주문을 생성합니다.", nodeIds: ["fe_ui", "fe_api"] },
           { title: "2) PaperTradingController 진입", detail: "요청 검증 후 PaperTradingService로 위임합니다.", nodeIds: [ctrl("PaperTradingController"), svc("PaperTradingService")].filter(Boolean), edgeIds: ["fe_api->ctrl_PaperTradingController", "ctrl_PaperTradingController->svc_PaperTradingService"].filter(Boolean) },
-          { title: "3) 잔고/리스크 체크", detail: "계좌 가용현금과 주문 리스크 한도를 확인합니다.", nodeIds: [svc("PaperTradingService"), repo("PaperAccountRepository"), "db_mysql"].filter(Boolean), edgeIds: ["svc_PaperTradingService->repo_PaperAccountRepository", "repo_PaperAccountRepository->db_mysql"].filter(Boolean) },
+          { title: "3) 잔고/리스크 체크", detail: "계좌 가용현금과 주문 리스크 한도를 확인합니다.", nodeIds: [svc("PaperTradingService"), repo("PaperAccountRepository"), "db_postgresql"].filter(Boolean), edgeIds: ["svc_PaperTradingService->repo_PaperAccountRepository", "repo_PaperAccountRepository->db_postgresql"].filter(Boolean) },
           { title: "4) 체결 시뮬레이션", detail: "모의 체결 엔진이 fill price/slippage를 계산합니다.", nodeIds: [svc("PaperTradingService"), svc("PriceService"), "be_ai_client", ai("prices")].filter(Boolean), edgeIds: ["svc_PaperTradingService->svc_PriceService", "svc_PriceService->be_ai_client", "be_ai_client->ai_gateway", "ai_gateway->ai_route_prices"].filter(Boolean) },
-          { title: "5) 주문/포지션/잔고 반영", detail: "주문과 포지션, 계좌 잔고를 저장소에 반영합니다.", nodeIds: [repo("PaperOrderRepository"), repo("PaperPositionRepository"), repo("PaperAccountRepository"), "db_mysql"].filter(Boolean), edgeIds: ["repo_PaperOrderRepository->db_mysql", "repo_PaperPositionRepository->db_mysql", "repo_PaperAccountRepository->db_mysql"].filter(Boolean) },
+          { title: "5) 주문/포지션/잔고 반영", detail: "주문과 포지션, 계좌 잔고를 저장소에 반영합니다.", nodeIds: [repo("PaperOrderRepository"), repo("PaperPositionRepository"), repo("PaperAccountRepository"), "db_postgresql"].filter(Boolean), edgeIds: ["repo_PaperOrderRepository->db_postgresql", "repo_PaperPositionRepository->db_postgresql", "repo_PaperAccountRepository->db_postgresql"].filter(Boolean) },
           { title: "6) UI 업데이트", detail: "체결 결과와 계좌 평가금액이 즉시 반영됩니다.", nodeIds: ["fe_query", "fe_ui"] },
         ],
       },

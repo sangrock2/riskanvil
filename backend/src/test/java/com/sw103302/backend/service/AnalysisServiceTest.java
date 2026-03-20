@@ -18,14 +18,16 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 
 import com.sw103302.backend.util.SecurityUtil;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -203,15 +205,13 @@ class AnalysisServiceTest {
     void myHistory_shouldReturnUserAnalysisHistory() {
         // Given
         String email = "user@example.com";
-        User user = new User(email, "hash", "ROLE_USER");
-
-        AnalysisRun run1 = new AnalysisRun(user, "AAPL", "US", "{}", "{}", "BUY", 0.8);
-        AnalysisRun run2 = new AnalysisRun(user, "GOOGL", "US", "{}", "{}", "HOLD", 0.5);
+        AnalysisRunSummary summary1 = new AnalysisRunSummary(1L, "AAPL", "US", "BUY", 0.8, Instant.now());
+        AnalysisRunSummary summary2 = new AnalysisRunSummary(2L, "GOOGL", "US", "HOLD", 0.5, Instant.now().minusSeconds(60));
 
         securityUtilMock.when(SecurityUtil::currentEmail).thenReturn(email);
         securityUtilMock.when(SecurityUtil::requireCurrentEmail).thenReturn(email);
-        when(analysisRunRepository.findByUser_EmailOrderByCreatedAtDesc(eq(email), any(Pageable.class)))
-                .thenReturn(List.of(run1, run2));
+        when(analysisRunRepository.findSummaryByUserEmail(eq(email), any(Pageable.class)))
+                .thenReturn(List.of(summary1, summary2));
 
         // When
         List<AnalysisRunSummary> history = analysisService.myHistory(10);
@@ -241,7 +241,7 @@ class AnalysisServiceTest {
         String email = "user@example.com";
         securityUtilMock.when(SecurityUtil::currentEmail).thenReturn(email);
         securityUtilMock.when(SecurityUtil::requireCurrentEmail).thenReturn(email);
-        when(analysisRunRepository.findByUser_EmailOrderByCreatedAtDesc(anyString(), any(Pageable.class)))
+        when(analysisRunRepository.findSummaryByUserEmail(anyString(), any(Pageable.class)))
                 .thenReturn(List.of());
 
         // When
@@ -249,7 +249,7 @@ class AnalysisServiceTest {
 
         // Then
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(analysisRunRepository).findByUser_EmailOrderByCreatedAtDesc(eq(email), pageableCaptor.capture());
+        verify(analysisRunRepository).findSummaryByUserEmail(eq(email), pageableCaptor.capture());
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(5);
     }
 
@@ -259,7 +259,7 @@ class AnalysisServiceTest {
         String email = "user@example.com";
         securityUtilMock.when(SecurityUtil::currentEmail).thenReturn(email);
         securityUtilMock.when(SecurityUtil::requireCurrentEmail).thenReturn(email);
-        when(analysisRunRepository.findByUser_EmailOrderByCreatedAtDesc(anyString(), any(Pageable.class)))
+        when(analysisRunRepository.findSummaryByUserEmail(anyString(), any(Pageable.class)))
                 .thenReturn(List.of());
 
         // When - request with limit > 100
@@ -267,7 +267,7 @@ class AnalysisServiceTest {
 
         // Then - should be clamped to 100
         ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-        verify(analysisRunRepository).findByUser_EmailOrderByCreatedAtDesc(eq(email), pageableCaptor.capture());
+        verify(analysisRunRepository).findSummaryByUserEmail(eq(email), pageableCaptor.capture());
         assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
     }
 
@@ -275,13 +275,12 @@ class AnalysisServiceTest {
     void myHistoryPage_shouldReturnPaginatedResults() {
         // Given
         String email = "user@example.com";
-        User user = new User(email, "hash", "ROLE_USER");
-        AnalysisRun run = new AnalysisRun(user, "AAPL", "US", "{}", "{}", "BUY", 0.8);
+        AnalysisRunSummary summary = new AnalysisRunSummary(1L, "AAPL", "US", "BUY", 0.8, Instant.now());
 
         securityUtilMock.when(SecurityUtil::currentEmail).thenReturn(email);
         securityUtilMock.when(SecurityUtil::requireCurrentEmail).thenReturn(email);
-        when(analysisRunRepository.findAll(any(Specification.class), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(run), PageRequest.of(0, 10), 1));
+        when(analysisRunRepository.findSummaryPageByFilters(anyString(), any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(summary), PageRequest.of(0, 10), 1));
 
         // When
         var response = analysisService.myHistoryPage(0, 10, "createdAt,desc", null, null, null, null, null);
@@ -290,6 +289,27 @@ class AnalysisServiceTest {
         assertThat(response.items()).hasSize(1);
         assertThat(response.page()).isEqualTo(0);
         assertThat(response.totalElements()).isEqualTo(1);
+    }
+
+    @Test
+    void myHistoryPage_shouldConvertDateRangeToSeoulInstants() {
+        String email = "user@example.com";
+        securityUtilMock.when(SecurityUtil::currentEmail).thenReturn(email);
+        securityUtilMock.when(SecurityUtil::requireCurrentEmail).thenReturn(email);
+        when(analysisRunRepository.findSummaryPageByFilters(anyString(), any(), any(), any(), any(), any(), any(Pageable.class)))
+                .thenReturn(Page.empty());
+
+        analysisService.myHistoryPage(0, 10, "createdAt,desc", null, null, null,
+                LocalDate.of(2026, 3, 1), LocalDate.of(2026, 3, 2));
+
+        ArgumentCaptor<Instant> fromCaptor = ArgumentCaptor.forClass(Instant.class);
+        ArgumentCaptor<Instant> toCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(analysisRunRepository).findSummaryPageByFilters(
+                eq(email), any(), any(), any(), fromCaptor.capture(), toCaptor.capture(), any(Pageable.class)
+        );
+
+        assertThat(fromCaptor.getValue()).isEqualTo(LocalDate.of(2026, 3, 1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant());
+        assertThat(toCaptor.getValue()).isEqualTo(LocalDate.of(2026, 3, 3).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant());
     }
 
     @Test

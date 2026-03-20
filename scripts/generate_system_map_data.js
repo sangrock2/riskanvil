@@ -9,23 +9,40 @@ const IGNORE_DIRS = new Set([
   ".git",
   "node_modules",
   ".gradle",
+  ".gradle-local",
+  ".gradle-local-review",
   "build",
   "dist",
   "out",
   "__pycache__",
   ".idea",
   ".vscode",
+  ".riskanvil-export",
+  "artifacts",
+  "coverage",
+  "playwright-report",
+  "test-results",
+]);
+const IGNORE_FILE_EXTENSIONS = new Set([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".svg",
+  ".pdf",
 ]);
 
 function walk(dir, base = ROOT, out = []) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
-    if (IGNORE_DIRS.has(entry.name)) continue;
+    if (IGNORE_DIRS.has(entry.name) || entry.name.startsWith(".tmp")) continue;
     const abs = path.join(dir, entry.name);
     const rel = path.relative(base, abs).replace(/\\/g, "/");
     if (entry.isDirectory()) {
       walk(abs, base, out);
     } else if (entry.isFile()) {
+      if (IGNORE_FILE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) continue;
       out.push(rel);
     }
   }

@@ -16,6 +16,7 @@ export function usePortfolios() {
     queryKey: ["portfolios"],
     queryFn: getPortfolios,
     staleTime: STALE_TIMES.PORTFOLIO,
+    retry: 0,
   });
 }
 
@@ -25,6 +26,7 @@ export function usePortfolioDetail(id) {
     queryFn: () => getPortfolioDetail(id),
     enabled: !!id,
     staleTime: STALE_TIMES.PORTFOLIO,
+    retry: 0,
   });
 }
 
@@ -65,6 +67,7 @@ export function usePortfolioEarningsCalendar(id, daysAhead = 90) {
     queryFn: () => getPortfolioEarningsCalendar(id, daysAhead),
     enabled: !!id,
     staleTime: STALE_TIMES.PORTFOLIO,
+    retry: 0,
   });
 }
 
@@ -74,5 +77,6 @@ export function usePortfolioRiskDashboard(id, lookbackDays = 252) {
     queryFn: () => getPortfolioRiskDashboard(id, lookbackDays),
     enabled: !!id,
     staleTime: STALE_TIMES.PORTFOLIO,
+    retry: 0,
   });
 }

@@ -8,8 +8,8 @@
 
 | 범주 | 현재 자산 | 위치 |
 |---|---|---|
-| 서버 헬스 | `/actuator/health`, `/health` | Backend, AI |
-| Prometheus 계측 | `/actuator/prometheus` | Backend |
+| 서버 헬스 | `/actuator/health/readiness`, `/health` | Backend, AI |
+| Prometheus 계측 | `/actuator/prometheus`, `/metrics` | Backend, AI |
 | 표준 웹 메트릭 | `http.server.requests` 등 Spring Boot 기본 메트릭 | Backend Actuator |
 | 인증 플로우 메트릭 | `auth_flow_total`, `auth_flow_latency`, `auth_flow_stage_latency` | `AuthMetricsRecorder` |
 | 캐시 이벤트 메트릭 | `app_cache_events_total` | `CacheMetricsRecorder` |

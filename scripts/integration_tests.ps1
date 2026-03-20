@@ -69,9 +69,9 @@ function Test-Endpoint {
 Write-Host "Checking service availability..." -ForegroundColor Yellow
 Write-Host ""
 
-# Test 1: Backend Health
+# Test 1: Backend Readiness
 Test-Endpoint -Name "Backend Health Check" `
-    -Url "$baseUrl/actuator/health" `
+    -Url "$baseUrl/actuator/health/readiness" `
     -Validator { param($r) $r.status -eq "UP" }
 
 # Test 2: AI Service Health

@@ -5,7 +5,7 @@
 ## 1. Service URLs
 
 - Public App URL: `https://<your-domain>`
-- Backend Health URL: `https://<your-domain>/api/actuator/health` (또는 내부 운영 URL)
+- Backend Readiness URL: `https://<your-domain>/actuator/health/readiness` (또는 내부 운영 URL)
 - AI Health URL: `https://<your-domain>/ai/health` (프록시 구성 시)
 
 ## 2. Automated Verification
@@ -15,7 +15,7 @@
 ```powershell
 pwsh -File scripts/verify_public_service.ps1 `
   -PublicAppUrl "https://your-domain.com" `
-  -BackendHealthUrl "https://api.your-domain.com/actuator/health" `
+  -BackendHealthUrl "https://api.your-domain.com/actuator/health/readiness" `
   -AiHealthUrl "https://ai.your-domain.com/health"
 ```
 

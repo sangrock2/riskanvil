@@ -14,6 +14,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.net.InetSocketAddress;
 import java.time.Instant;
 import java.util.Date;
 import java.util.concurrent.Executors;
@@ -69,7 +70,7 @@ class QuoteWebSocketHandlerTest {
     void broadcastQuote_shouldSendOnlyToSubscribedSessions() throws Exception {
         when(sessionA.getId()).thenReturn("session-a");
         when(sessionB.getId()).thenReturn("session-b");
-        when(sessionA.isOpen()).thenReturn(true);
+        lenient().when(sessionA.isOpen()).thenReturn(true);
         when(sessionB.isOpen()).thenReturn(true);
         when(jwtService.parseClaims("valid.jwt")).thenReturn(claims);
 
@@ -94,7 +95,6 @@ class QuoteWebSocketHandlerTest {
     void connectionClose_shouldUnsubscribeOnlyWhenLastSubscriberLeaves() throws Exception {
         when(sessionA.getId()).thenReturn("session-a");
         when(sessionB.getId()).thenReturn("session-b");
-        when(sessionA.isOpen()).thenReturn(true);
         when(sessionB.isOpen()).thenReturn(true);
         when(jwtService.parseClaims("valid.jwt")).thenReturn(claims);
 
@@ -181,5 +181,28 @@ class QuoteWebSocketHandlerTest {
         Thread.sleep(160);
 
         verify(sessionA, times(1)).close(any(CloseStatus.class));
+    }
+
+    @Test
+    void unauthenticatedConnectionsFromSameIp_shouldBeLimited() throws Exception {
+        QuoteWebSocketHandler limitedHandler = new QuoteWebSocketHandler(
+                eventPublisher,
+                new ObjectMapper(),
+                jwtService,
+                1_000,
+                10,
+                1,
+                authTimeoutScheduler
+        );
+        when(sessionA.getId()).thenReturn("session-a");
+        when(sessionB.getId()).thenReturn("session-b");
+        when(sessionB.isOpen()).thenReturn(true);
+        when(sessionA.getRemoteAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 8080));
+        when(sessionB.getRemoteAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 8081));
+
+        limitedHandler.afterConnectionEstablished(sessionA);
+        limitedHandler.afterConnectionEstablished(sessionB);
+
+        verify(sessionB, times(1)).close(any(CloseStatus.class));
     }
 }

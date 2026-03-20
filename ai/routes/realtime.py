@@ -7,6 +7,7 @@ import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
+from config import INTERNAL_SERVICE_TOKEN_HEADER, is_internal_service_request_authorized
 from data_sources.finnhub_ws import finnhub_ws
 
 logger = logging.getLogger("app")
@@ -46,6 +47,11 @@ finnhub_ws.on_price_update(_broadcast_price)
 @router.websocket("/ws/quotes")
 async def websocket_quotes(ws: WebSocket):
     """실시간 시세 WebSocket 엔드포인트"""
+    if not is_internal_service_request_authorized(ws.headers.get(INTERNAL_SERVICE_TOKEN_HEADER, "")):
+        logger.warning("Rejected unauthorized AI WebSocket connection")
+        await ws.close(code=1008)
+        return
+
     await ws.accept()
     _clients.add(ws)
     _client_subscriptions[ws] = set()
