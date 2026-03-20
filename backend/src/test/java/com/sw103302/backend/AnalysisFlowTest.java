@@ -70,9 +70,10 @@ class AnalysisFlowTest {
                 .andExpect(jsonPath("$.result.decision.action").value("HOLD"));
 
         // 3) history
-        var historyResult = mvc.perform(get("/api/analysis/history?limit=10")
+        var historyResult = mvc.perform(get("/api/analysis/history?page=0&size=10&sort=createdAt,desc")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items").isArray())
                 .andReturn();
 
         String historyJson = historyResult.getResponse().getContentAsString();

@@ -17,21 +17,21 @@ public class AnalysisRunSpecs {
     public static Specification<AnalysisRun> tickerEq(String ticker) {
         return (root, query, cb) -> {
             if (ticker == null || ticker.isBlank()) return cb.conjunction();
-            return cb.equal(root.get("ticker"), ticker.trim());
+            return cb.equal(cb.upper(root.get("ticker")), ticker.trim().toUpperCase());
         };
     }
 
     public static Specification<AnalysisRun> marketEq(String market) {
         return (root, query, cb) -> {
             if (market == null || market.isBlank()) return cb.conjunction();
-            return cb.equal(root.get("market"), market.trim());
+            return cb.equal(cb.upper(root.get("market")), market.trim().toUpperCase());
         };
     }
 
     public static Specification<AnalysisRun> actionEq(String action) {
         return (root, query, cb) -> {
             if (action == null || action.isBlank()) return cb.conjunction();
-            return cb.equal(root.get("action"), action.trim());
+            return cb.equal(cb.upper(root.get("action")), action.trim().toUpperCase());
         };
     }
 
@@ -39,10 +39,10 @@ public class AnalysisRunSpecs {
         return (root, query, cb) -> {
             if (from == null && to == null) return cb.conjunction();
 
-            var createdAt = root.get("createdAt").as(Instant.class);; // AnalysisRun 필드명이 createdAt 맞다는 가정
+            var createdAt = root.get("createdAt").as(Instant.class);
 
             Instant fromI = (from != null) ? from.atStartOfDay(ZONE).toInstant() : null;
-            Instant toI = (to != null) ? to.plusDays(1).atStartOfDay(ZONE).toInstant() : null; // to 포함: null;
+            Instant toI = (to != null) ? to.plusDays(1).atStartOfDay(ZONE).toInstant() : null;
 
             if (fromI != null && toI != null) {
                 return cb.between(createdAt, fromI, toI);
