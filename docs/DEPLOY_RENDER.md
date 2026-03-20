@@ -28,6 +28,7 @@ Stock-AI를 Render에 배포할 때 필요한 최소 설정입니다.
 SPRING_PROFILES_ACTIVE=prod,postgres
 JWT_SECRET=<32바이트 이상 랜덤 문자열>
 REFRESH_TOKEN_PEPPER=<추가 시크릿 권장>
+TOTP_ENCRYPTION_KEY=<32바이트 이상 랜덤 문자열, 재배포 시 동일 값 유지>
 
 # DB (PostgreSQL 16)
 DB_URL=jdbc:postgresql://<host>:5432/stock_ai
@@ -55,6 +56,24 @@ SPRING_CACHE_TYPE=simple
 # REDIS_PASSWORD=<redis-password>
 ```
 
+중요:
+- `TOTP_ENCRYPTION_KEY` 는 `backend` 시작 전에 반드시 설정되어 있어야 하며, 문자열 기준 최소 32바이트 이상이어야 합니다.
+- 이미 운영 DB에 저장된 2FA 시크릿은 이 키로 암호화되므로, 값을 바꾸면 기존 사용자의 TOTP 복호화가 실패할 수 있습니다. 키 회전 절차를 별도로 준비하지 않았다면 재배포 때도 같은 값을 유지하세요.
+- PowerShell 예시: `[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))`
+
+### 2.1 Backend + AI 공통 시크릿
+
+아래 값은 `backend` 와 `ai` 서비스에 **같은 값으로** 넣어야 합니다.
+
+```env
+AI_INTERNAL_SERVICE_TOKEN=<32자 이상 강한 랜덤 문자열>
+```
+
+중요:
+- `backend` 에만 넣거나 `ai` 에만 넣으면 두 서비스 모두 기동에 실패할 수 있습니다.
+- 기본값, 예제값, `change-me`, `dev-only` 같은 토큰은 운영/스테이징에서 거부됩니다.
+- 이 값은 외부 공개 토큰이 아니라 backend -> ai 내부 호출용 공유 시크릿입니다.
+
 참고:
 - `DB_URL`에 실수로 `postgresql://...` 또는 `postgres://...`를 넣어도 앱 시작 시 자동으로 `jdbc:postgresql://...`로 보정됩니다.
 - 운영 안정성을 위해 Dashboard에는 처음부터 `jdbc:postgresql://...` 형식으로 입력하는 것을 권장합니다.
@@ -73,10 +92,11 @@ VITE_WS_URL=https://<your-backend>.onrender.com
 
 ## 4. 배포 순서
 
-1. `ai` 배포
-2. `backend` 배포 (AI/PostgreSQL/보안 env 설정)
-3. `frontend` 배포 (`VITE_API_BASE_URL`을 backend URL로 설정)
-4. frontend URL 확정 후 backend의 `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 값을 최종 URL로 업데이트 후 재배포
+1. `ai`와 `backend`에 같은 `AI_INTERNAL_SERVICE_TOKEN` 입력
+2. `ai` 배포
+3. `backend` 배포 (AI/PostgreSQL/보안 env 설정)
+4. `frontend` 배포 (`VITE_API_BASE_URL`을 backend URL로 설정)
+5. frontend URL 확정 후 backend의 `APP_CORS_ALLOWED_ORIGIN_PATTERNS` 값을 최종 URL로 업데이트 후 재배포
 
 ## 5. 이번 코드 반영 사항
 

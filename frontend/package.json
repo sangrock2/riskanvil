@@ -27,7 +27,7 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "build": "vite build",
+    "build": "vite build && node ../scripts/generate_static_spa_routes.js",
     "preview": "vite preview --host 0.0.0.0 --port 3000",
     "test": "vitest run --config vitest.config.cjs --pool=threads --poolOptions.threads.singleThread=true",
     "test:watch": "vitest --config vitest.config.cjs --pool=threads --poolOptions.threads.singleThread=true",

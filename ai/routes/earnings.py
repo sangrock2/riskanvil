@@ -1,5 +1,5 @@
 """Earnings calendar endpoints."""
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter
@@ -35,7 +35,7 @@ def _to_float(value) -> Optional[float]:
 @router.post("/earnings/calendar")
 async def earnings_calendar(req: EarningsCalendarRequest):
     days_ahead = min(max(req.daysAhead, 7), 365)
-    today = datetime.utcnow().date()
+    today = datetime.now(UTC).date()
     end = today + timedelta(days=days_ahead)
     events = []
 
@@ -78,6 +78,6 @@ async def earnings_calendar(req: EarningsCalendarRequest):
 
     return {
         "daysAhead": days_ahead,
-        "generatedAt": datetime.utcnow().isoformat(),
+        "generatedAt": datetime.now(UTC).isoformat(),
         "events": events,
     }

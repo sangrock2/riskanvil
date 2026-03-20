@@ -1,5 +1,5 @@
 """Portfolio risk dashboard endpoint."""
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException
@@ -206,7 +206,7 @@ async def portfolio_risk(req: PortfolioRiskRequest):
         risk_level = "MEDIUM"
 
     return {
-        "generatedAt": datetime.utcnow().isoformat(),
+        "generatedAt": datetime.now(UTC).isoformat(),
         "riskLevel": risk_level,
         "annualizedVolatilityPct": vol_pct,
         "maxDrawdownPct": max_dd_pct,

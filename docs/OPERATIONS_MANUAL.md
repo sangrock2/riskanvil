@@ -19,6 +19,8 @@
 - `SPRING_PROFILES_ACTIVE=prod,postgres`
 - `JWT_SECRET` (32바이트 이상 랜덤 문자열)
 - `REFRESH_TOKEN_PEPPER` (운영 필수)
+- `TOTP_ENCRYPTION_KEY` (32바이트 이상 랜덤 문자열, 기존 운영값 유지)
+- `AI_INTERNAL_SERVICE_TOKEN` (AI 서비스와 같은 강한 랜덤 문자열)
 - `DB_URL` (반드시 JDBC 형식)
 - `DB_USERNAME`, `DB_PASSWORD`
 - `FLYWAY_ENABLED=true`
@@ -38,8 +40,14 @@ DB_PASSWORD=your_db_password
 
 ### 2.2 AI
 
+- `AI_INTERNAL_SERVICE_TOKEN` (backend와 같은 강한 랜덤 문자열)
 - 선택: `SENTRY_DSN`
 - 선택: `OPENAI_API_KEY`, `ALPHAVANTAGE_API_KEY`
+
+주의:
+- backend와 ai는 `AI_INTERNAL_SERVICE_TOKEN` 값을 반드시 동일하게 유지해야 합니다.
+- 한쪽만 누락되거나 값이 다르면 두 서비스 중 하나가 아니라 둘 다 기동 실패 또는 내부 호출 실패 상태가 됩니다.
+- `TOTP_ENCRYPTION_KEY`는 backend 기동 전 반드시 설정되어야 하며, 이미 암호화된 TOTP 시크릿이 있는 운영 DB에서는 재배포 시 같은 값을 유지해야 합니다.
 
 ### 2.3 Frontend
 

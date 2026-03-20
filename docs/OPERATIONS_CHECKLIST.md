@@ -45,6 +45,8 @@
 - [ ] `SPRING_PROFILES_ACTIVE=prod,postgres`
 - [ ] `JWT_SECRET` 설정 (32바이트 이상)
 - [ ] `REFRESH_TOKEN_PEPPER` 설정
+- [ ] `TOTP_ENCRYPTION_KEY` 설정 (32바이트 이상, 기존 운영값 유지)
+- [ ] `AI_INTERNAL_SERVICE_TOKEN` 설정
 - [ ] `DB_URL` 설정 (반드시 `jdbc:postgresql://...`)
 - [ ] `DB_USERNAME` 설정
 - [ ] `DB_PASSWORD` 설정
@@ -61,6 +63,8 @@
 주의:
 - `DB_URL`에 `postgresql://...` 형식(=jdbc 없음)을 넣지 않습니다.
 - DB 이름은 Render Postgres의 실제 DB 이름과 정확히 일치해야 합니다.
+- `AI_INTERNAL_SERVICE_TOKEN`은 AI 서비스와 반드시 같은 값이어야 합니다.
+- `TOTP_ENCRYPTION_KEY`를 새 값으로 바꾸면 기존 2FA 사용자의 인증이 깨질 수 있으므로, 특별한 키 회전 절차 없이 임의 변경하지 않습니다.
 
 ### 1.3 Frontend 환경변수 확인
 
@@ -78,8 +82,12 @@
 2. `Environment` 탭
 
 - [ ] `DATA_PROVIDER` 확인 (`yfinance` 또는 `alpha_vantage`)
+- [ ] `AI_INTERNAL_SERVICE_TOKEN` 설정
 - [ ] `ALPHAVANTAGE_API_KEY` 입력 (alpha_vantage 쓸 때)
 - [ ] `OPENAI_API_KEY` 입력 (OpenAI 기능 사용할 때)
+
+주의:
+- `AI_INTERNAL_SERVICE_TOKEN`은 backend 서비스와 반드시 같은 값이어야 합니다.
 
 ### 1.5 Sentry 연결 (Frontend/Backend/AI)
 
@@ -98,6 +106,8 @@
 - [ ] GitHub `main` 브랜치에 배포 커밋 푸시 완료
 - [ ] Render Backend/AI/Frontend 대상 브랜치가 `main`인지 확인
 - [ ] 환경변수 오타/누락 재확인
+- [ ] backend와 ai의 `AI_INTERNAL_SERVICE_TOKEN` 값이 정확히 같은지 재확인
+- [ ] `TOTP_ENCRYPTION_KEY` 가 비어 있지 않고 기존 운영값과 동일한지 재확인
 - [ ] `DB_URL`, `AI_BASE_URL`, `CORS` 재확인
 - [ ] 롤백 기준 확인 (직전 정상 커밋/배포 ID 기록)
 - [ ] `docs/PATCH_NOTES.md` 업데이트
@@ -108,10 +118,12 @@
 
 ## 3. 배포 실행 순서 (권장)
 
-1. AI 배포
-2. Backend 배포
-3. Frontend 배포
-4. Backend CORS 최종 재확인 후 필요 시 재배포
+1. AI와 Backend에 같은 `AI_INTERNAL_SERVICE_TOKEN` 입력 확인
+2. Backend의 `TOTP_ENCRYPTION_KEY` 설정/유지 확인
+3. AI 배포
+4. Backend 배포
+5. Frontend 배포
+6. Backend CORS 최종 재확인 후 필요 시 재배포
 
 Render에서 배포 방법:
 1. 서비스 선택
