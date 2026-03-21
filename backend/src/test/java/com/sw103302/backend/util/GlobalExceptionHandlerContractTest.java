@@ -9,6 +9,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -41,6 +42,20 @@ class GlobalExceptionHandlerContractTest {
                 .andExpect(jsonPath("$.path").value("/test/bad-request"));
     }
 
+    @Test
+    void shouldPreserveResponseStatusExceptionStatusAndCode() throws Exception {
+        mockMvc.perform(get("/test/forbidden")
+                        .header("X-Request-Id", "rid-test-403")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(header().string("X-Request-Id", "rid-test-403"))
+                .andExpect(header().string("X-Error-Code", "forbidden"))
+                .andExpect(jsonPath("$.error").value("forbidden"))
+                .andExpect(jsonPath("$.message").value("Invalid request origin"))
+                .andExpect(jsonPath("$.requestId").value("rid-test-403"))
+                .andExpect(jsonPath("$.path").value("/test/forbidden"));
+    }
+
     @RestController
     @RequestMapping("/test")
     static class ThrowingController {
@@ -48,6 +63,10 @@ class GlobalExceptionHandlerContractTest {
         public String badRequest() {
             throw new IllegalArgumentException("invalid input");
         }
+
+        @GetMapping("/forbidden")
+        public String forbidden() {
+            throw new ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "Invalid request origin");
+        }
     }
 }
-

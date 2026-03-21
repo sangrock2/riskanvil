@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -68,6 +69,27 @@ public class GlobalExceptionHandler {
     public org.springframework.http.ResponseEntity<ApiErrorResponse> handleSecurity(SecurityException e, HttpServletRequest req) {
         String msg = (e.getMessage() == null || e.getMessage().isBlank()) ? "forbidden" : e.getMessage();
         return build(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN, msg, req, null);
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public org.springframework.http.ResponseEntity<ApiErrorResponse> handleResponseStatus(ResponseStatusException e, HttpServletRequest req) {
+        HttpStatus status = HttpStatus.resolve(e.getStatusCode().value());
+        if (status == null) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        String msg = (e.getReason() == null || e.getReason().isBlank())
+                ? status.getReasonPhrase()
+                : e.getReason();
+
+        ErrorCode code = switch (status) {
+            case BAD_REQUEST -> ErrorCode.BAD_REQUEST;
+            case UNAUTHORIZED -> ErrorCode.UNAUTHENTICATED;
+            case FORBIDDEN -> ErrorCode.FORBIDDEN;
+            default -> status.is4xxClientError() ? ErrorCode.BAD_REQUEST : ErrorCode.INTERNAL_ERROR;
+        };
+
+        return build(status, code, msg, req, null);
     }
 
     @ExceptionHandler(IllegalStateException.class)
