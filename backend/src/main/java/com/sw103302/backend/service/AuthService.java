@@ -237,9 +237,7 @@ public class AuthService {
 
             long stageStartNs = System.nanoTime();
             String tokenHash = tokenHashService.hash(refreshTokenString);
-            RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash)
-                    .or(() -> refreshTokenRepository.findByToken(refreshTokenString))
-                    .orElse(null);
+            RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(tokenHash).orElse(null);
             authMetricsRecorder.recordStage("refresh", "lookup_refresh_token", elapsedMs(stageStartNs));
             if (refreshToken == null) {
                 outcome = "invalid_token";
@@ -287,10 +285,7 @@ public class AuthService {
 
         String tokenHash = tokenHashService.hash(refreshTokenString);
         refreshTokenRepository.findByTokenHash(tokenHash)
-                .ifPresentOrElse(refreshTokenRepository::delete, () ->
-                        refreshTokenRepository.findByToken(refreshTokenString)
-                                .ifPresent(refreshTokenRepository::delete)
-                );
+                .ifPresent(refreshTokenRepository::delete);
     }
 
     private String createRefreshToken(User user) {

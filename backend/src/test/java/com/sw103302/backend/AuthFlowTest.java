@@ -2,6 +2,7 @@ package com.sw103302.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sw103302.backend.component.AiClient;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -273,5 +274,49 @@ class AuthFlowTest {
         mvc.perform(get("/api/analysis/history?limit=10")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void refresh_withAllowedOriginAndCookie_shouldSucceed() throws Exception {
+        Cookie refreshCookie = registerAndCaptureRefreshCookie("refresh-ok@example.com");
+
+        mvc.perform(post("/api/auth/refresh")
+                        .header("Origin", "http://localhost:5173")
+                        .cookie(refreshCookie))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").exists())
+                .andExpect(header().string("Set-Cookie", org.hamcrest.Matchers.containsString("refreshToken=")));
+    }
+
+    @Test
+    void refresh_withoutAllowedOrigin_shouldBeForbidden() throws Exception {
+        Cookie refreshCookie = registerAndCaptureRefreshCookie("refresh-blocked@example.com");
+
+        mvc.perform(post("/api/auth/refresh")
+                        .cookie(refreshCookie))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void logout_withoutAllowedOrigin_shouldBeForbidden() throws Exception {
+        Cookie refreshCookie = registerAndCaptureRefreshCookie("logout-blocked@example.com");
+
+        mvc.perform(post("/api/auth/logout")
+                        .cookie(refreshCookie))
+                .andExpect(status().isForbidden());
+    }
+
+    private Cookie registerAndCaptureRefreshCookie(String email) throws Exception {
+        String regBody = """
+            {"email":"%s","password":"password1234"}
+            """.formatted(email);
+
+        return mvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(regBody))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getCookie("refreshToken");
     }
 }

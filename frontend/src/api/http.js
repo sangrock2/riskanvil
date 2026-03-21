@@ -1,4 +1,4 @@
-import { getToken, getRefreshToken, hasSessionHint, setTokens, clearAllTokens } from "../auth/token";
+import { getToken, hasSessionHint, setTokens, clearAllTokens } from "../auth/token";
 import { wasRecentlyActive } from "../hooks/useActivityDetection";
 
 // Track if we're currently refreshing to avoid multiple simultaneous refresh attempts
@@ -255,8 +255,6 @@ function normalizeRefreshError(error, fallbackStatus = null) {
  * 비활성 사용자/만료 사용자의 경우 토큰을 제거하고 로그인으로 이동한다.
  */
 async function refreshAccessToken({ redirectOnFail = true } = {}) {
-  const refreshToken = getRefreshToken();
-
   // Check if user was recently active (within 5 minutes)
   // Only refresh tokens for active users as requested by the user
   if (!wasRecentlyActive(5 * 60 * 1000)) {
@@ -269,20 +267,9 @@ async function refreshAccessToken({ redirectOnFail = true } = {}) {
   }
 
   try {
-    const headers = {};
-    const requestInit = {
+    const response = await fetchWithTimeout(resolveApiPath("/api/auth/refresh"), {
       method: "POST",
       credentials: "include",
-    };
-
-    if (refreshToken) {
-      headers["Content-Type"] = "application/json";
-      requestInit.headers = headers;
-      requestInit.body = JSON.stringify({ refreshToken });
-    }
-
-    const response = await fetchWithTimeout(resolveApiPath("/api/auth/refresh"), {
-      ...requestInit,
     }, REFRESH_REQUEST_TIMEOUT_MS);
 
     if (!response.ok) {
@@ -339,8 +326,7 @@ export async function ensureValidAccessToken({
     return token;
   }
 
-  const refreshToken = getRefreshToken();
-  if (!token && !refreshToken && !hasSessionHint() && !allowSessionProbe) {
+  if (!token && !hasSessionHint() && !allowSessionProbe) {
     return null;
   }
 

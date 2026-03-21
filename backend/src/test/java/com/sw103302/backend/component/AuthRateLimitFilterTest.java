@@ -17,7 +17,7 @@ class AuthRateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new AuthRateLimitFilter(false, true);
+        filter = new AuthRateLimitFilter(false, true, 256);
     }
 
     @Test
@@ -108,5 +108,21 @@ class AuthRateLimitFilterTest {
                 assertThat(res.getContentAsString()).contains("\"rule\":\"report\"");
             }
         }
+    }
+
+    @Test
+    void shouldCapTrackedCountersWhenPresentedWithManyDistinctIps() throws ServletException, IOException {
+        filter = new AuthRateLimitFilter(false, true, 128);
+
+        for (int i = 0; i < 512; i++) {
+            MockHttpServletRequest req = new MockHttpServletRequest("POST", "/api/auth/login");
+            req.setRemoteAddr("127.0.0.1");
+            req.addHeader("X-Real-IP", "10.0.0." + i);
+            MockHttpServletResponse res = new MockHttpServletResponse();
+
+            filter.doFilter(req, res, new MockFilterChain());
+        }
+
+        assertThat(filter.trackedCounterCount()).isLessThanOrEqualTo(128);
     }
 }

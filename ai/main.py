@@ -61,9 +61,15 @@ async def lifespan(app: FastAPI):
     environment = os.getenv("ENVIRONMENT", "development").lower()
     configured_token = INTERNAL_SERVICE_TOKEN.strip()
     if not configured_token:
-        raise RuntimeError("AI_INTERNAL_SERVICE_TOKEN must be set before startup.")
+        raise RuntimeError(
+            "AI_INTERNAL_SERVICE_TOKEN must be set before startup. "
+            "Set the same strong random value in BOTH the AI service and the backend service."
+        )
     if environment in {"prod", "production", "staging"} and is_default_internal_service_token():
-        raise RuntimeError("AI_INTERNAL_SERVICE_TOKEN must be a strong non-default value in production-like environments.")
+        raise RuntimeError(
+            "AI_INTERNAL_SERVICE_TOKEN must be a strong non-default value in production-like environments. "
+            "Use the same strong random value in BOTH the AI service and the backend service."
+        )
 
     if FINNHUB_KEY:
         asyncio.create_task(finnhub_ws.connect())
@@ -100,7 +106,7 @@ async def request_id_middleware(request: Request, call_next):
     start = time.perf_counter()
     response = None
     try:
-        if request.url.path not in {"/health", "/metrics"}:
+        if request.url.path != "/health":
             presented_token = request.headers.get(INTERNAL_SERVICE_TOKEN_HEADER, "")
             if not is_internal_service_request_authorized(presented_token):
                 logger.warning("Rejected unauthorized AI HTTP request: %s", request.url.path)

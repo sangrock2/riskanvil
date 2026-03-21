@@ -34,9 +34,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(AuthRateLimitFilter.class);
+    private static final int DEFAULT_MAX_TRACKED_COUNTERS = 4_096;
     private final boolean enabled;
     private final boolean trustXForwardedFor;
     private final boolean trustXRealIp;
+    private final int maxTrackedCounters;
 
     private static final long WINDOW_MS = 60_000L; // 60초
     private static final List<RateLimitRule> RULES = List.of(
@@ -55,15 +57,25 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
     public AuthRateLimitFilter(
             @Value("${security.rate-limit.enabled:true}") boolean enabled,
             @Value("${security.rate-limit.trust-x-forwarded-for:false}") boolean trustXForwardedFor,
-            @Value("${security.rate-limit.trust-x-real-ip:true}") boolean trustXRealIp
+            @Value("${security.rate-limit.trust-x-real-ip:true}") boolean trustXRealIp,
+            @Value("${security.rate-limit.max-tracked-counters:4096}") int maxTrackedCounters
     ) {
         this.enabled = enabled;
         this.trustXForwardedFor = trustXForwardedFor;
         this.trustXRealIp = trustXRealIp;
+        this.maxTrackedCounters = Math.max(128, maxTrackedCounters);
     }
 
     AuthRateLimitFilter(boolean trustXForwardedFor, boolean trustXRealIp) {
-        this(true, trustXForwardedFor, trustXRealIp);
+        this(true, trustXForwardedFor, trustXRealIp, DEFAULT_MAX_TRACKED_COUNTERS);
+    }
+
+    AuthRateLimitFilter(boolean trustXForwardedFor, boolean trustXRealIp, int maxTrackedCounters) {
+        this(true, trustXForwardedFor, trustXRealIp, maxTrackedCounters);
+    }
+
+    AuthRateLimitFilter(boolean enabled, boolean trustXForwardedFor, boolean trustXRealIp) {
+        this(enabled, trustXForwardedFor, trustXRealIp, DEFAULT_MAX_TRACKED_COUNTERS);
     }
 
     @Override
@@ -81,11 +93,13 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             return;
         }
 
+        long now = System.currentTimeMillis();
+        cleanupExpiredCounters(now);
         String ip = resolveClientIp(request);
-        String counterKey = rule.name + ":" + ip;
-        WindowCounter counter = counters.computeIfAbsent(counterKey, k -> new WindowCounter());
+        String counterKey = resolveCounterKey(rule.name, ip, now);
+        WindowCounter counter = counters.computeIfAbsent(counterKey, k -> new WindowCounter(now));
 
-        if (!counter.tryAcquire(rule.maxRequests)) {
+        if (!counter.tryAcquire(rule.maxRequests, now)) {
             log.warn("Rate limit exceeded. rule={} ip={} path={}",
                     rule.name, ip, request.getRequestURI());
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
@@ -96,6 +110,22 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private String resolveCounterKey(String ruleName, String ip, long now) {
+        String requestedKey = ruleName + ":" + ip;
+        if (counters.containsKey(requestedKey)) {
+            return requestedKey;
+        }
+        if (counters.size() < maxTrackedCounters) {
+            return requestedKey;
+        }
+
+        cleanupExpiredCounters(now);
+        if (counters.size() < maxTrackedCounters) {
+            return requestedKey;
+        }
+        return ruleName + ":overflow";
     }
 
     private RateLimitRule resolveRule(HttpServletRequest request) {
@@ -155,12 +185,23 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         }
     }
 
+    private void cleanupExpiredCounters(long now) {
+        counters.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
+    }
+
+    int trackedCounterCount() {
+        return counters.size();
+    }
+
     private static class WindowCounter {
         private final AtomicInteger count = new AtomicInteger(0);
-        private final AtomicLong windowStart = new AtomicLong(System.currentTimeMillis());
+        private final AtomicLong windowStart;
 
-        boolean tryAcquire(int maxRequests) {
-            long now = System.currentTimeMillis();
+        WindowCounter(long startedAt) {
+            this.windowStart = new AtomicLong(startedAt);
+        }
+
+        boolean tryAcquire(int maxRequests, long now) {
             long start = windowStart.get();
 
             // 윈도우가 만료되면 초기화
@@ -171,6 +212,10 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             }
 
             return count.incrementAndGet() <= maxRequests;
+        }
+
+        boolean isExpired(long now) {
+            return now - windowStart.get() >= WINDOW_MS;
         }
     }
 

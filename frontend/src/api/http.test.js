@@ -51,13 +51,13 @@ describe("apiFetch auth refresh", () => {
 
     vi.stubGlobal("fetch", fetchMock);
     sessionStorage.setItem("accessToken", expiredToken);
-    sessionStorage.setItem("refreshToken", "refresh-1");
 
     const result = await apiFetch("/api/protected");
 
     expect(result).toEqual({ ok: true });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[0][0]).toBe("/api/auth/refresh");
+    expect(fetchMock.mock.calls[0][1].body).toBeUndefined();
     expect(fetchMock.mock.calls[1][0]).toBe("/api/protected");
     expect(fetchMock.mock.calls[1][1].headers.Authorization).toBe(`Bearer ${freshToken}`);
     expect(sessionStorage.getItem("refreshToken")).toBeNull();
@@ -70,7 +70,6 @@ describe("apiFetch auth refresh", () => {
 
     vi.stubGlobal("fetch", fetchMock);
     sessionStorage.setItem("accessToken", expiredToken);
-    sessionStorage.setItem("refreshToken", "refresh-1");
 
     await apiFetch("/api/auth/login", {
       method: "POST",

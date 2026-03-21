@@ -3,7 +3,6 @@ const AUTH_SYNC_CHANNEL_NAME = "stock-ai-auth";
 const AUTH_SESSION_HINT_KEY = "stock-ai:session-present";
 const AUTH_SYNC_SENDER_ID = `tab-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 const ACCESS_TOKEN_KEY = "accessToken";
-const REFRESH_TOKEN_KEY = "refreshToken";
 let authSyncChannel = null;
 
 export { AUTH_SYNC_STORAGE_KEY };
@@ -49,25 +48,12 @@ export function clearToken() {
 }
 
 /**
- * Get the refresh token from sessionStorage
- * @returns {string|null} The refresh token or null if not found
+ * Refresh tokens are cookie-only. This helper now only scrubs legacy storage.
+ * @returns {null}
  */
 export function getRefreshToken() {
-  const token = sessionStorage.getItem(REFRESH_TOKEN_KEY);
-  if (token) {
-    setSessionHint();
-    return token;
-  }
-
-  const legacyToken = localStorage.getItem(REFRESH_TOKEN_KEY);
-  if (!legacyToken) {
-    return null;
-  }
-
-  sessionStorage.setItem(REFRESH_TOKEN_KEY, legacyToken);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  setSessionHint();
-  return legacyToken;
+  clearRefreshToken();
+  return null;
 }
 
 export function hasSessionHint() {
@@ -75,28 +61,25 @@ export function hasSessionHint() {
 }
 
 /**
- * Store the refresh token in sessionStorage
- * @param {string} token - The refresh token
+ * Refresh tokens are cookie-only. Clear any stale legacy storage.
  */
 export function setRefreshToken(token) {
-  if (!token) return;
-  sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  void token;
+  clearRefreshToken();
 }
 
 /**
- * Remove the refresh token from sessionStorage
+ * Remove any legacy refresh token storage
  */
 export function clearRefreshToken() {
-  sessionStorage.removeItem(REFRESH_TOKEN_KEY);
-  // backward compatibility: remove legacy localStorage key if present
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  sessionStorage.removeItem("refreshToken");
+  localStorage.removeItem("refreshToken");
 }
 
 /**
  * Store both access and refresh tokens
  * @param {string} accessToken - The JWT access token
- * @param {string} refreshToken - The refresh token
+ * @param {string} refreshToken - Ignored. Refresh tokens stay in HttpOnly cookies.
  */
 export function setTokens(accessToken, refreshToken) {
   applyTokens(accessToken, refreshToken);
@@ -219,11 +202,7 @@ function applyTokens(accessToken, refreshToken) {
   } else {
     clearToken();
   }
-  if (refreshToken) {
-    setRefreshToken(refreshToken);
-  } else {
-    clearRefreshToken();
-  }
+  clearRefreshToken();
   if (accessToken || refreshToken) {
     setSessionHint();
   } else {

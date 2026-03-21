@@ -1,10 +1,10 @@
 package com.sw103302.backend.controller;
 
+import com.sw103302.backend.component.AuthOriginValidator;
 import com.sw103302.backend.dto.AuthResponse;
 import com.sw103302.backend.dto.EmailAvailabilityRequest;
 import com.sw103302.backend.dto.EmailAvailabilityResponse;
 import com.sw103302.backend.dto.LoginRequest;
-import com.sw103302.backend.dto.RefreshRequest;
 import com.sw103302.backend.dto.RegisterRequest;
 import com.sw103302.backend.dto.VerifyTwoFactorLoginRequest;
 import com.sw103302.backend.service.AuthService;
@@ -18,12 +18,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.WebUtils;
 
 @RestController
@@ -33,10 +35,16 @@ import org.springframework.web.util.WebUtils;
 public class AuthController {
     private final AuthService auth;
     private final RefreshTokenCookieService refreshTokenCookieService;
+    private final AuthOriginValidator authOriginValidator;
 
-    public AuthController(AuthService auth, RefreshTokenCookieService refreshTokenCookieService) {
+    public AuthController(
+            AuthService auth,
+            RefreshTokenCookieService refreshTokenCookieService,
+            AuthOriginValidator authOriginValidator
+    ) {
         this.auth = auth;
         this.refreshTokenCookieService = refreshTokenCookieService;
+        this.authOriginValidator = authOriginValidator;
     }
 
     @PostMapping("/check-email")
@@ -86,30 +94,28 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    @Operation(summary = "Refresh access token", description = "Get a new access token using the HttpOnly refresh-token cookie or a legacy request body token")
+    @Operation(summary = "Refresh access token", description = "Get a new access token using the HttpOnly refresh-token cookie")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Token refreshed successfully",
                     content = @Content(schema = @Schema(implementation = AuthResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid or expired refresh token")
+            @ApiResponse(responseCode = "400", description = "Invalid or expired refresh token"),
+            @ApiResponse(responseCode = "403", description = "Request origin is not allowed")
     })
-    public ResponseEntity<AuthResponse> refresh(
-            @RequestBody(required = false) RefreshRequest req,
-            HttpServletRequest request
-    ) {
-        return withRefreshCookie(auth.refreshAccessToken(resolveRefreshToken(req, request)));
+    public ResponseEntity<AuthResponse> refresh(HttpServletRequest request) {
+        validateAllowedOrigin(request);
+        return withRefreshCookie(auth.refreshAccessToken(resolveRefreshToken(request)));
     }
 
     @PostMapping("/logout")
     @Operation(summary = "User logout", description = "Revoke refresh token and clear the HttpOnly refresh-token cookie")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Logout successful"),
-            @ApiResponse(responseCode = "400", description = "Invalid request")
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
+            @ApiResponse(responseCode = "403", description = "Request origin is not allowed")
     })
-    public ResponseEntity<Void> logout(
-            @RequestBody(required = false) RefreshRequest req,
-            HttpServletRequest request
-    ) {
-        auth.logout(resolveRefreshToken(req, request));
+    public ResponseEntity<Void> logout(HttpServletRequest request) {
+        validateAllowedOrigin(request);
+        auth.logout(resolveRefreshToken(request));
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshTokenCookieService.clear().toString())
                 .build();
@@ -129,11 +135,13 @@ public class AuthController {
                 .body(AuthResponse.accessOnly(response.accessToken()));
     }
 
-    private String resolveRefreshToken(RefreshRequest req, HttpServletRequest request) {
-        if (req != null && req.refreshToken() != null && !req.refreshToken().isBlank()) {
-            return req.refreshToken();
+    private void validateAllowedOrigin(HttpServletRequest request) {
+        if (!authOriginValidator.isAllowed(request)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid request origin");
         }
+    }
 
+    private String resolveRefreshToken(HttpServletRequest request) {
         var cookie = WebUtils.getCookie(request, refreshTokenCookieService.cookieName());
         return cookie == null ? "" : cookie.getValue();
     }

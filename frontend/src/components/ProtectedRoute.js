@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getRefreshToken, getToken, hasSessionHint } from "../auth/token";
+import { getToken, hasSessionHint } from "../auth/token";
 import { Navigate } from "react-router-dom";
 import { ensureValidAccessToken, isTokenExpired } from "../api/http";
 import { Spinner } from "./ui/Loading";
@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children }) {
     const [state, setState] = useState(() => {
         const token = getToken();
         if (token && !isTokenExpired(token)) return "ready";
-        if (getRefreshToken() || hasSessionHint()) return "refreshing";
+        if (hasSessionHint()) return "refreshing";
         return "unauthorized";
     });
 
@@ -54,7 +54,7 @@ export default function ProtectedRoute({ children }) {
     }
 
     if (state === "unauthorized") {
-        const reason = getRefreshToken() || hasSessionHint() ? "expired" : "missing";
+        const reason = hasSessionHint() ? "expired" : "missing";
         return <Navigate to={`/login?reason=${reason}`} replace />;
     }
 
