@@ -97,6 +97,7 @@ public class SecurityConfig {
                 )
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers("/actuator/health", "/actuator/health/**").permitAll();
                     auth.requestMatchers(EndpointRequest.to("health")).permitAll();
                     if (exposePrometheus) {
                         auth.requestMatchers(EndpointRequest.to("prometheus")).permitAll();

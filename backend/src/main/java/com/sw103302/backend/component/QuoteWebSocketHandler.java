@@ -193,11 +193,11 @@ public class QuoteWebSocketHandler extends TextWebSocketHandler {
                 }
                 boolean alreadySubscribedGlobally = isTickerSubscribedByAnySession(ticker);
                 boolean added = subs.add(ticker);
-                if (added && !alreadySubscribedGlobally) {
-                    eventPublisher.publishEvent(QuoteSubscriptionEvent.subscribe(ticker));
-                }
                 if (added) {
                     tickerSubscribers.computeIfAbsent(ticker, key -> ConcurrentHashMap.newKeySet()).add(session);
+                    if (!alreadySubscribedGlobally) {
+                        eventPublisher.publishEvent(QuoteSubscriptionEvent.subscribe(ticker));
+                    }
                     log.debug("Session {} subscribed to {}", session.getId(), ticker);
                 }
             } else if ("unsubscribe".equals(action)) {

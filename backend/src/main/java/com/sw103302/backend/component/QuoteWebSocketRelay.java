@@ -2,7 +2,6 @@ package com.sw103302.backend.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +42,11 @@ public class QuoteWebSocketRelay extends TextWebSocketHandler {
     private String aiInternalServiceToken;
 
     private WebSocketSession aiSession;
-    private final ScheduledExecutorService reconnectScheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService reconnectScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread thread = new Thread(r, "quote-ws-relay");
+        thread.setDaemon(true);
+        return thread;
+    });
     private volatile boolean running = true;
     private final AtomicBoolean reconnectScheduled = new AtomicBoolean(false);
     private volatile int reconnectAttempts = 0;
@@ -51,11 +54,6 @@ public class QuoteWebSocketRelay extends TextWebSocketHandler {
     public QuoteWebSocketRelay(QuoteWebSocketHandler broadcastHandler, ObjectMapper objectMapper) {
         this.broadcastHandler = broadcastHandler;
         this.objectMapper = objectMapper;
-    }
-
-    @PostConstruct
-    public void init() {
-        connectToAi();
     }
 
     @PreDestroy
@@ -67,6 +65,9 @@ public class QuoteWebSocketRelay extends TextWebSocketHandler {
 
     private synchronized void connectToAi() {
         if (!running) {
+            return;
+        }
+        if (!hasActiveSubscriptions()) {
             return;
         }
         WebSocketSession current = aiSession;
@@ -98,6 +99,11 @@ public class QuoteWebSocketRelay extends TextWebSocketHandler {
 
     private void scheduleReconnect() {
         if (!running) {
+            return;
+        }
+        if (!hasActiveSubscriptions()) {
+            reconnectAttempts = 0;
+            reconnectScheduled.set(false);
             return;
         }
         if (!reconnectScheduled.compareAndSet(false, true)) {
@@ -152,7 +158,16 @@ public class QuoteWebSocketRelay extends TextWebSocketHandler {
 
     @EventListener
     public void handleSubscriptionEvent(QuoteSubscriptionEvent event) {
+        if ("subscribe".equals(event.action())) {
+            ensureConnectedAsync();
+        }
         sendSubscriptionCommand(event.action(), event.ticker());
+        if ("unsubscribe".equals(event.action()) && !hasActiveSubscriptions()) {
+            log.info("No active quote subscriptions remain. Closing AI WebSocket relay.");
+            reconnectAttempts = 0;
+            closeAiSession();
+            reconnectScheduled.set(false);
+        }
     }
 
     private void sendSubscriptionCommand(String action, String ticker) {
@@ -170,6 +185,29 @@ public class QuoteWebSocketRelay extends TextWebSocketHandler {
         } catch (Exception e) {
             log.warn("Failed to forward {} command for {} to AI relay: {}", action, ticker, e.getMessage());
         }
+    }
+
+    private void ensureConnectedAsync() {
+        if (!running) {
+            return;
+        }
+        WebSocketSession current = aiSession;
+        if (current != null && current.isOpen()) {
+            return;
+        }
+        if (!reconnectScheduled.compareAndSet(false, true)) {
+            return;
+        }
+        reconnectScheduler.execute(() -> {
+            reconnectScheduled.set(false);
+            if (running) {
+                connectToAi();
+            }
+        });
+    }
+
+    private boolean hasActiveSubscriptions() {
+        return !broadcastHandler.getSubscribedTickersSnapshot().isEmpty();
     }
 
     private long nextReconnectDelayMillis() {

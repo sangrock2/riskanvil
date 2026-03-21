@@ -22,6 +22,8 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
@@ -116,6 +118,24 @@ class QuoteWebSocketHandlerTest {
         handler.afterConnectionClosed(sessionB, CloseStatus.NORMAL);
         verify(eventPublisher, times(1)).publishEvent(QuoteSubscriptionEvent.unsubscribe("AAPL"));
         assertThat(handler.getSubscribedTickersSnapshot()).doesNotContain("AAPL");
+    }
+
+    @Test
+    void firstSubscriptionEvent_shouldBePublishedAfterTickerIsTracked() throws Exception {
+        when(sessionA.getId()).thenReturn("session-a");
+        when(jwtService.parseClaims("valid.jwt")).thenReturn(claims);
+        doAnswer(invocation -> {
+            assertThat(handler.getSubscribedTickersSnapshot()).contains("AAPL");
+            return null;
+        }).when(eventPublisher).publishEvent(eq(QuoteSubscriptionEvent.subscribe("AAPL")));
+
+        handler.afterConnectionEstablished(sessionA);
+        handler.handleTextMessage(sessionA, new TextMessage("{\"action\":\"auth\",\"token\":\"valid.jwt\"}"));
+
+        handler.handleTextMessage(sessionA, new TextMessage("{\"action\":\"subscribe\",\"ticker\":\"AAPL\"}"));
+
+        verify(eventPublisher, times(1)).publishEvent(QuoteSubscriptionEvent.subscribe("AAPL"));
+        assertThat(handler.getSubscribedTickersSnapshot()).contains("AAPL");
     }
 
     @Test
